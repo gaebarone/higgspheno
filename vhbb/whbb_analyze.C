@@ -270,6 +270,9 @@ void whbb_analyze(const char *inputFilePlus, const char *inputFileMinus) {
 
   // Loop over events
   for(Int_t entry = 0; entry < numberOfEntries; ++entry){
+    fill_reco = true;
+    fill_parton = true;
+    fill_particle = true;
     // Load selected branches with data from specified event
     treeReader->ReadEntry(entry);
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
@@ -288,7 +291,7 @@ void whbb_analyze(const char *inputFilePlus, const char *inputFileMinus) {
         }
       }
     }
-    if (bjets != 2) fill_reco = true;
+    if (bjets != 2) fill_reco = false;
     higgsvec = b1_reco + b2_reco;
     // Now check for events with 1 charged lepton and save its information
     // Also combine it with MET data to reconstruct the W
@@ -438,14 +441,20 @@ void whbb_analyze(const char *inputFilePlus, const char *inputFileMinus) {
         if (eparticlevec.Pt() == 0) {
           eparticlevec = particle -> P4();
           wparticlevec = genmetvec + eparticlevec;
-        } else fill_particle = false;
+        } else {
+          fill_particle = false;
+        }
       } else if (abs(particle -> PID) == 13 && particle -> Status == 1 && particle->PT > mu_pt_cut && abs(particle->Eta) < eta_cut) {
         if (mparticlevec.Pt() == 0) {
           mparticlevec = particle -> P4();
           wparticlevec = genmetvec + mparticlevec;
-        } else fill_particle = false;
+        } else {
+          fill_particle = false;
+        }
       }
     }
+    // check only one charged lepton
+    if ((eparticlevec.Pt() == 0 && mparticlevec.Pt() == 0) || (eparticlevec.Pt() != 0 && mparticlevec.Pt() != 0)) fill_particle = false;
     // fill parton level histograms
     if (fill_parton) {
       // fill higgs and w boson parton level histograms
@@ -614,7 +623,6 @@ void whbb_analyze(const char *inputFilePlus, const char *inputFileMinus) {
     nPassed+=weight;
     nPassedRaw++;
   }
-
   // Fit higgs mass distribution (can also do Z but W is less insightful due to MET)
   TF1 *fitMHR = new TF1("higgs_dscb_reco", DSCBf, 20, 250, 7);
   fitMHR -> SetParameters(1, 2, 1, 2, 125, 10, 1);
