@@ -101,7 +101,7 @@ void whbb_analyze(const char *inputFilePlus, const char *inputFileMinus) {
   TH2 *hMbbComp = new TH2F("mass_bb_Comp", "m_{bb}", 50, 0.0, 250.0, 50, 0.0, 250.0);
   TH2 *hMTWComp = new TH2F("massT_W_Comp", "m_{T}^{W}", 50, 40.0, 300.0, 50, 40.0, 300.0);
   TH2 *hMTWHComp = new TH2F("massT_WH_Comp", "m_{T}^{WH}", 50, 120.0, 900.0, 50, 120.0, 900.0);
-  TH2 *hMTWCompP = new TH2F("massT_W_Comp_particle", "m_{T}^{W}", 50, 40.0, 300.0, 50, 40.0, 300.0);
+  TH2 *hMTWCompP = new TH2F("massT_W_Comp_particle", "m_{T}^{W}", 50, 50.0, 600.0, 50, 50.0, 600.0);
   TH2 *hMTWHCompP = new TH2F("massT_WH_Comp_particle", "m_{T}^{WH}", 50, 120.0, 900.0, 50, 120.0, 900.0);
   // pt parton level
   TH1 *hPtH = new TH1F("pt_H", "p_{T}^{H}", 100, 0.0, 400.0);
@@ -143,7 +143,7 @@ void whbb_analyze(const char *inputFilePlus, const char *inputFileMinus) {
   TH2 *hPtHCompP = new TH2F("pt_H_Comp_particle", "p_{T}^{H}", 50, 0.0, 400.0, 50, 0.0, 400.0);
   TH2 *hPtWCompP = new TH2F("pt_W_Comp_particle", "p_{T}^{W}", 50, 0.0, 400.0, 50, 0.0, 400.0);
   TH2 *hPtECompP = new TH2F("pt_e_Comp_particle", "p_{T}^{e}", 50, 20.0, 200.0, 50, 20.0, 200.0);
-  TH2 *hPtMetCompP = new TH2F("pt_nu_Comp_particle", "p_{T}^{#nu}", 50, 20.0, 200.0, 50, 20.0, 200.0);
+  TH2 *hPtMetCompP = new TH2F("pt_met_Comp_particle", "MET", 50, 20.0, 200.0, 50, 20.0, 200.0);
   TH2 *hPtMuCompP = new TH2F("pt_mu_Comp_particle", "p_{T}^{#mu}", 50, 20.0, 200.0, 50, 20.0, 200.0);
   TH2 *hPtLBCompP = new TH2F("pt_LB_Comp_particle", "Lead p_{T}^{b}", 50, 20.0, 200.0, 50, 20.0, 200.0);
   TH2 *hPtSLBCompP = new TH2F("pt_SLB_Comp_particle", "Sublead p_{T}^{b}", 50, 20.0, 200.0, 50, 20.0, 200.0);

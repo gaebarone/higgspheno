@@ -450,7 +450,7 @@ void zhbb_analyze(const char *inputFile) {
         }
       // now look for status 1 (particle level) electrons
       } else if (abs(particle -> PID) == 11 && particle -> Status == 1 && abs(particle -> Eta) < eta_cut) {
-        if (e1_particle.Pt() != 0 && e2_particle.Pt() != 0 && particle->PT > e_pt_cut_sub) {
+        if (num_elec_particle > 1 && particle->PT > e_pt_cut_sub) {
           fill_particle = false;
           continue;
         }
@@ -464,7 +464,7 @@ void zhbb_analyze(const char *inputFile) {
         }
       // now look for status 1 (particle level) muons
       } else if (abs(particle -> PID) == 13 && particle -> Status == 1 && abs(particle -> Eta) < eta_cut) {
-        if (m1_particle.Pt() != 0 && m2_particle.Pt() != 0 && particle->PT > mu_pt_cut_sub) {
+        if (num_mu_particle > 1 && particle->PT > mu_pt_cut_sub) {
           fill_particle = false;
           continue;
         }
@@ -481,14 +481,13 @@ void zhbb_analyze(const char *inputFile) {
     if (fill_parton) {
       // fill electron parton histograms
       if (elec_ev_parton) {
-        zparticlevec = e1_particle + e2_particle;
         hPtLE -> Fill(e1_parton.Pt(), weight);
         hEtaLE -> Fill(e1_parton.Eta(), weight);
         hPhiLE -> Fill(e1_parton.Phi(), weight);
         hPtSLE -> Fill(e2_parton.Pt(), weight);
         hEtaSLE -> Fill(e2_parton.Eta(), weight);
         hPhiSLE -> Fill(e2_parton.Phi(), weight);
-        if (fill_reco && num_elec_particle == 2) {
+        if (fill_reco && num_elec_reco == 2) {
           // fill electron comparison histograms
           hPtLEComp -> Fill(e1_parton.Pt(), elecvec1.Pt(), weight);
           hEtaLEComp -> Fill(e1_parton.Eta(), elecvec1.Eta(), weight);
@@ -499,14 +498,13 @@ void zhbb_analyze(const char *inputFile) {
         }
       } else {
         // fill muon parton histograms
-        zparticlevec = m1_particle + m2_particle;
         hPtLM -> Fill(m1_parton.Pt(), weight);
         hEtaLM -> Fill(m1_parton.Eta(), weight);
         hPhiLM -> Fill(m1_parton.Phi(), weight);
         hPtSLM -> Fill(m2_parton.Pt(), weight);
         hEtaSLM -> Fill(m2_parton.Eta(), weight);
         hPhiSLM -> Fill(m2_parton.Phi(), weight);
-        if (fill_reco && num_mu_particle == 2) {
+        if (fill_reco && num_mu_reco == 2) {
           // fill muon comparison histograms
           hPtSLMComp -> Fill(m2_parton.Pt(), muvec2.Pt(), weight);
           hEtaSLMComp -> Fill(m2_parton.Eta(), muvec2.Eta(), weight);
@@ -561,7 +559,7 @@ void zhbb_analyze(const char *inputFile) {
       }
     }
     // gather generated b jets if the particle level leptons look good
-    if (!((num_elec_particle == 2 && num_mu_particle == 0) || (num_elec_particle == 2 && num_mu_particle == 0))) {
+    if (!((num_elec_particle == 2 && num_mu_particle == 0) || (num_elec_particle == 0 && num_mu_particle == 2))) {
       fill_particle = false;
     }
     if (fill_particle) {
