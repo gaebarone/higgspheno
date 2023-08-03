@@ -5,6 +5,7 @@ R__LOAD_LIBRARY(libDelphes)
 #include "classes/DelphesClasses.h"
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
 #include "DSCBf.h"
+#include "ghost_tagging.h"
 #endif
 
 //------------------------------------------------------------------------------
@@ -34,35 +35,6 @@ void draw_hist2(TH2 *histo, const char *name, const char *title, const char *xax
   PrintCanvas(c, name); 
 }
 
-// search for the final daughter given a particle and the id of the daughter to search for
-GenParticle* find_status1_child(TClonesArray *branchGenParticle, GenParticle *particle, int target) {
-  // check particle itself
-  if (abs(particle -> PID) == target && particle -> Status == 1) {
-    return particle;
-  }
-  // safely access daughters
-  int d1_pid = 9999;
-  int d2_pid = 9999;
-  GenParticle *daughter1;
-  GenParticle *daughter2;
-  if (particle->D1 != -1) {
-    daughter1 = (GenParticle*) branchGenParticle->At(particle->D1);
-    d1_pid = daughter1 -> PID;
-  }
-  if (particle->D2 != -1) {
-    daughter2 = (GenParticle*) branchGenParticle->At(particle->D2);
-    d2_pid = daughter2 -> PID;
-  }
-  // recursive call on daughters or return null
-  if (abs(d1_pid) == target) {
-    return find_status1_child(branchGenParticle, daughter1, target);
-  } else if (abs(d2_pid) == target) {
-    return find_status1_child(branchGenParticle, daughter2, target);
-  } else {
-    return NULL;
-  }
-}
-
 // make a ton of plots for zhbb events (z -> l l)
 void zhbb_analyze(const char *inputFile) {
   gSystem->Load("libDelphes");
@@ -79,6 +51,12 @@ void zhbb_analyze(const char *inputFile) {
   TClonesArray *branchEvent = treeReader->UseBranch("Event");
   TClonesArray *branchGenParticle = treeReader->UseBranch("Particle");
   TClonesArray *branchGenJet = treeReader->UseBranch("GenJet");
+  // SET CUTS
+  const double e_pt_cut_lead = 27;
+  const double mu_pt_cut_lead = 20;
+  const double e_pt_cut_sub = 15;
+  const double mu_pt_cut_sub = 12;
+  const double eta_cut = 2.5;
   // Book histograms
   // mass
   TH1 *hMZH = new TH1F("mass_ZH", "m_{ZH}", 100, 120.0, 670.0);
@@ -91,6 +69,7 @@ void zhbb_analyze(const char *inputFile) {
   TH2 *hMbbComp = new TH2F("mass_bb_Comp", "m_{bb}", 50, 0.0, 250.0, 50, 0.0, 250.0);
   TH2 *hMllComp = new TH2F("mass_ll_Comp", "m_{ll}", 50, 40.0, 140.0, 50, 40.0, 140.0);
   TH2 *hMZHComp = new TH2F("mass_ZH_Comp", "m_{ZH}", 50, 120.0, 670.0, 50, 120.0, 670.0);
+  TH2 *hMZHCompP = new TH2F("mass_ZH_Comp_particle", "m_{ZH}", 50, 120.0, 670.0, 50, 120.0, 670.0);
   // pt parton level
   TH1 *hPtH = new TH1F("pt_H", "p_{T}^{H}", 100, 0.0, 400.0);
   TH1 *hPtZ = new TH1F("pt_Z", "p_{T}^{Z}", 100, 0.0, 400.0);
@@ -121,7 +100,7 @@ void zhbb_analyze(const char *inputFile) {
   TH1 *hPtLBP = new TH1F("pt_LB_particle", "Lead b Jet p_{T}", 100, 20.0, 200.0);
   TH1 *hPtSLBP = new TH1F("pt_SLB_particle", "Sublead b Jet p_{T}", 100, 20.0, 200.0);
   TH1 *hPtBBLLP = new TH1F("pt_bbll_particle", "p_{T}^{bbll}", 100, 0.0, 400.0);
-  // pt comparison
+  // pt parton-reco comparison
   TH2 *hPtHComp = new TH2F("pt_H_Comp", "p_{T}^{H}", 50, 0.0, 400.0, 50, 0.0, 400.0);
   TH2 *hPtZComp = new TH2F("pt_Z_Comp", "p_{T}^{Z}", 50, 0.0, 400.0, 50, 0.0, 400.0);
   TH2 *hPtLEComp = new TH2F("pt_LE_Comp", "Lead p_{T}^{e}", 50, 20.0, 200.0, 50, 20.0, 200.0);
@@ -130,9 +109,17 @@ void zhbb_analyze(const char *inputFile) {
   TH2 *hPtSLMComp = new TH2F("pt_SLM_Comp", "Sublead p_{T}^{#mu}", 50, 20.0, 200.0, 50, 20.0, 200.0);
   TH2 *hPtLBComp = new TH2F("pt_LB_Comp", "Lead p_{T}^{b}", 50, 20.0, 200.0, 50, 20.0, 200.0);
   TH2 *hPtSLBComp = new TH2F("pt_SLB_Comp", "Sublead p_{T}^{b}", 50, 20.0, 200.0, 50, 20.0, 200.0);
-  TH2 *hPtLBCompP = new TH2F("pt_LB_Comp_particle", "Lead Jet p_{T}^{b}", 50, 20.0, 200.0, 50, 20.0, 200.0);
-  TH2 *hPtSLBCompP = new TH2F("pt_SLB_Comp_particle", "Sublead Jet p_{T}^{b}", 50, 20.0, 200.0, 50, 20.0, 200.0);
   TH2 *hPtZHComp = new TH2F("pt_ZH_Comp", "Sublead p_{T}^{ZH}", 50, 0.0, 400.0, 50, 0.0, 400.0);
+  // pt particle-reco comparison
+  TH2 *hPtHCompP = new TH2F("pt_H_Comp_particle", "p_{T}^{H}", 50, 0.0, 400.0, 50, 0.0, 400.0);
+  TH2 *hPtZCompP = new TH2F("pt_Z_Comp_particle", "p_{T}^{Z}", 50, 0.0, 400.0, 50, 0.0, 400.0);
+  TH2 *hPtLECompP = new TH2F("pt_LE_Comp_particle", "Lead p_{T}^{e}", 50, 20.0, 200.0, 50, 20.0, 200.0);
+  TH2 *hPtLMCompP = new TH2F("pt_LM_Comp_particle", "Lead p_{T}^{#mu}", 50, 20.0, 200.0, 50, 20.0, 200.0);
+  TH2 *hPtSLECompP = new TH2F("pt_SLE_Comp_particle", "Sublead p_{T}^{e}", 50, 20.0, 200.0, 50, 20.0, 200.0);
+  TH2 *hPtSLMCompP = new TH2F("pt_SLM_Comp_particle", "Sublead p_{T}^{#mu}", 50, 20.0, 200.0, 50, 20.0, 200.0);
+  TH2 *hPtLBCompP = new TH2F("pt_LB_Comp_particle", "Lead p_{T}^{b}", 50, 20.0, 200.0, 50, 20.0, 200.0);
+  TH2 *hPtSLBCompP = new TH2F("pt_SLB_Comp_particle", "Sublead p_{T}^{b}", 50, 20.0, 200.0, 50, 20.0, 200.0);
+  TH2 *hPtZHCompP = new TH2F("pt_ZH_Comp_particle", "Sublead p_{T}^{ZH}", 50, 0.0, 400.0, 50, 0.0, 400.0);
   // eta parton level
   TH1 *hEtaH = new TH1F("eta_H", "#eta_{H}", 100, -3.0, 3.0);
   TH1 *hEtaZ = new TH1F("eta_Z", "#eta_{Z}", 100, -3.0, 3.0);
@@ -163,7 +150,7 @@ void zhbb_analyze(const char *inputFile) {
   TH1 *hEtaLBP = new TH1F("eta_LB_particle", "Lead b Jet #eta", 100, -3.0, 3.0);
   TH1 *hEtaSLBP = new TH1F("eta_SLB_particle", "Sublead b Jet #eta", 100, -3.0, 3.0);
   TH1 *hEtaBBLLP = new TH1F("eta_bbll_particle", "#eta_{bbll}", 100, -3.0, 3.0);
-  // eta comparison
+  // eta parton-reco comparison
   TH2 *hEtaHComp = new TH2F("eta_H_Comp", "#eta_{H}", 50, -3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaZComp = new TH2F("eta_Z_Comp", "#eta_{Z}", 50, -3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaLEComp = new TH2F("eta_LE_Comp", "Lead #eta_{e}", 50,-3.0, 3.0, 50, -3.0, 3.0);
@@ -173,6 +160,16 @@ void zhbb_analyze(const char *inputFile) {
   TH2 *hEtaLBComp = new TH2F("eta_LB_Comp", "Lead #eta_{b}", 50,-3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaSLBComp = new TH2F("eta_SLB_Comp", "Sublead #eta_{b}", 50,-3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaZHComp = new TH2F("eta_ZH_Comp", "Sublead #eta_{ZH}", 50, -3.0, 3.0, 50, -3.0, 3.0);
+  // eta particle-reco comparison
+  TH2 *hEtaHCompP = new TH2F("eta_H_Comp_particle", "#eta_{H}", 50, -3.0, 3.0, 50, -3.0, 3.0);
+  TH2 *hEtaZCompP = new TH2F("eta_Z_Comp_particle", "#eta_{Z}", 50, -3.0, 3.0, 50, -3.0, 3.0);
+  TH2 *hEtaLECompP = new TH2F("eta_LE_Comp_particle", "Lead #eta_{e}", 50,-3.0, 3.0, 50, -3.0, 3.0);
+  TH2 *hEtaLMCompP = new TH2F("eta_LM_Comp_particle", "Lead #eta_{#mu}", 50,-3.0, 3.0, 50, -3.0, 3.0);
+  TH2 *hEtaSLECompP = new TH2F("eta_SLE_Comp_particle", "Sublead #eta_{e}", 50,-3.0, 3.0, 50, -3.0, 3.0);
+  TH2 *hEtaSLMCompP = new TH2F("eta_SLM_Comp_particle", "Sublead #eta_{#mu}", 50,-3.0, 3.0, 50, -3.0, 3.0);
+  TH2 *hEtaLBCompP = new TH2F("eta_LB_Comp_particle", "Lead #eta_{b}", 50,-3.0, 3.0, 50, -3.0, 3.0);
+  TH2 *hEtaSLBCompP = new TH2F("eta_SLB_Comp_particle", "Sublead #eta_{b}", 50,-3.0, 3.0, 50, -3.0, 3.0);
+  TH2 *hEtaZHCompP = new TH2F("eta_ZH_Comp_particle", "Sublead #eta_{ZH}", 50, -3.0, 3.0, 50, -3.0, 3.0);
   // phi parton level
   TH1 *hPhiH = new TH1F("phi_H", "#phi_{H}", 100, -3.15, 3.15);
   TH1 *hPhiZ = new TH1F("phi_Z", "#phi_{Z}", 100, -3.15, 3.15);
@@ -213,12 +210,17 @@ void zhbb_analyze(const char *inputFile) {
   TH2 *hPhiLBComp = new TH2F("phi_LB_Comp", "Lead #phi_{b}", 50,-3.15, 3.15, 50, -3.15, 3.15);
   TH2 *hPhiSLBComp = new TH2F("phi_SLB_Comp", "Sublead #phi_{b}", 50,-3.15, 3.15, 50, -3.15, 3.15);
   TH2 *hPhiZHComp = new TH2F("phi_ZH_Comp", "Sublead #phi_{ZH}", 50, -3.15, 3.15, 50, -3.15, 3.15);
+
   // initialize variables needed for filling histograms
   double  nPassed=0;
   int  nPassedRaw=0;
   double Lumi=3e3;
   int bjets = 0;
-  bool electronEvent;
+  int num_elec_reco;
+  int num_mu_reco;
+  int num_elec_particle;
+  int num_mu_particle;
+  bool elec_ev_parton;
   TLorentzVector b1_parton;
   TLorentzVector b2_parton;
   TLorentzVector b1_reco;
@@ -234,8 +236,10 @@ void zhbb_analyze(const char *inputFile) {
   TLorentzVector m1_particle;
   TLorentzVector m2_particle;
   TLorentzVector higgsvec;
+  Electron *elec;
   Electron *elec1;
   Electron *elec2;
+  Muon *muon;
   Muon *muon1;
   Muon *muon2;
   GenParticle *daughter1;
@@ -257,85 +261,119 @@ void zhbb_analyze(const char *inputFile) {
     treeReader->ReadEntry(entry);
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
     Float_t weight = event->Weight/numberOfEntries*Lumi;
-    // check for 2 gen b jets
-    bjets = 0;
-    for(int i=0; i<(int)branchGenJet->GetEntries(); i++){
-      Jet *genjet=(Jet*) branchGenJet->At(i);
-      if (genjet -> Flavor == 5) bjets += 1;
-    }
-    if (bjets != 2) continue;
+    bool fill_reco = true;
+    bool fill_parton = true;
+    bool fill_particle = true;
     // Loop over jets in event and save the b jets in 2b events as lorentz vectors to reconstruct the higgs
     bjets = 0;
     for(int i=0; i<(int)branchJet->GetEntries(); i++){
       Jet *jet=(Jet*) branchJet->At(i);
-      if (jet -> Flavor == 5) bjets += 1; // add additional cuts?
-      else continue;
-      if (bjets == 1) {
-        b1_reco = jet->P4();
-      } else if (bjets == 2){
-        b2_reco = jet->P4();
-        break;
+      if (jet -> BTag == 1 && abs(jet -> Eta) < eta_cut) {
+        bjets += 1;
+        if (bjets == 1) {
+          b1_reco = jet->P4();
+        } else if (bjets == 2){
+          b2_reco = jet->P4();
+          break;
+        }
       }
     }
-    if (bjets != 2) continue;
+    if (bjets != 2) fill_reco = false;
     higgsvec = b1_reco + b2_reco;
-    // Now check for dilepton
-    if (branchElectron->GetEntries() == 2 && branchMuon->GetEntries() == 0){
-      elec1 = (Electron *) branchElectron->At(0);
-      elec2 = (Electron *) branchElectron->At(1);
-      if ((elec1->Charge + elec2->Charge) == 0) {
-        electronEvent = true;
-        elecvec1 = elec1->P4();
-        elecvec2 = elec2->P4();
-        zvec = elecvec1 + elecvec2;
-        hPtLER -> Fill(elec1->PT, weight);
-        hEtaLER -> Fill(elec1->Eta, weight);
-        hPhiLER -> Fill(elec1->Phi, weight);
-        hPtSLER -> Fill(elec2->PT, weight);
-        hEtaSLER -> Fill(elec2->Eta, weight);
-        hPhiSLER -> Fill(elec2->Phi, weight);
+    // Check for two electrons meeting requirements 
+    num_elec_reco = 0;
+    num_mu_reco = 0;
+    if (fill_reco) {
+      if (branchElectron->GetEntries() > 1) {
+        for(int i=0; i<(int)branchElectron->GetEntries(); i++) {
+          elec = (Electron *) branchElectron->At(i);
+          if (abs(elec->Eta) < eta_cut && num_elec_reco == 0 && elec->PT > e_pt_cut_lead) {
+            elec1 = elec;
+            num_elec_reco += 1;
+          } else if (abs(elec->Eta) < eta_cut && num_elec_reco == 1 && elec->PT > e_pt_cut_sub) {
+            elec2 = elec;
+            num_elec_reco += 1;
+            if ((elec1->Charge + elec2->Charge) != 0) {
+              fill_reco = false;
+              break;
+            }
+          } else if (abs(elec->Eta) < eta_cut && num_elec_reco == 2 && elec->PT > e_pt_cut_sub) {
+            fill_reco = false;
+            break;
+          }
+        }
       }
-    } else if (branchMuon->GetEntries() == 2 && branchElectron->GetEntries() == 0) {
-      muon1 = (Muon *) branchMuon->At(0);
-      muon2 = (Muon *) branchMuon->At(1);
-      if ((muon1->Charge + muon2->Charge) == 0) {
-        electronEvent = false;
-        muvec1 = muon1->P4();
-        muvec2 = muon2->P4();
-        zvec = muvec1 + muvec2;
-        hPtLMR -> Fill(muon1->PT, weight);
-        hEtaLMR -> Fill(muon1->Eta, weight);
-        hPhiLMR -> Fill(muon1->Phi, weight);
-        hPtSLMR -> Fill(muon2->PT, weight);
-        hEtaSLMR -> Fill(muon2->Eta, weight);
-        hPhiSLMR -> Fill(muon2->Phi, weight);
+      // Check for two muons meeting requirements 
+      if (branchMuon->GetEntries() > 1) {
+        for(int i=0; i<(int)branchMuon->GetEntries(); i++) {
+          muon = (Muon *) branchMuon->At(i);
+          if (abs(muon->Eta) < eta_cut && num_mu_reco == 0 && muon->PT > mu_pt_cut_lead) {
+            muon1 = muon;
+            num_mu_reco += 1;
+          } else if (abs(muon->Eta) < eta_cut && num_mu_reco == 1 && muon->PT > mu_pt_cut_sub) {
+            muon2 = muon;
+            num_mu_reco += 1;
+            if ((muon1->Charge + muon2->Charge) != 0) {
+              fill_reco = false;
+              break;
+            }
+          } else if (abs(muon->Eta) < eta_cut && num_mu_reco == 2 && muon->PT > mu_pt_cut_sub) {
+            fill_reco = false;
+            break;
+          }
+        }
       }
-    } else {
-      continue;
     }
-    sysvec = higgsvec + zvec;
+    // fill electron data
+    if (fill_reco && num_elec_reco == 2 && num_mu_reco == 0) {
+      elecvec1 = elec1->P4();
+      elecvec2 = elec2->P4();
+      zvec = elecvec1 + elecvec2;
+      hPtLER -> Fill(elec1->PT, weight);
+      hEtaLER -> Fill(elec1->Eta, weight);
+      hPhiLER -> Fill(elec1->Phi, weight);
+      hPtSLER -> Fill(elec2->PT, weight);
+      hEtaSLER -> Fill(elec2->Eta, weight);
+      hPhiSLER -> Fill(elec2->Phi, weight);
+    // fill muon data
+    } else if (fill_reco && num_elec_reco == 0 && num_mu_reco == 2) {
+      muvec1 = muon1->P4();
+      muvec2 = muon2->P4();
+      zvec = muvec1 + muvec2;
+      hPtLMR -> Fill(muon1->PT, weight);
+      hEtaLMR -> Fill(muon1->Eta, weight);
+      hPhiLMR -> Fill(muon1->Phi, weight);
+      hPtSLMR -> Fill(muon2->PT, weight);
+      hEtaSLMR -> Fill(muon2->Eta, weight);
+      hPhiSLMR -> Fill(muon2->Phi, weight);
+    } else {
+      fill_reco = false;
+    }
     // fill mass reco histograms
-    hMllR -> Fill(zvec.M(), weight);
-    hMbbllR -> Fill(sysvec.M(), weight);
-    hMbbR -> Fill(higgsvec.M(), weight);
-    // fill pt reco histograms 
-    hPtBBR -> Fill(higgsvec.Pt(), weight);
-    hPtLLR -> Fill(zvec.Pt(), weight);
-    hPtLBR -> Fill(b1_reco.Pt(), weight);
-    hPtSLBR -> Fill(b2_reco.Pt(), weight);
-    hPtBBLLR -> Fill(sysvec.Pt(), weight);
-    // fill eta reco histograms
-    hEtaBBR -> Fill(higgsvec.Eta(), weight);
-    hEtaLLR -> Fill(zvec.Eta(), weight);
-    hEtaLBR -> Fill(b1_reco.Eta(), weight);
-    hEtaSLBR -> Fill(b2_reco.Eta(), weight);
-    hEtaBBLLR -> Fill(sysvec.Eta(), weight);
-    // fill phi reco histograms
-    hPhiBBR -> Fill(higgsvec.Phi(), weight);
-    hPhiLLR -> Fill(zvec.Phi(), weight);
-    hPhiLBR -> Fill(b1_reco.Phi(), weight);
-    hPhiSLBR -> Fill(b2_reco.Phi(), weight);
-    hPhiBBLLR -> Fill(sysvec.Phi(), weight);
+    sysvec = higgsvec + zvec;
+    if (fill_reco) {
+      hMllR -> Fill(zvec.M(), weight);
+      hMbbllR -> Fill(sysvec.M(), weight);
+      hMbbR -> Fill(higgsvec.M(), weight);
+      // fill pt reco histograms 
+      hPtBBR -> Fill(higgsvec.Pt(), weight);
+      hPtLLR -> Fill(zvec.Pt(), weight);
+      hPtLBR -> Fill(b1_reco.Pt(), weight);
+      hPtSLBR -> Fill(b2_reco.Pt(), weight);
+      hPtBBLLR -> Fill(sysvec.Pt(), weight);
+      // fill eta reco histograms
+      hEtaBBR -> Fill(higgsvec.Eta(), weight);
+      hEtaLLR -> Fill(zvec.Eta(), weight);
+      hEtaLBR -> Fill(b1_reco.Eta(), weight);
+      hEtaSLBR -> Fill(b2_reco.Eta(), weight);
+      hEtaBBLLR -> Fill(sysvec.Eta(), weight);
+      // fill phi reco histograms
+      hPhiBBR -> Fill(higgsvec.Phi(), weight);
+      hPhiLLR -> Fill(zvec.Phi(), weight);
+      hPhiLBR -> Fill(b1_reco.Phi(), weight);
+      hPhiSLBR -> Fill(b2_reco.Phi(), weight);
+      hPhiBBLLR -> Fill(sysvec.Phi(), weight);
+    }
     // loop over true particles and fill those histograms
     b1_parton.SetPtEtaPhiM(0,0,0,0);
     b2_parton.SetPtEtaPhiM(0,0,0,0);
@@ -343,6 +381,12 @@ void zhbb_analyze(const char *inputFile) {
     e2_parton.SetPtEtaPhiM(0,0,0,0);
     m1_parton.SetPtEtaPhiM(0,0,0,0);
     m2_parton.SetPtEtaPhiM(0,0,0,0);
+    e1_particle.SetPtEtaPhiM(0,0,0,0);
+    e2_particle.SetPtEtaPhiM(0,0,0,0);
+    m1_particle.SetPtEtaPhiM(0,0,0,0);
+    m2_particle.SetPtEtaPhiM(0,0,0,0);
+    num_elec_particle = 0;
+    num_mu_particle = 0;
     for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
       // safely access mother and daughter particles
       GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
@@ -357,16 +401,10 @@ void zhbb_analyze(const char *inputFile) {
         d2_pid = daughter2 -> PID;
       } 
       // Higgs parton
-      if (particle->PID == 25 && d1_pid != 25) {
-        hPtH -> Fill(particle -> PT, weight);
-        hEtaH -> Fill(particle -> Eta, weight);
-        hPhiH -> Fill(particle -> Phi, weight);
-        hPtHComp -> Fill(particle -> PT, higgsvec.Pt(), weight);
-        hEtaHComp -> Fill(particle -> Eta, higgsvec.Eta(), weight);
-        hPhiHComp -> Fill(particle -> Phi, higgsvec.Phi(), weight);
+      if (particle->PID == 25 && d1_pid != 25 && d2_pid != 25) {
         hpartonvec = particle->P4();
         // check for b parton children
-        if (abs(d1_pid) == 5) {
+        if (abs(d1_pid) == 5 && abs(d2_pid) == 5) {
           if (daughter1 -> PT > daughter2 -> PT) {
             b1_parton = daughter1 -> P4();
             b2_parton = daughter2 -> P4();
@@ -374,149 +412,254 @@ void zhbb_analyze(const char *inputFile) {
             b1_parton = daughter2 -> P4();
             b2_parton = daughter1 -> P4();
           }
-        }
+          if (abs(b1_parton.Eta()) > eta_cut || abs(b2_parton.Eta()) > eta_cut) fill_parton = false;
+        } else fill_parton = false;
       // Z parton
-      } else if ((particle -> PID == 23) && (d1_pid != 23)) {
-        hPtZ -> Fill(particle -> PT, weight);
-        hEtaZ -> Fill(particle -> Eta, weight);
-        hPhiZ -> Fill(particle -> Phi, weight);
-        hPtZComp -> Fill(particle -> PT, zvec.Pt(), weight);
-        hEtaZComp -> Fill(particle -> Eta, zvec.Eta(), weight);
-        hPhiZComp -> Fill(particle -> Phi, zvec.Phi(), weight);
+      } else if ((particle->PID == 23) && (d1_pid != 23) && (d2_pid != 23)) {
         zpartonvec = particle->P4();
         // check for electron daughters
         if (abs(d1_pid) == 11) {
           if (daughter1 -> PT > daughter2 -> PT) {
             e1_parton = daughter1 -> P4();
             e2_parton = daughter2 -> P4();
-            e1_particle = find_status1_child(branchGenParticle, daughter1, 11) -> P4();
-            e2_particle = find_status1_child(branchGenParticle, daughter2, 11) -> P4();
           } else {
             e1_parton = daughter2 -> P4();
             e2_parton = daughter1 -> P4();
-            e1_particle = find_status1_child(branchGenParticle, daughter2, 11) -> P4();
-            e2_particle = find_status1_child(branchGenParticle, daughter1, 11) -> P4();
+          }
+          elec_ev_parton = true;
+          if (abs(e1_parton.Eta()) > eta_cut || abs(e2_parton.Eta()) > eta_cut) {
+            fill_parton = false;
+          } else if (e1_parton.Pt() < e_pt_cut_lead || e1_parton.Pt() < e_pt_cut_sub) {
+            fill_parton = false;
           }
         // check for muon daughters
         } else if (abs(d1_pid) == 13) {
           if (daughter1 -> PT > daughter2 -> PT) {
             m1_parton = daughter1 -> P4();
             m2_parton = daughter2 -> P4();
-            m1_particle = find_status1_child(branchGenParticle, daughter1, 13) -> P4();
-            m2_particle = find_status1_child(branchGenParticle, daughter2, 13) -> P4();
           } else {
             m1_parton = daughter2 -> P4();
             m2_parton = daughter1 -> P4();
-            m1_particle = find_status1_child(branchGenParticle, daughter2, 13) -> P4();
-            m2_particle = find_status1_child(branchGenParticle, daughter1, 13) -> P4();
           }
+          elec_ev_parton = false;
+          if (abs(m1_parton.Eta()) > eta_cut || abs(m2_parton.Eta()) > eta_cut) {
+            fill_parton = false;
+          } else if (m1_parton.Pt() < mu_pt_cut_lead || m1_parton.Pt() < mu_pt_cut_sub) {
+            fill_parton = false;
+          }
+        }
+      // now look for status 1 (particle level) electrons
+      } else if (abs(particle -> PID) == 11 && particle -> Status == 1 && abs(particle -> Eta) < eta_cut) {
+        if (e1_particle.Pt() != 0 && e2_particle.Pt() != 0 && particle->PT > e_pt_cut_sub) {
+          fill_particle = false;
+          continue;
+        }
+        if (particle->PT > e_pt_cut_lead && particle->PT > e1_particle.Pt()) {
+          num_elec_particle += 1;
+          e2_particle.SetPtEtaPhiM(e1_particle.Pt(), e1_particle.Eta(), e1_particle.Phi(), e1_particle.M());
+          e1_particle = particle -> P4();
+        } else if (particle->PT > e_pt_cut_sub) {
+          num_elec_particle += 1;
+          e2_particle = particle -> P4();
+        }
+      // now look for status 1 (particle level) muons
+      } else if (abs(particle -> PID) == 13 && particle -> Status == 1 && abs(particle -> Eta) < eta_cut) {
+        if (m1_particle.Pt() != 0 && m2_particle.Pt() != 0 && particle->PT > mu_pt_cut_sub) {
+          fill_particle = false;
+          continue;
+        }
+        if (particle->PT > mu_pt_cut_lead && particle -> PT > m1_particle.Pt()) {
+          num_mu_particle += 1;
+          m2_particle.SetPtEtaPhiM(m1_particle.Pt(), m1_particle.Eta(), m1_particle.Phi(), m1_particle.M());
+          m1_particle = particle -> P4();
+        } else if (particle->PT > mu_pt_cut_sub) {
+          num_mu_particle += 1;
+          m2_particle = particle -> P4();
         }
       }
     }
-    if (electronEvent) {
-      // fill true electron histograms
-      zparticlevec = e1_particle + e2_particle;
-      hPtLE -> Fill(e1_parton.Pt(), weight);
-      hEtaLE -> Fill(e1_parton.Eta(), weight);
-      hPhiLE -> Fill(e1_parton.Phi(), weight);
-      hPtLEP -> Fill(e1_particle.Pt(), weight);
-      hEtaLEP -> Fill(e1_particle.Eta(), weight);
-      hPhiLEP -> Fill(e1_particle.Phi(), weight);
-      hPtLEComp -> Fill(e1_parton.Pt(), elecvec1.Pt(), weight);
-      hEtaLEComp -> Fill(e1_parton.Eta(), elecvec1.Eta(), weight);
-      hPhiLEComp -> Fill(e1_parton.Phi(), elecvec1.Phi(), weight);
-      hPtSLE -> Fill(e2_parton.Pt(), weight);
-      hEtaSLE -> Fill(e2_parton.Eta(), weight);
-      hPhiSLE -> Fill(e2_parton.Phi(), weight);
-      hPtSLEP -> Fill(e2_particle.Pt(), weight);
-      hEtaSLEP -> Fill(e2_particle.Eta(), weight);
-      hPhiSLEP -> Fill(e2_particle.Phi(), weight);
-      hPtSLEComp -> Fill(e2_parton.Pt(), elecvec2.Pt(), weight);
-      hEtaSLEComp -> Fill(e2_parton.Eta(), elecvec2.Eta(), weight);
-      hPhiSLEComp -> Fill(e2_parton.Phi(), elecvec2.Phi(), weight);
-    } else {
-      zparticlevec = m1_particle + m2_particle;
-      hPtLM -> Fill(m1_parton.Pt(), weight);
-      hEtaLM -> Fill(m1_parton.Eta(), weight);
-      hPhiLM -> Fill(m1_parton.Phi(), weight);
-      hPtLMP -> Fill(m1_particle.Pt(), weight);
-      hEtaLMP -> Fill(m1_particle.Eta(), weight);
-      hPhiLMP -> Fill(m1_particle.Phi(), weight);
-      hPtLMComp -> Fill(m1_parton.Pt(), muvec1.Pt(), weight);
-      hEtaLMComp -> Fill(m1_parton.Eta(), muvec1.Eta(), weight);
-      hPhiLMComp -> Fill(m1_parton.Phi(), muvec1.Phi(), weight);
-      hPtSLM -> Fill(m2_parton.Pt(), weight);
-      hEtaSLM -> Fill(m2_parton.Eta(), weight);
-      hPhiSLM -> Fill(m2_parton.Phi(), weight);
-      hPtSLMP -> Fill(m2_particle.Pt(), weight);
-      hEtaSLMP -> Fill(m2_particle.Eta(), weight);
-      hPhiSLMP -> Fill(m2_particle.Phi(), weight);
-      hPtSLMComp -> Fill(m2_parton.Pt(), muvec2.Pt(), weight);
-      hEtaSLMComp -> Fill(m2_parton.Eta(), muvec2.Eta(), weight);
-      hPhiSLMComp -> Fill(m2_parton.Phi(), muvec2.Phi(), weight);
-    }
-    // fill electron histograms
-
-    // fill b parton histograms
-    hPtLB -> Fill(b1_parton.Pt(), weight);
-    hPtSLB -> Fill(b2_parton.Pt(), weight);
-    hEtaLB -> Fill(b1_parton.Eta(), weight);
-    hEtaSLB -> Fill(b2_parton.Eta(), weight);
-    hPhiLB -> Fill(b1_parton.Phi(), weight);
-    hPhiSLB -> Fill(b2_parton.Phi(), weight);
-    hPtLBComp -> Fill(b1_parton.Pt(), b1_reco.Pt(), weight);
-    hPtSLBComp -> Fill(b2_parton.Pt(), b2_reco.Pt(), weight);
-    hEtaLBComp -> Fill(b1_parton.Eta(), b1_reco.Eta(), weight);
-    hEtaSLBComp -> Fill(b2_parton.Eta(), b2_reco.Eta(), weight);
-    hPhiLBComp -> Fill(b1_parton.Phi(), b1_reco.Phi(), weight);
-    hPhiSLBComp -> Fill(b2_parton.Phi(), b2_reco.Phi(), weight);
-    // fill parton level composite histograms
-    hMZH -> Fill((zpartonvec+hpartonvec).M(), weight);
-    hMZHComp -> Fill((zpartonvec+hpartonvec).M(), sysvec.M(), weight);
-    hPtZH -> Fill((zpartonvec+hpartonvec).Pt(), weight);
-    hEtaZH -> Fill((zpartonvec+hpartonvec).Eta(), weight);
-    hPhiZH -> Fill((zpartonvec+hpartonvec).Phi(), weight);
-    hPtZHComp -> Fill((zpartonvec+hpartonvec).Pt(), sysvec.Pt(), weight);
-    hEtaZHComp -> Fill((zpartonvec+hpartonvec).Eta(), sysvec.Eta(), weight);
-    hPhiZHComp -> Fill((zpartonvec+hpartonvec).Phi(), sysvec.Phi(), weight);
-    // gather particle level jets
-    bjets = 0;
-    for(int i=0; i<(int)branchGenJet->GetEntries(); i++){
-      Jet *genjet=(Jet*) branchGenJet->At(i);
-      if (genjet -> Flavor == 5) bjets += 1; // add additional cuts?
-      else continue;
-      if (bjets == 1) {
-        b1_particle = genjet->P4();
-      } else if (bjets == 2){
-        b2_particle = genjet->P4();
-        break;
+    if (fill_parton) {
+      // fill electron parton histograms
+      if (elec_ev_parton) {
+        zparticlevec = e1_particle + e2_particle;
+        hPtLE -> Fill(e1_parton.Pt(), weight);
+        hEtaLE -> Fill(e1_parton.Eta(), weight);
+        hPhiLE -> Fill(e1_parton.Phi(), weight);
+        hPtSLE -> Fill(e2_parton.Pt(), weight);
+        hEtaSLE -> Fill(e2_parton.Eta(), weight);
+        hPhiSLE -> Fill(e2_parton.Phi(), weight);
+        if (fill_reco && num_elec_particle == 2) {
+          // fill electron comparison histograms
+          hPtLEComp -> Fill(e1_parton.Pt(), elecvec1.Pt(), weight);
+          hEtaLEComp -> Fill(e1_parton.Eta(), elecvec1.Eta(), weight);
+          hPhiLEComp -> Fill(e1_parton.Phi(), elecvec1.Phi(), weight);
+          hPtSLEComp -> Fill(e2_parton.Pt(), elecvec2.Pt(), weight);
+          hEtaSLEComp -> Fill(e2_parton.Eta(), elecvec2.Eta(), weight);
+          hPhiSLEComp -> Fill(e2_parton.Phi(), elecvec2.Phi(), weight);
+        }
+      } else {
+        // fill muon parton histograms
+        zparticlevec = m1_particle + m2_particle;
+        hPtLM -> Fill(m1_parton.Pt(), weight);
+        hEtaLM -> Fill(m1_parton.Eta(), weight);
+        hPhiLM -> Fill(m1_parton.Phi(), weight);
+        hPtSLM -> Fill(m2_parton.Pt(), weight);
+        hEtaSLM -> Fill(m2_parton.Eta(), weight);
+        hPhiSLM -> Fill(m2_parton.Phi(), weight);
+        if (fill_reco && num_mu_particle == 2) {
+          // fill muon comparison histograms
+          hPtSLMComp -> Fill(m2_parton.Pt(), muvec2.Pt(), weight);
+          hEtaSLMComp -> Fill(m2_parton.Eta(), muvec2.Eta(), weight);
+          hPhiSLMComp -> Fill(m2_parton.Phi(), muvec2.Phi(), weight);
+          hPtLMComp -> Fill(m1_parton.Pt(), muvec1.Pt(), weight);
+          hEtaLMComp -> Fill(m1_parton.Eta(), muvec1.Eta(), weight);
+          hPhiLMComp -> Fill(m1_parton.Phi(), muvec1.Phi(), weight);
+        }
+      }
+      // fill higgs and z parton histograms
+      hPtH -> Fill(hpartonvec.Pt(), weight);
+      hEtaH -> Fill(hpartonvec.Eta(), weight);
+      hPhiH -> Fill(hpartonvec.Phi(), weight);
+      hPtZ -> Fill(zpartonvec.Pt(), weight);
+      hEtaZ -> Fill(zpartonvec.Eta(), weight);
+      hPhiZ -> Fill(zpartonvec.Phi(), weight);
+      if (fill_reco) {
+        // fill higgs and z comparison histograms
+        hPtHComp -> Fill(hpartonvec.Pt(), higgsvec.Pt(), weight);
+        hEtaHComp -> Fill(hpartonvec.Eta(), higgsvec.Eta(), weight);
+        hPhiHComp -> Fill(hpartonvec.Phi(), higgsvec.Phi(), weight);
+        hPtZComp -> Fill(zpartonvec.Pt(), zvec.Pt(), weight);
+        hEtaZComp -> Fill(zpartonvec.Eta(), zvec.Eta(), weight);
+        hPhiZComp -> Fill(zpartonvec.Phi(), zvec.Phi(), weight);
+      }
+      // fill b parton histograms
+      hPtLB -> Fill(b1_parton.Pt(), weight);
+      hPtSLB -> Fill(b2_parton.Pt(), weight);
+      hEtaLB -> Fill(b1_parton.Eta(), weight);
+      hEtaSLB -> Fill(b2_parton.Eta(), weight);
+      hPhiLB -> Fill(b1_parton.Phi(), weight);
+      hPhiSLB -> Fill(b2_parton.Phi(), weight);
+      if (fill_reco) {
+        // fill b comparison histograms
+        hPtLBComp -> Fill(b1_parton.Pt(), b1_reco.Pt(), weight);
+        hPtSLBComp -> Fill(b2_parton.Pt(), b2_reco.Pt(), weight);
+        hEtaLBComp -> Fill(b1_parton.Eta(), b1_reco.Eta(), weight);
+        hEtaSLBComp -> Fill(b2_parton.Eta(), b2_reco.Eta(), weight);
+        hPhiLBComp -> Fill(b1_parton.Phi(), b1_reco.Phi(), weight);
+        hPhiSLBComp -> Fill(b2_parton.Phi(), b2_reco.Phi(), weight);
+      }
+      // fill parton level composite histograms
+      hMZH -> Fill((zpartonvec+hpartonvec).M(), weight);
+      hPtZH -> Fill((zpartonvec+hpartonvec).Pt(), weight);
+      hEtaZH -> Fill((zpartonvec+hpartonvec).Eta(), weight);
+      hPhiZH -> Fill((zpartonvec+hpartonvec).Phi(), weight);
+      if (fill_reco) {
+        hMZHComp -> Fill((zpartonvec+hpartonvec).M(), sysvec.M(), weight);
+        hPtZHComp -> Fill((zpartonvec+hpartonvec).Pt(), sysvec.Pt(), weight);
+        hEtaZHComp -> Fill((zpartonvec+hpartonvec).Eta(), sysvec.Eta(), weight);
+        hPhiZHComp -> Fill((zpartonvec+hpartonvec).Phi(), sysvec.Phi(), weight);
       }
     }
-    // fill particle level b jet histograms
-    hPtLBP -> Fill(b1_particle.Pt(), weight);
-    hPtSLBP -> Fill(b2_particle.Pt(), weight);
-    hEtaLBP -> Fill(b1_particle.Eta(), weight);
-    hEtaSLBP -> Fill(b2_particle.Eta(), weight);
-    hPhiLBP -> Fill(b1_particle.Phi(), weight);
-    hPhiSLBP -> Fill(b2_particle.Phi(), weight);
-    hPtLBCompP -> Fill(b1_particle.Pt(), b1_reco.Pt(), weight);
-    hPtSLBCompP -> Fill(b2_particle.Pt(), b2_reco.Pt(), weight);
-    // fill particle level composite histograms
-    hparticlevec = b1_particle + b2_particle;
-    hMbbP -> Fill(hparticlevec.M(), weight);
-    hMllP -> Fill(zparticlevec.M(), weight);
-    hMbbllP -> Fill((hparticlevec+zparticlevec).M(), weight);
-    hMbbComp -> Fill(hparticlevec.M(), higgsvec.M(), weight);
-    hMllComp -> Fill(zparticlevec.M(), zvec.M(), weight);
-    hPtBBP -> Fill(hparticlevec.Pt(), weight);
-    hPtLLP -> Fill(zparticlevec.Pt(), weight);
-    hPtBBLLP -> Fill((hparticlevec+zparticlevec).Pt(), weight);
-    hEtaBBP -> Fill(hparticlevec.Eta(), weight);
-    hEtaLLP -> Fill(zparticlevec.Eta(), weight);
-    hEtaBBLLP -> Fill((hparticlevec+zparticlevec).Eta(), weight);
-    hPhiBBP -> Fill(hparticlevec.Phi(), weight);
-    hPhiLLP -> Fill(zparticlevec.Phi(), weight);
-    hPhiBBLLP -> Fill((hparticlevec+zparticlevec).Phi(), weight);
+    // gather generated b jets if the particle level leptons look good
+    if (!((num_elec_particle == 2 && num_mu_particle == 0) || (num_elec_particle == 2 && num_mu_particle == 0))) {
+      fill_particle = false;
+    }
+    if (fill_particle) {
+      bjets = 0;
+      for(int i=0; i<(int)branchGenJet->GetEntries(); i++){
+        Jet *genjet=(Jet*) branchGenJet->At(i);
+        if (ghost_btag(branchGenParticle, genjet) && abs(genjet->Eta) < eta_cut) {
+          bjets += 1;
+          if (bjets == 1) {
+            b1_particle = genjet->P4();
+          } else if (bjets == 2) {
+            b2_particle = genjet->P4();
+          } else break;
+        }
+      }
+      if (bjets != 2) fill_particle = false;
+    }
+    if (fill_particle) {
+      if (num_elec_particle == 2) {
+      // fill electron particle histograms
+        zparticlevec = e1_particle + e2_particle;
+        hPtLEP -> Fill(e1_particle.Pt(), weight);
+        hEtaLEP -> Fill(e1_particle.Eta(), weight);
+        hPhiLEP -> Fill(e1_particle.Phi(), weight);
+        hPtSLEP -> Fill(e2_particle.Pt(), weight);
+        hEtaSLEP -> Fill(e2_particle.Eta(), weight);
+        hPhiSLEP -> Fill(e2_particle.Phi(), weight);
+        // fill electron particle-reco comparison histograms
+        if (fill_reco && num_elec_particle == 2) {
+          hPtLECompP -> Fill(e1_particle.Pt(), elecvec1.Pt(), weight);
+          hEtaLECompP -> Fill(e1_particle.Eta(), elecvec1.Eta(), weight);
+          hPtSLECompP -> Fill(e2_particle.Pt(), elecvec2.Pt(), weight);
+          hEtaSLECompP -> Fill(e2_particle.Eta(), elecvec2.Eta(), weight);
+        }
+      } else if (num_mu_particle == 2){
+        // fill muon particle histograms
+        zparticlevec = m1_particle + m2_particle;
+        hPtLMP -> Fill(m1_particle.Pt(), weight);
+        hEtaLMP -> Fill(m1_particle.Eta(), weight);
+        hPhiLMP -> Fill(m1_particle.Phi(), weight);
+        hPtSLMP -> Fill(m2_particle.Pt(), weight);
+        hEtaSLMP -> Fill(m2_particle.Eta(), weight);
+        hPhiSLMP -> Fill(m2_particle.Phi(), weight);
+        // fill muon particle-reco comparison histograms
+        if (fill_reco && num_mu_particle == 2) {
+          hPtSLMCompP -> Fill(m2_particle.Pt(), muvec2.Pt(), weight);
+          hEtaSLMCompP -> Fill(m2_particle.Eta(), muvec2.Eta(), weight);
+          hPtLMCompP -> Fill(m1_particle.Pt(), muvec1.Pt(), weight);
+          hEtaLMCompP -> Fill(m1_particle.Eta(), muvec1.Eta(), weight);
+        }
+      }
+      // fill particle level b jet histograms
+      hPtLBP -> Fill(b1_particle.Pt(), weight);
+      hPtSLBP -> Fill(b2_particle.Pt(), weight);
+      hEtaLBP -> Fill(b1_particle.Eta(), weight);
+      hEtaSLBP -> Fill(b2_particle.Eta(), weight);
+      hPhiLBP -> Fill(b1_particle.Phi(), weight);
+      hPhiSLBP -> Fill(b2_particle.Phi(), weight);
+      hparticlevec = b1_particle + b2_particle;
+      // fill b jet comparison histograms
+      if (fill_reco) {
+        hPtLBCompP -> Fill(b1_particle.Pt(), b1_reco.Pt(), weight);
+        hPtSLBCompP -> Fill(b2_particle.Pt(), b2_reco.Pt(), weight);
+        hEtaLBCompP -> Fill(b1_particle.Eta(), b1_reco.Eta(), weight);
+        hEtaSLBCompP -> Fill(b2_particle.Eta(), b2_reco.Eta(), weight);
+      }
+      // fill mass histograms
+      hMbbP -> Fill(hparticlevec.M(), weight);
+      hMllP -> Fill(zparticlevec.M(), weight);
+      hMbbllP -> Fill((hparticlevec+zparticlevec).M(), weight);
+      if (fill_reco) {
+        hMZHCompP -> Fill((zparticlevec+hparticlevec).M(), sysvec.M(), weight);
+        hMbbComp -> Fill(hparticlevec.M(), higgsvec.M(), weight);
+        hMllComp -> Fill(zparticlevec.M(), zvec.M(), weight);
+      }
+      // fill higgs and z histograms
+      hPtBBP -> Fill(hparticlevec.Pt(), weight);
+      hPtLLP -> Fill(zparticlevec.Pt(), weight);
+      hEtaBBP -> Fill(hparticlevec.Eta(), weight);
+      hEtaLLP -> Fill(zparticlevec.Eta(), weight);
+      hPhiBBP -> Fill(hparticlevec.Phi(), weight);
+      hPhiLLP -> Fill(zparticlevec.Phi(), weight);
+      // fill higgs and z particle-reco comparison histograms
+      if (fill_reco) {
+        hPtHCompP -> Fill(hparticlevec.Pt(), higgsvec.Pt(), weight);
+        hEtaHCompP -> Fill(hparticlevec.Eta(), higgsvec.Eta(), weight);
+        hPtZCompP -> Fill(zparticlevec.Pt(), zvec.Pt(), weight);
+        hEtaZCompP -> Fill(zparticlevec.Eta(), zvec.Eta(), weight);
+      }
+      // fill total event histograms
+      hPtBBLLP -> Fill((hparticlevec+zparticlevec).Pt(), weight);
+      hEtaBBLLP -> Fill((hparticlevec+zparticlevec).Eta(), weight);
+      hPhiBBLLP -> Fill((hparticlevec+zparticlevec).Phi(), weight);
+      if (fill_reco) {
+        hPtZHCompP -> Fill((zparticlevec+hparticlevec).Pt(), sysvec.Pt(), weight);
+        hEtaZHCompP -> Fill((zparticlevec+hparticlevec).Eta(), sysvec.Eta(), weight);
+      }
+    }
     nPassed+=weight;
     nPassedRaw++;
   }
@@ -558,6 +701,7 @@ void zhbb_analyze(const char *inputFile) {
   hMbbComp -> Write();
   hMllComp -> Write();
   hMZHComp -> Write();
+  hMZHCompP -> Write();
   // pt
   hPtH->Write();
   hPtZ->Write();
@@ -594,9 +738,16 @@ void zhbb_analyze(const char *inputFile) {
   hPtSLMComp->Write();
   hPtLBComp->Write();
   hPtSLBComp->Write();
+  hPtZHComp->Write();
+  hPtHCompP->Write();
+  hPtZCompP->Write();
+  hPtLECompP->Write();
+  hPtLMCompP->Write();
+  hPtSLECompP->Write();
+  hPtSLMCompP->Write();
   hPtLBCompP->Write();
   hPtSLBCompP->Write();
-  hPtZHComp->Write();
+  hPtZHCompP->Write();
   //eta
   hEtaH->Write();
   hEtaZ->Write();
@@ -634,6 +785,15 @@ void zhbb_analyze(const char *inputFile) {
   hEtaLBComp->Write();
   hEtaSLBComp->Write();
   hEtaZHComp->Write();
+  hEtaHCompP->Write();
+  hEtaZCompP->Write();
+  hEtaLECompP->Write();
+  hEtaLMCompP->Write();
+  hEtaSLECompP->Write();
+  hEtaSLMCompP->Write();
+  hEtaLBCompP->Write();
+  hEtaSLBCompP->Write();
+  hEtaZHCompP->Write();
   // phi
   hPhiH->Write();
   hPhiZ->Write();
@@ -685,6 +845,7 @@ void zhbb_analyze(const char *inputFile) {
   draw_hist2(hMbbComp, "mass_bb_Comp", "m_{bb}", "Particle Level mass (GeV)", "Reco Level mass (GeV)");
   draw_hist2(hMllComp, "mass_ll_Comp", "m_{ll}", "Particle Level mass (GeV)", "Reco Level mass (GeV)");
   draw_hist2(hMZHComp, "mass_ZH_Comp", "m_{T}^{ZH}", "Parton Level mass (GeV)", "Reco Level mass (GeV)");
+  draw_hist2(hMZHCompP, "mass_ZH_Comp_particle", "m_{T}^{ZH}", "Particle Level mass (GeV)", "Reco Level mass (GeV)");
   // pt
   draw_hist(hPtH, "pt_H", "p_{T}^{H}", "p_{T}");
   draw_hist(hPtZ, "pt_Z", "p_{T}^{Z}", "p_{T}");
@@ -722,9 +883,16 @@ void zhbb_analyze(const char *inputFile) {
   draw_hist2(hPtSLMComp, "pt_SLM_Comp", "Sublead p_{T}^{#mu}", "Parton Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
   draw_hist2(hPtLBComp, "pt_LB_Comp", "Lead p_{T}^{b}", "Parton Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
   draw_hist2(hPtSLBComp, "pt_SLB_Comp", "Sublead p_{T}^{b}", "Parton Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
-  draw_hist2(hPtLBCompP, "pt_LB_Comp_particle", "Lead Jet p_{T}^{b}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
-  draw_hist2(hPtSLBCompP, "pt_SLB_Comp_particle", "Sublead Jet p_{T}^{b}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
   draw_hist2(hPtZHComp, "pt_ZH_Comp", "Sublead p_{T}^{ZH}", "Parton Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
+  draw_hist2(hPtHCompP, "pt_H_Comp_particle", "p_{T}^{H}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
+  draw_hist2(hPtZCompP, "pt_Z_Comp_particle", "p_{T}^{Z}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
+  draw_hist2(hPtLECompP, "pt_LE_Comp_particle", "Lead p_{T}^{e}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
+  draw_hist2(hPtLMCompP, "pt_LM_Comp_particle", "Lead p_{T}^{#mu}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
+  draw_hist2(hPtSLECompP, "pt_SLE_Comp_particle", "Sublead p_{T}^{e}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
+  draw_hist2(hPtSLMCompP, "pt_SLM_Comp_particle", "Sublead p_{T}^{#mu}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
+  draw_hist2(hPtLBCompP, "pt_LB_Comp_particle", "Lead p_{T}^{b}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
+  draw_hist2(hPtSLBCompP, "pt_SLB_Comp_particle", "Sublead p_{T}^{b}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
+  draw_hist2(hPtZHCompP, "pt_ZH_Comp_particle", "Sublead p_{T}^{ZH}", "Particle Level P_{T} (GeV)", "Reco Level P_{T} (GeV)");
   // eta
   draw_hist(hEtaH, "eta_H", "#eta_{H}", "#eta");
   draw_hist(hEtaZ, "eta_Z", "#eta_{Z}", "#eta");
@@ -763,6 +931,15 @@ void zhbb_analyze(const char *inputFile) {
   draw_hist2(hEtaLBComp, "eta_LB_Comp", "Lead #eta_{b}","Parton Level #eta", "Reco Level #eta");
   draw_hist2(hEtaSLBComp, "eta_SLB_Comp", "Sublead #eta_{b}","Parton Level #eta", "Reco Level #eta");
   draw_hist2(hEtaZHComp, "eta_ZH_Comp", "Sublead #eta_{ZH}", "Parton Level #eta", "Reco Level #eta");
+  draw_hist2(hEtaHCompP, "eta_H_Comp_particle", "#eta_{H}", "Particle Level #eta", "Reco Level #eta");
+  draw_hist2(hEtaZCompP, "eta_Z_Comp_particle", "#eta_{Z}", "Particle Level #eta", "Reco Level #eta");
+  draw_hist2(hEtaLECompP, "eta_LE_Comp_particle", "Lead #eta_{e}","Particle Level #eta", "Reco Level #eta");
+  draw_hist2(hEtaLMCompP, "eta_LM_Comp_particle", "Lead #eta_{#mu}","Particle Level #eta", "Reco Level #eta");
+  draw_hist2(hEtaSLECompP, "eta_SLE_Comp_particle", "Sublead #eta_{e}","Particle Level #eta", "Reco Level #eta");
+  draw_hist2(hEtaSLMCompP, "eta_SLM_Comp_particle", "Sublead #eta_{#mu}","Particle Level #eta", "Reco Level #eta");
+  draw_hist2(hEtaLBCompP, "eta_LB_Comp_particle", "Lead #eta_{b}","Particle Level #eta", "Reco Level #eta");
+  draw_hist2(hEtaSLBCompP, "eta_SLB_Comp_particle", "Sublead #eta_{b}","Particle Level #eta", "Reco Level #eta");
+  draw_hist2(hEtaZHCompP, "eta_ZH_Comp_particle", "Sublead #eta_{ZH}", "Particle Level #eta", "Reco Level #eta");
   // phi parton level
   draw_hist(hPhiH, "phi_H", "#phi_{H}", "#phi (Rad)");
   draw_hist(hPhiZ, "phi_Z", "#phi_{Z}", "#phi (Rad)");
