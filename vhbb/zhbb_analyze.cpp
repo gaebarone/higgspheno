@@ -4,6 +4,29 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TClonesArray.h"
+#include "TTree.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <TROOT.h>
+#include <TLorentzVector.h>
+#include <TFile.h>
+#include <TTree.h>
+#include <TBranch.h>
+#include <TMath.h>
+#include <Rtypes.h>
+#include <TString.h>
+#include <TRandom.h>
+#include <TRandom3.h>
+#include "TParticle.h"
+#include <vector>
+#include "TClonesArray.h"
+
+
 //------------------------------------------------------------------------------
 // make a ton of plots for zhbb events (z -> l l) (h -> b b)
 void zhbb_analyze(const char *inputFile, const char *outputFile) {
@@ -21,12 +44,12 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
   Long64_t numberOfEntries = treeReader->GetEntries();
   // Get pointers to branches used in this analysis
-  TClonesArray *branchJet = treeReader->UseBranch("Jet");
-  TClonesArray *branchElectron = treeReader->UseBranch("Electron");
-  TClonesArray *branchMuon = treeReader->UseBranch("Muon");
-  TClonesArray *branchEvent = treeReader->UseBranch("Event");
-  TClonesArray *branchGenParticle = treeReader->UseBranch("Particle");
-  TClonesArray *branchGenJet = treeReader->UseBranch("GenJet");
+  TClonesArray *branchJet = (TClonesArray*)treeReader->UseBranch("Jet");
+  TClonesArray *branchElectron = (TClonesArray*)treeReader->UseBranch("Electron");
+  TClonesArray *branchMuon = (TClonesArray*)treeReader->UseBranch("Muon");
+  TClonesArray *branchEvent = (TClonesArray*)treeReader->UseBranch("Event");
+  TClonesArray *branchGenParticle = (TClonesArray*)treeReader->UseBranch("Particle");
+  TClonesArray *branchGenJet = (TClonesArray*) treeReader->UseBranch("GenJet");
   // Book histograms
   // mass
   TH1 *hMZH = new TH1F("mass_ZH", "m_{ZH}", 50, 120.0, 670.0);
