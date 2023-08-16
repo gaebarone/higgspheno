@@ -23,24 +23,24 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   TH1F *drellyan_hist = (TH1F*)drellyan_file->Get(name);
   //std::cout<<"Name "<<name<<std::endl;
   sig_hist->SetFillColor(kCyan);
-  ttbar_hist->SetFillColor(kRed);
-  ttHbb_hist->SetFillColor(kOrange);
-  diboson_hist->SetFillColor(kPink);
-  drellyan_hist->SetFillColor(kYellow);
+  ttbar_hist->SetFillColor(kOrange);
+  ttHbb_hist->SetFillColor(kYellow);
+  diboson_hist->SetFillColor(kRed);
+  drellyan_hist->SetFillColor(kMagenta);
   // form the histogram stack
   THStack *stack = new THStack(name, title);
-  stack->Add(ttbar_hist);
-  stack->Add(ttHbb_hist);
   stack->Add(diboson_hist);
   stack->Add(drellyan_hist);
+  stack->Add(ttbar_hist);
+  stack->Add(ttHbb_hist);
   stack->Add(sig_hist);
   // make a legend
-  TLegend *legend = new TLegend(0.7, 0.7, 0.9, 0.9);
+  TLegend *legend = new TLegend(0.8, 0.8, 0.9, 0.9);
   legend->AddEntry(sig_hist, "Signal", "f");
-  legend->AddEntry(ttbar_hist, "ttbar", "f");
   legend->AddEntry(ttHbb_hist, "ttHbb", "f");
-  legend->AddEntry(diboson_hist, "diboson", "f");
+  legend->AddEntry(ttbar_hist, "ttbar", "f");
   legend->AddEntry(drellyan_hist, "drell-yan", "f");
+  legend->AddEntry(diboson_hist, "diboson", "f");
   // make a canvas and draw on it
   TCanvas *c = new TCanvas(name, title, 1500, 1200);
   c->cd();
@@ -354,7 +354,7 @@ void draw_zhbb(const char *sig_filename, const char *bkg_filename, const char *t
 
   std::cout<<"ttbar contribution: "<<ttbar_mbb->Integral()<<std::endl;
   std::cout<<"ttHbb contribution: "<<ttHbb_mbb->Integral()<<std::endl;
-  std::cout<<"diboson contribution: "<<diboson_mbb_mbb->Integral()<<std::endl;
+  std::cout<<"diboson contribution: "<<diboson_mbb->Integral()<<std::endl;
   std::cout<<"drell-yan contribution: "<<drellyan_mbb->Integral()<<std::endl;
   
   double sig_sig = sig_mbb->Integral()/sqrt(bkg_mbb->Integral());

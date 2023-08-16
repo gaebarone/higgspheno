@@ -27,6 +27,18 @@
 #include "TClonesArray.h"
 #include "get_cross_section.h"
 
+Long64_t get_num_entries(const char *process_name) {
+    std::string inputFileName = std::string(process_name) + "_inputs.txt";
+    std::ifstream inputFile(inputFileName.c_str());
+    std::string line;
+    TChain chain("Delphes");
+    while (std::getline(inputFile, line)) {
+        chain.Add(line.c_str());
+    }
+    ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
+    return treeReader->GetEntries();
+}
+
 //------------------------------------------------------------------------------
 // make a ton of plots for zhbb events (z -> l l) (h -> b b)
 void zhbb_analyze(const char *inputFile, const char *outputFile, const char *process_name) {
@@ -38,9 +50,9 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   const double eta_cut = 2.5;
   const double jet_pt_cut = 20;
   const double higgs_mass_cut_low = 70;
-  const double higgs_mass_cut_hi = 170;
-  const double z_mass_cut_low = 60;
-  const double z_mass_cut_hi = 120;
+  const double higgs_mass_cut_hi = 140;
+  const double z_mass_cut_low = 80;
+  const double z_mass_cut_hi = 100;
   // get process cross section
   const double cross_section = get_cross_section(process_name);
   // Create chain of and append the file
@@ -49,6 +61,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   // Create object of class ExRootTreeReader
   ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
   Long64_t numberOfEntries = treeReader->GetEntries();
+  Long64_t totalEntries = get_num_entries(process_name);
   // Get pointers to branches used in this analysis
   TClonesArray *branchJet = (TClonesArray*)treeReader->UseBranch("Jet");
   TClonesArray *branchElectron = (TClonesArray*)treeReader->UseBranch("Electron");
@@ -317,7 +330,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
     // Load selected branches with data from specified event
     treeReader->ReadEntry(entry);
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
-    Float_t weight = event->Weight/numberOfEntries*Lumi*cross_section;
+    Float_t weight = event->Weight/totalEntries*Lumi*cross_section;
     bool fill_reco = true;
     bool fill_parton = true;
     bool fill_particle = true;
