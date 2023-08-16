@@ -25,11 +25,11 @@
 #include "TParticle.h"
 #include <vector>
 #include "TClonesArray.h"
-
+#include "get_cross_section.h"
 
 //------------------------------------------------------------------------------
 // make a ton of plots for zhbb events (z -> l l) (h -> b b)
-void zhbb_analyze(const char *inputFile, const char *outputFile) {
+void zhbb_analyze(const char *inputFile, const char *outputFile, const char *process_name) {
   // SET CUTS
   const double e_pt_cut_lead = 27;
   const double mu_pt_cut_lead = 20;
@@ -37,6 +37,12 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   const double mu_pt_cut_sub = 12;
   const double eta_cut = 2.5;
   const double jet_pt_cut = 20;
+  const double higgs_mass_cut_low = 70;
+  const double higgs_mass_cut_hi = 170;
+  const double z_mass_cut_low = 60;
+  const double z_mass_cut_hi = 120;
+  // get process cross section
+  const double cross_section = get_cross_section(process_name);
   // Create chain of and append the file
   TChain chain("Delphes");
   chain.Add(inputFile);
@@ -53,14 +59,14 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   // Book histograms
   // mass
   TH1 *hMZH = new TH1F("mass_ZH", "m_{ZH}", 50, 120.0, 670.0);
-  TH1 *hMbbR = new TH1F("mass_bb_reco", "Reco m_{bb}", 50, 0.0, 250.0);
-  TH1 *hMllR = new TH1F("mass_ll_reco", "Reco m_{ll}", 50, 40.0, 140.0);
+  TH1 *hMbbR = new TH1F("mass_bb_reco", "Reco m_{bb}", 50, higgs_mass_cut_low, higgs_mass_cut_hi);
+  TH1 *hMllR = new TH1F("mass_ll_reco", "Reco m_{ll}", 50, z_mass_cut_low, z_mass_cut_hi);
   TH1 *hMbbllR = new TH1F("mass_bbll_reco", "Reco m_{bbll}", 50, 120.0, 670.0);
-  TH1 *hMbbP = new TH1F("mass_bb_particle", "m_{bb}", 50, 0.0, 250.0);
-  TH1 *hMllP = new TH1F("mass_ll_particle", "m_{ll}", 50, 40.0, 140.0);
+  TH1 *hMbbP = new TH1F("mass_bb_particle", "m_{bb}", 50, higgs_mass_cut_low, higgs_mass_cut_hi);
+  TH1 *hMllP = new TH1F("mass_ll_particle", "m_{ll}", 50, z_mass_cut_low, z_mass_cut_hi);
   TH1 *hMbbllP = new TH1F("mass_bbll_particle", "m_{bbll}", 50, 120.0, 670.0);
-  TH2 *hMbbComp = new TH2F("mass_bb_Comp", "m_{bb}", 50, 0.0, 250.0, 50, 0.0, 250.0);
-  TH2 *hMllComp = new TH2F("mass_ll_Comp", "m_{ll}", 50, 40.0, 140.0, 50, 40.0, 140.0);
+  TH2 *hMbbComp = new TH2F("mass_bb_Comp", "m_{bb}", 50, higgs_mass_cut_low, higgs_mass_cut_hi, 50, higgs_mass_cut_low, higgs_mass_cut_hi);
+  TH2 *hMllComp = new TH2F("mass_ll_Comp", "m_{ll}", 50, z_mass_cut_low, z_mass_cut_hi, 50, z_mass_cut_low, z_mass_cut_hi);
   TH2 *hMZHComp = new TH2F("mass_ZH_Comp", "m_{ZH}", 50, 120.0, 670.0, 50, 120.0, 670.0);
   TH2 *hMZHCompP = new TH2F("mass_ZH_Comp_particle", "m_{ZH}", 50, 120.0, 670.0, 50, 120.0, 670.0);
   // pt parton level
@@ -123,6 +129,8 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   TH1 *hEtaLB = new TH1F("eta_LB", "Lead #eta_{b}", 50, -3.0, 3.0);
   TH1 *hEtaSLB = new TH1F("eta_SLB", "Sublead #eta_{b}", 50, -3.0, 3.0);
   TH1 *hEtaZH = new TH1F("eta_ZH", "#eta_{ZH}", 50, -3.0, 3.0);
+  TH1 *hDEtaEE = new TH1F("deta_EE", "#Delta#eta_{EE}", 50, -5.0, 5.0);
+  TH1 *hDEtaMM = new TH1F("deta_MM", "#Delta#eta_{MM}", 50, -5.0, 5.0);
   // eta reco level
   TH1 *hEtaBBR = new TH1F("eta_bb_reco", "Reco #eta_{bb}", 50, -3.0, 3.0);
   TH1 *hEtaLLR = new TH1F("eta_ll_reco", "Reco #eta_{ll}", 50, -3.0, 3.0);
@@ -133,6 +141,8 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   TH1 *hEtaLBR = new TH1F("eta_LB_reco", "Lead Reco b Jet #eta", 50, -3.0, 3.0);
   TH1 *hEtaSLBR = new TH1F("eta_SLB_reco", "Sublead Reco b Jet #eta", 50, -3.0, 3.0);
   TH1 *hEtaBBLLR = new TH1F("eta_bbll_reco", "Reco #eta_{bbll}", 50, -3.0, 3.0);
+  TH1 *hDEtaEER = new TH1F("deta_EE_reco", "Reco #Delta#eta_{EE}", 50, -5.0, 5.0);
+  TH1 *hDEtaMMR = new TH1F("deta_MM_reco", "Reco #Delta#eta_{MM}", 50, -5.0, 5.0);
   // eta particle level
   TH1 *hEtaBBP = new TH1F("eta_bb_particle", "#eta_{bb}", 50, -3.0, 3.0);
   TH1 *hEtaLLP = new TH1F("eta_ll_particle", "#eta_{ll}", 50, -3.0, 3.0);
@@ -143,6 +153,8 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   TH1 *hEtaLBP = new TH1F("eta_LB_particle", "Lead b Jet #eta", 50, -3.0, 3.0);
   TH1 *hEtaSLBP = new TH1F("eta_SLB_particle", "Sublead b Jet #eta", 50, -3.0, 3.0);
   TH1 *hEtaBBLLP = new TH1F("eta_bbll_particle", "#eta_{bbll}", 50, -3.0, 3.0);
+  TH1 *hDEtaEEP = new TH1F("deta_EE_particle", "#Delta#eta_{EE}", 50, -5.0, 5.0);
+  TH1 *hDEtaMMP = new TH1F("deta_MM_particle", "#Delta#eta_{MM}", 50, -5.0, 5.0);
   // eta parton-reco comparison
   TH2 *hEtaHComp = new TH2F("eta_H_Comp", "#eta_{H}", 50, -3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaZComp = new TH2F("eta_Z_Comp", "#eta_{Z}", 50, -3.0, 3.0, 50, -3.0, 3.0);
@@ -153,6 +165,8 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   TH2 *hEtaLBComp = new TH2F("eta_LB_Comp", "Lead #eta_{b}", 50,-3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaSLBComp = new TH2F("eta_SLB_Comp", "Sublead #eta_{b}", 50,-3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaZHComp = new TH2F("eta_ZH_Comp", "Sublead #eta_{ZH}", 50, -3.0, 3.0, 50, -3.0, 3.0);
+  TH2 *hDEtaEEComp = new TH2F("deta_EE_Comp", "#Delta#eta_{e}", 50, -5.0, 5.0, 50, -5.0, 5.0);
+  TH2 *hDEtaMMComp = new TH2F("deta_MM_Comp", "#Delta#eta_{#mu}", 50, -5.0, 5.0, 50, -5.0, 5.0);
   // eta particle-reco comparison
   TH2 *hEtaHCompP = new TH2F("eta_H_Comp_particle", "#eta_{H}", 50, -3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaZCompP = new TH2F("eta_Z_Comp_particle", "#eta_{Z}", 50, -3.0, 3.0, 50, -3.0, 3.0);
@@ -163,8 +177,9 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   TH2 *hEtaLBCompP = new TH2F("eta_LB_Comp_particle", "Lead #eta_{b}", 50,-3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaSLBCompP = new TH2F("eta_SLB_Comp_particle", "Sublead #eta_{b}", 50,-3.0, 3.0, 50, -3.0, 3.0);
   TH2 *hEtaZHCompP = new TH2F("eta_ZH_Comp_particle", "Sublead #eta_{ZH}", 50, -3.0, 3.0, 50, -3.0, 3.0);
-
-  // cos theta pa1ton 1evel
+  TH2 *hDEtaEECompP = new TH2F("deta_EE_Comp_particle", "#Delta#eta_{e}", 50, -5.0, 5.0, 50, -5.0, 5.0);
+  TH2 *hDEtaMMCompP = new TH2F("deta_MM_Comp_particle", "#Delta#eta_{#mu}", 50, -5.0, 5.0, 50, -5.0, 5.0);
+  // cos theta parton 1evel
   TH1 *hCosThetaLE = new TH1F("costheta_LE",  "Lead cos#theta_{e}", 50, -1.0, 1.0);
   TH1 *hCosThetaLM = new TH1F("costheta_LM",  "Lead cos#theta_{#mu}", 50, -1.0, 1.0);
   TH1 *hCosThetaSLE = new TH1F("costheta_SLE",  "Sublead cos#theta_{e}", 50, -1.0, 1.0);
@@ -253,7 +268,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   // info for totals
   double  nPassed=0;
   int  nPassedRaw=0;
-  double Lumi=3e3;
+  double Lumi=200e3;
   // variables to keep track of event content
   int bjets = 0;
   int num_elec_reco;
@@ -302,7 +317,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
     // Load selected branches with data from specified event
     treeReader->ReadEntry(entry);
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
-    Float_t weight = event->Weight/numberOfEntries*Lumi;
+    Float_t weight = event->Weight/numberOfEntries*Lumi*cross_section;
     bool fill_reco = true;
     bool fill_parton = true;
     bool fill_particle = true;
@@ -322,6 +337,9 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
     }
     if (bjets != 2) fill_reco = false;
     higgsvec = b1_reco + b2_reco;
+    if (higgsvec.M() > higgs_mass_cut_hi || higgsvec.M() < higgs_mass_cut_low) {
+        fill_reco = false;
+    }
     // Check for two electrons meeting requirements 
     num_elec_reco = 0;
     num_mu_reco = 0;
@@ -371,35 +389,47 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
       elecvec1 = elec1->P4();
       elecvec2 = elec2->P4();
       zvec = elecvec1 + elecvec2;
-      hPtLER -> Fill(elec1->PT, weight);
-      hEtaLER -> Fill(elec1->Eta, weight);
-      hPhiLER -> Fill(elec1->Phi, weight);
-      hPtSLER -> Fill(elec2->PT, weight);
-      hEtaSLER -> Fill(elec2->Eta, weight);
-      hPhiSLER -> Fill(elec2->Phi, weight);
-      hDPhiEER -> Fill(deltaPhi(elec1->Phi, elec2->Phi), weight); 
-      elecvec1.Boost(-zvec.BoostVector());
-      elecvec2.Boost(-zvec.BoostVector());
-      hCosThetaLER -> Fill(elecvec1.CosTheta(), weight);
-      hCosThetaSLER -> Fill(elecvec2.CosTheta(), weight);
-      elecvec1.Boost(zvec.BoostVector());
-      elecvec2.Boost(zvec.BoostVector());
+      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low) {
+        fill_reco = false;
+      } else {
+        hPtLER -> Fill(elec1->PT, weight);
+        hEtaLER -> Fill(elec1->Eta, weight);
+        hPhiLER -> Fill(elec1->Phi, weight);
+        hPtSLER -> Fill(elec2->PT, weight);
+        hEtaSLER -> Fill(elec2->Eta, weight);
+        hPhiSLER -> Fill(elec2->Phi, weight);
+        hDPhiEER -> Fill(deltaPhi(elec1->Phi, elec2->Phi), weight); 
+        hDEtaEER -> Fill(elec1->Eta - elec2->Eta, weight); 
+        elecvec1.Boost(-zvec.BoostVector());
+        elecvec2.Boost(-zvec.BoostVector());
+        hCosThetaLER -> Fill(elecvec1.CosTheta(), weight);
+        hCosThetaSLER -> Fill(elecvec2.CosTheta(), weight);
+        elecvec1.Boost(zvec.BoostVector());
+        elecvec2.Boost(zvec.BoostVector());
+      }
     // fill muon data
     } else if (fill_reco && num_elec_reco == 0 && num_mu_reco == 2) {
       muvec1 = muon1->P4();
       muvec2 = muon2->P4();
       zvec = muvec1 + muvec2;
-      hPtLMR -> Fill(muon1->PT, weight);
-      hEtaLMR -> Fill(muon1->Eta, weight);
-      hPhiLMR -> Fill(muon1->Phi, weight);
-      hPtSLMR -> Fill(muon2->PT, weight);
-      hEtaSLMR -> Fill(muon2->Eta, weight);
-      hPhiSLMR -> Fill(muon2->Phi, weight);
-      hDPhiMMR -> Fill(deltaPhi(muon1->Phi, muon2->Phi), weight);
-      muvec1.Boost(-zvec.BoostVector());
-      muvec2.Boost(-zvec.BoostVector());
-      hCosThetaLMR -> Fill(muvec1.CosTheta(), weight);
-      hCosThetaSLMR -> Fill(muvec2.CosTheta(), weight);
+      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low) {
+        fill_reco = false;
+      } else {
+        hPtLMR -> Fill(muon1->PT, weight);
+        hEtaLMR -> Fill(muon1->Eta, weight);
+        hPhiLMR -> Fill(muon1->Phi, weight);
+        hPtSLMR -> Fill(muon2->PT, weight);
+        hEtaSLMR -> Fill(muon2->Eta, weight);
+        hPhiSLMR -> Fill(muon2->Phi, weight);
+        hDPhiMMR -> Fill(deltaPhi(muon1->Phi, muon2->Phi), weight);
+        hDEtaMMR -> Fill(muon1->Eta - muon2->Eta, weight);
+        muvec1.Boost(-zvec.BoostVector());
+        muvec2.Boost(-zvec.BoostVector());
+        hCosThetaLMR -> Fill(muvec1.CosTheta(), weight);
+        hCosThetaSLMR -> Fill(muvec2.CosTheta(), weight);
+        muvec1.Boost(zvec.BoostVector());
+        muvec2.Boost(zvec.BoostVector());
+      } 
     } else {
       fill_reco = false;
     }
@@ -446,6 +476,8 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
     e2_particle.SetPtEtaPhiM(0,0,0,0);
     m1_particle.SetPtEtaPhiM(0,0,0,0);
     m2_particle.SetPtEtaPhiM(0,0,0,0);
+    hpartonvec.SetPtEtaPhiM(0,0,0,0);
+    zpartonvec.SetPtEtaPhiM(0,0,0,0);
     num_elec_particle = 0;
     num_mu_particle = 0;
     for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
@@ -480,7 +512,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
       } else if ((particle->PID == 23) && (d1_pid != 23) && (d2_pid != 23)) {
         zpartonvec = particle->P4();
         // check for electron daughters
-        if (abs(d1_pid) == 11) {
+        if (abs(d1_pid) == 11 && abs(d2_pid) == 11) {
           if (daughter1 -> PT > daughter2 -> PT) {
             e1_parton = daughter1 -> P4();
             e2_parton = daughter2 -> P4();
@@ -495,7 +527,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
             fill_parton = false;
           }
         // check for muon daughters
-        } else if (abs(d1_pid) == 13) {
+        } else if (abs(d1_pid) == 13 && abs(d2_pid) == 13) {
           if (daughter1 -> PT > daughter2 -> PT) {
             m1_parton = daughter1 -> P4();
             m2_parton = daughter2 -> P4();
@@ -509,7 +541,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
           } else if (m1_parton.Pt() < mu_pt_cut_lead || m1_parton.Pt() < mu_pt_cut_sub) {
             fill_parton = false;
           }
-        }
+        } else fill_parton = false;
       // now look for status 1 (particle level) electrons
       } else if (abs(particle -> PID) == 11 && particle -> Status == 1 && abs(particle -> Eta) < eta_cut) {
         if (num_elec_particle > 1 && particle->PT > e_pt_cut_sub) {
@@ -540,6 +572,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
         }
       }
     }
+    if (hpartonvec.Pt() == 0 || zpartonvec.Pt() == 0) fill_parton = false;
     if (fill_parton) {
       // fill electron parton histograms
       if (elec_ev_parton) {
@@ -550,6 +583,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
         hEtaSLE -> Fill(e2_parton.Eta(), weight);
         hPhiSLE -> Fill(e2_parton.Phi(), weight);
         hDPhiEE -> Fill(deltaPhi(e1_parton.Phi(), e2_parton.Phi()), weight);
+        hDEtaEE -> Fill(e1_parton.Eta()-e2_parton.Eta(), weight);
         // boost to z frame for cos theta
         e1_parton.Boost(-zpartonvec.BoostVector());
         e2_parton.Boost(-zpartonvec.BoostVector());
@@ -576,6 +610,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
           hEtaSLEComp -> Fill(e2_parton.Eta(), elecvec2.Eta(), weight);
           hPhiSLEComp -> Fill(e2_parton.Phi(), elecvec2.Phi(), weight);
           hDPhiEEComp -> Fill(deltaPhi(e1_parton.Phi(), e2_parton.Phi()), deltaPhi(elecvec1.Phi(), elecvec2.Phi()), weight);
+          hDEtaEEComp -> Fill(e1_parton.Eta()-e2_parton.Eta(), elecvec1.Eta()-elecvec2.Eta(), weight);
         }
       } else {
         // fill muon parton histograms
@@ -586,6 +621,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
         hEtaSLM -> Fill(m2_parton.Eta(), weight);
         hPhiSLM -> Fill(m2_parton.Phi(), weight);
         hDPhiMM -> Fill(deltaPhi(m1_parton.Phi(), m2_parton.Phi()), weight);
+        hDEtaMM -> Fill(m1_parton.Eta()-m2_parton.Eta(), weight);
         // boost to z frame for cos theta
         m1_parton.Boost(-zpartonvec.BoostVector());
         m2_parton.Boost(-zpartonvec.BoostVector());
@@ -612,6 +648,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
           hEtaLMComp -> Fill(m1_parton.Eta(), muvec1.Eta(), weight);
           hPhiLMComp -> Fill(m1_parton.Phi(), muvec1.Phi(), weight);
           hDPhiMMComp -> Fill(deltaPhi(m1_parton.Phi(), m2_parton.Phi()), deltaPhi(muvec1.Phi(), muvec2.Phi()), weight);
+          hDEtaMMComp -> Fill(m1_parton.Eta()-m2_parton.Eta(), muvec1.Eta()-muvec2.Eta(), weight);
         }
       }
       // fill higgs and z parton histograms
@@ -698,75 +735,91 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
       if (num_elec_particle == 2) {
       // fill electron particle histograms
         zparticlevec = e1_particle + e2_particle;
-        hPtLEP -> Fill(e1_particle.Pt(), weight);
-        hEtaLEP -> Fill(e1_particle.Eta(), weight);
-        hPhiLEP -> Fill(e1_particle.Phi(), weight);
-        hPtSLEP -> Fill(e2_particle.Pt(), weight);
-        hEtaSLEP -> Fill(e2_particle.Eta(), weight);
-        hPhiSLEP -> Fill(e2_particle.Phi(), weight);
-        hDPhiEEP -> Fill(deltaPhi(e1_particle.Phi(), e2_particle.Phi()), weight);
-        // boost to z frame and for cos theta
-        e1_particle.Boost(-zparticlevec.BoostVector());
-        e2_particle.Boost(-zparticlevec.BoostVector());
-        hCosThetaLEP -> Fill(e1_particle.CosTheta(), weight);
-        hCosThetaSLEP -> Fill(e2_particle.CosTheta(), weight);
+        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low) {
+          fill_particle = false;
+        } else {
+          hPtLEP -> Fill(e1_particle.Pt(), weight);
+          hEtaLEP -> Fill(e1_particle.Eta(), weight);
+          hPhiLEP -> Fill(e1_particle.Phi(), weight);
+          hPtSLEP -> Fill(e2_particle.Pt(), weight);
+          hEtaSLEP -> Fill(e2_particle.Eta(), weight);
+          hPhiSLEP -> Fill(e2_particle.Phi(), weight);
+          hDPhiEEP -> Fill(deltaPhi(e1_particle.Phi(), e2_particle.Phi()), weight);
+          hDEtaEEP -> Fill(e1_particle.Eta()-e2_particle.Eta(), weight);
+          // boost to z frame and for cos theta
+          e1_particle.Boost(-zparticlevec.BoostVector());
+          e2_particle.Boost(-zparticlevec.BoostVector());
+          hCosThetaLEP -> Fill(e1_particle.CosTheta(), weight);
+          hCosThetaSLEP -> Fill(e2_particle.CosTheta(), weight);
         // fill cos theta comparison histograms (boosting back to z frame for reco as well)
-        if (fill_reco && num_elec_reco == 2) {
-          elecvec1.Boost(-zvec.BoostVector());
-          elecvec2.Boost(-zvec.BoostVector());
-          hCosThetaLECompP -> Fill(e1_particle.CosTheta(), elecvec1.CosTheta(), weight);
-          hCosThetaSLECompP -> Fill(e2_particle.CosTheta(), elecvec2.CosTheta(), weight);
-          // boost back to lab frame
-          elecvec1.Boost(zvec.BoostVector());
-          elecvec2.Boost(zvec.BoostVector());
-        }
-        e1_particle.Boost(zparticlevec.BoostVector());
-        e2_particle.Boost(zparticlevec.BoostVector());
-        // fill other electron particle-reco comparison histograms
-        if (fill_reco && num_elec_reco == 2) {
-          hPtLECompP -> Fill(e1_particle.Pt(), elecvec1.Pt(), weight);
-          hEtaLECompP -> Fill(e1_particle.Eta(), elecvec1.Eta(), weight);
-          hPtSLECompP -> Fill(e2_particle.Pt(), elecvec2.Pt(), weight);
-          hEtaSLECompP -> Fill(e2_particle.Eta(), elecvec2.Eta(), weight);
-          hDPhiEECompP -> Fill(deltaPhi(e1_particle.Phi(), e2_particle.Phi()), deltaPhi(elecvec1.Phi(), elecvec2.Phi()), weight);
+          if (fill_reco && num_elec_reco == 2) {
+            elecvec1.Boost(-zvec.BoostVector());
+            elecvec2.Boost(-zvec.BoostVector());
+            hCosThetaLECompP -> Fill(e1_particle.CosTheta(), elecvec1.CosTheta(), weight);
+            hCosThetaSLECompP -> Fill(e2_particle.CosTheta(), elecvec2.CosTheta(), weight);
+            // boost back to lab frame
+            elecvec1.Boost(zvec.BoostVector());
+            elecvec2.Boost(zvec.BoostVector());
+          }
+          e1_particle.Boost(zparticlevec.BoostVector());
+          e2_particle.Boost(zparticlevec.BoostVector());
+          // fill other electron particle-reco comparison histograms
+          if (fill_reco && num_elec_reco == 2) {
+            hPtLECompP -> Fill(e1_particle.Pt(), elecvec1.Pt(), weight);
+            hEtaLECompP -> Fill(e1_particle.Eta(), elecvec1.Eta(), weight);
+            hPtSLECompP -> Fill(e2_particle.Pt(), elecvec2.Pt(), weight);
+            hEtaSLECompP -> Fill(e2_particle.Eta(), elecvec2.Eta(), weight);
+            hDPhiEECompP -> Fill(deltaPhi(e1_particle.Phi(), e2_particle.Phi()), deltaPhi(elecvec1.Phi(), elecvec2.Phi()), weight);
+            hDEtaEECompP -> Fill(e1_particle.Eta()-e2_particle.Eta(), elecvec1.Eta()-elecvec2.Eta(), weight);
+          }
         }
       } else if (num_mu_particle == 2){
         // LEFT OFF HERE
         // fill muon particle histograms
         zparticlevec = m1_particle + m2_particle;
-        hPtLMP -> Fill(m1_particle.Pt(), weight);
-        hEtaLMP -> Fill(m1_particle.Eta(), weight);
-        hPhiLMP -> Fill(m1_particle.Phi(), weight);
-        hPtSLMP -> Fill(m2_particle.Pt(), weight);
-        hEtaSLMP -> Fill(m2_particle.Eta(), weight);
-        hPhiSLMP -> Fill(m2_particle.Phi(), weight);
-        hDPhiMMP -> Fill(deltaPhi(m1_particle.Phi(), m2_particle.Phi()), weight);
-        // boost to z frame and for cos theta
-        m1_particle.Boost(-zparticlevec.BoostVector());
-        m2_particle.Boost(-zparticlevec.BoostVector());
-        hCosThetaLMP -> Fill(m1_particle.CosTheta(), weight);
-        hCosThetaSLMP -> Fill(m2_particle.CosTheta(), weight);
-        // fill cos theta comparison histograms (boosting back to z frame for reco as well)
-        if (fill_reco && num_mu_reco == 2) {
-          muvec1.Boost(-zvec.BoostVector());
-          muvec2.Boost(-zvec.BoostVector());
-          hCosThetaLMCompP -> Fill(m1_particle.CosTheta(), muvec1.CosTheta(), weight);
-          hCosThetaSLMCompP -> Fill(m2_particle.CosTheta(), muvec2.CosTheta(), weight);
-          // boost back to lab frame
-          muvec1.Boost(zvec.BoostVector());
-          muvec2.Boost(zvec.BoostVector());
-        }
-        m1_particle.Boost(zparticlevec.BoostVector());
-        m2_particle.Boost(zparticlevec.BoostVector());
-        // fill other muon particle-reco comparison histograms
-        if (fill_reco && num_mu_reco == 2) {
-          hPtSLMCompP -> Fill(m2_particle.Pt(), muvec2.Pt(), weight);
-          hEtaSLMCompP -> Fill(m2_particle.Eta(), muvec2.Eta(), weight);
-          hPtLMCompP -> Fill(m1_particle.Pt(), muvec1.Pt(), weight);
-          hEtaLMCompP -> Fill(m1_particle.Eta(), muvec1.Eta(), weight);
-          hDPhiMMCompP -> Fill(deltaPhi(m1_particle.Phi(), m2_particle.Phi()), deltaPhi(muvec1.Phi(), muvec2.Phi()), weight);
+        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low) {
+          fill_particle = false;
+        } else {
+          hPtLMP -> Fill(m1_particle.Pt(), weight);
+          hEtaLMP -> Fill(m1_particle.Eta(), weight);
+          hPhiLMP -> Fill(m1_particle.Phi(), weight);
+          hPtSLMP -> Fill(m2_particle.Pt(), weight);
+          hEtaSLMP -> Fill(m2_particle.Eta(), weight);
+          hPhiSLMP -> Fill(m2_particle.Phi(), weight);
+          hDPhiMMP -> Fill(deltaPhi(m1_particle.Phi(), m2_particle.Phi()), weight);
+          hDEtaMMP -> Fill(m1_particle.Eta()-m2_particle.Eta(), weight);
+          // boost to z frame and for cos theta
+          m1_particle.Boost(-zparticlevec.BoostVector());
+          m2_particle.Boost(-zparticlevec.BoostVector());
+          hCosThetaLMP -> Fill(m1_particle.CosTheta(), weight);
+          hCosThetaSLMP -> Fill(m2_particle.CosTheta(), weight);
+          // fill cos theta comparison histograms (boosting back to z frame for reco as well)
+          if (fill_reco && num_mu_reco == 2) {
+            muvec1.Boost(-zvec.BoostVector());
+            muvec2.Boost(-zvec.BoostVector());
+            hCosThetaLMCompP -> Fill(m1_particle.CosTheta(), muvec1.CosTheta(), weight);
+            hCosThetaSLMCompP -> Fill(m2_particle.CosTheta(), muvec2.CosTheta(), weight);
+            // boost back to lab frame
+            muvec1.Boost(zvec.BoostVector());
+            muvec2.Boost(zvec.BoostVector());
+          }
+          m1_particle.Boost(zparticlevec.BoostVector());
+          m2_particle.Boost(zparticlevec.BoostVector());
+          // fill other muon particle-reco comparison histograms
+          if (fill_reco && num_mu_reco == 2) {
+            hPtSLMCompP -> Fill(m2_particle.Pt(), muvec2.Pt(), weight);
+            hEtaSLMCompP -> Fill(m2_particle.Eta(), muvec2.Eta(), weight);
+            hPtLMCompP -> Fill(m1_particle.Pt(), muvec1.Pt(), weight);
+            hEtaLMCompP -> Fill(m1_particle.Eta(), muvec1.Eta(), weight);
+            hDPhiMMCompP -> Fill(deltaPhi(m1_particle.Phi(), m2_particle.Phi()), deltaPhi(muvec1.Phi(), muvec2.Phi()), weight);
+            hDEtaMMCompP -> Fill(m1_particle.Eta()-m2_particle.Eta(), muvec1.Eta()-muvec2.Eta(), weight);
+          }
         }
       }
+    }
+    hparticlevec = b1_particle + b2_particle;
+    if (hparticlevec.M() > higgs_mass_cut_hi || hparticlevec.M() < higgs_mass_cut_low) fill_particle = false;
+    if (fill_particle) {
       // fill particle level b jet histograms
       hPtLBP -> Fill(b1_particle.Pt(), weight);
       hPtSLBP -> Fill(b2_particle.Pt(), weight);
@@ -774,7 +827,6 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
       hEtaSLBP -> Fill(b2_particle.Eta(), weight);
       hPhiLBP -> Fill(b1_particle.Phi(), weight);
       hPhiSLBP -> Fill(b2_particle.Phi(), weight);
-      hparticlevec = b1_particle + b2_particle;
       // boost to higgs frame and for cos theta
       b1_particle.Boost(-hparticlevec.BoostVector());
       b2_particle.Boost(-hparticlevec.BoostVector());
@@ -964,6 +1016,16 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   hEtaLBCompP->Write();
   hEtaSLBCompP->Write();
   hEtaZHCompP->Write();
+  hDEtaEE->Write();
+  hDEtaMM->Write();
+  hDEtaEER->Write();
+  hDEtaMMR->Write();
+  hDEtaEEP->Write();
+  hDEtaMMP->Write();
+  hDEtaEEComp->Write();
+  hDEtaEECompP->Write();
+  hDEtaMMComp->Write();
+  hDEtaMMCompP->Write();
    //cos theta
   hCosThetaLE->Write();
   hCosThetaLM->Write();
@@ -1148,6 +1210,16 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
   hEtaLBCompP->Clear();
   hEtaSLBCompP->Clear();
   hEtaZHCompP->Clear();
+  hDEtaEE->Clear();
+  hDEtaMM->Clear();
+  hDEtaEER->Clear();
+  hDEtaMMR->Clear();
+  hDEtaEEP->Clear();
+  hDEtaMMP->Clear();
+  hDEtaEEComp->Clear();
+  hDEtaEECompP->Clear();
+  hDEtaMMComp->Clear();
+  hDEtaMMCompP->Clear();
    //cos theta
   hCosThetaLE->Clear();
   hCosThetaLM->Clear();
@@ -1231,6 +1303,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile) {
 int main(int argc, char* argv[]) {
   const char *inputFileName = argv[1];
   const char *outputFileName = argv[2];
-  zhbb_analyze(inputFileName, outputFileName);
+  const char *process_name = argv[3];
+  zhbb_analyze(inputFileName, outputFileName, process_name);
   return 1;
 }
