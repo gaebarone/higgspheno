@@ -1,9 +1,0 @@
-universe = vanilla
-Executable     =  do_zhbb.sh
-arguments = $(IN) $(OUT) $(PNAME)
-transfer_input_files = $(IN), do_zhbb.sh
-Output     = condor/log_$(Cluster)_$(Process).out
-Error      = condor/log_$(Cluster)_$(Process).out
-Log        = condor/log_$(Cluster)_$(Process).log
-
-queue IN, OUT, PNAME from test.txt

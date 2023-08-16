@@ -1,6 +1,22 @@
+// #include <iostream>
+// #include <unordered_set>
+// #include <utility>
+// #include "TClonesArray.h"
+// #include "Math/LorentzVector.h"
+// #include "classes/DelphesClasses.h"
+// #include "external/ExRootAnalysis/ExRootTreeReader.h"
+
 #ifdef __CLING__
 R__LOAD_LIBRARY(libDelphes)
 #include "classes/DelphesClasses.h"
+#include "external/ExRootAnalysis/ExRootTreeReader.h"
+#include "external/ExRootAnalysis/ExRootResult.h"
+#include <cstdlib>
+#include <iostream>
+#include <functional>
+#include <time.h>
+#else
+class ExRootTreeReader;
 #endif
 
 const double pi = TMath::Pi();
@@ -28,8 +44,69 @@ double deltaR(const T1 &a, const T2 &b) {
   return deltaR(a->Eta, a->Phi, b->Eta, b->Phi);
 }
 
+
+
+struct ParticleInfo {
+  // initialize generated particle
+  ParticleInfo(const GenParticle *particle, int src = -1) {
+    pt = particle->PT;
+    eta = particle->Eta;
+    phi = particle->Phi;
+    mass = particle->Mass;
+    p4 = ROOT::Math::PtEtaPhiMVector(pt, eta, phi, mass);
+    px = p4.px();
+    py = p4.py();
+    pz = p4.pz();
+    energy = p4.energy();
+    charge = particle->Charge;
+    pid = particle->PID;
+    fUniqueID = particle->GetUniqueID();
+    source = src;
+  }
+
+  // initialize reconstructed particle
+  ParticleInfo(const ParticleFlowCandidate *particle, int src = -1) {
+    pt = particle->PT;
+    eta = particle->Eta;
+    phi = particle->Phi;
+    mass = particle->Mass;
+    p4 = ROOT::Math::PtEtaPhiMVector(pt, eta, phi, mass);
+    px = p4.px();
+    py = p4.py();
+    pz = p4.pz();
+    energy = p4.energy();
+    charge = particle->Charge;
+    pid = particle->PID;
+    d0 = particle->D0;
+    d0err = particle->ErrorD0;
+    dz = particle->DZ;
+    dzerr = particle->ErrorDZ;
+    source = src;
+  }
+
+  double pt;
+  double eta;
+  double phi;
+  double mass;
+  double px;
+  double py;
+  double pz;
+  double energy;
+  ROOT::Math::PtEtaPhiMVector p4;
+
+  int charge;
+  int pid;
+  int fUniqueID;
+  int source;
+
+  float d0 = 0;
+  float d0err = 0;
+  float dz = 0;
+  float dzerr = 0;
+};
+
 template <typename T>
-bool inEllipse(const Jet *jet1, const Jet *jet2, T const *p, float semimajoradd = 1.0) {
+std::pair<bool,int> isInEllipse(const Jet *jet1, const Jet *jet2, T const *p, float semimajoradd = 1.0) {
   float eta1 = jet1->Eta;
   float eta2 = jet2->Eta;
   float phi1 = jet1->Phi;
@@ -80,7 +157,6 @@ bool inEllipse(const Jet *jet1, const Jet *jet2, T const *p, float semimajoradd 
   distsum = f1dist+f2dist;
 
   //if in ellipse, the sum of the distances will be less than 2*semimajor
-  if (distsum < 2*semimajor) return true;
-  else return false;
-
+  if (distsum < 2*semimajor) return make_pair(true,1);
+  else return make_pair(false,-1);
 }
