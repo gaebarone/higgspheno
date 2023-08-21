@@ -24,9 +24,15 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   //std::cout<<"Name "<<name<<std::endl;
   sig_hist->SetFillColor(kCyan);
   ttbar_hist->SetFillColor(kOrange);
-  ttHbb_hist->SetFillColor(kYellow);
+  ttHbb_hist->SetFillColor(kMagenta);
   diboson_hist->SetFillColor(kRed);
-  drellyan_hist->SetFillColor(kMagenta);
+  drellyan_hist->SetFillColor(kYellow);
+  // rebin
+  sig_hist->Rebin(2);
+  ttbar_hist->Rebin(2);
+  ttHbb_hist->Rebin(2);
+  diboson_hist->Rebin(2);
+  drellyan_hist->Rebin(2);
   // form the histogram stack
   THStack *stack = new THStack(name, title);
   stack->Add(diboson_hist);
@@ -37,9 +43,9 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   // make a legend
   TLegend *legend = new TLegend(0.8, 0.8, 0.9, 0.9);
   legend->AddEntry(sig_hist, "Signal", "f");
-  legend->AddEntry(ttHbb_hist, "ttHbb", "f");
-  legend->AddEntry(ttbar_hist, "ttbar", "f");
   legend->AddEntry(drellyan_hist, "drell-yan", "f");
+  legend->AddEntry(ttbar_hist, "ttbar", "f");
+  legend->AddEntry(ttHbb_hist, "ttH", "f");
   legend->AddEntry(diboson_hist, "diboson", "f");
   // make a canvas and draw on it
   TCanvas *c = new TCanvas(name, title, 1500, 1200);

@@ -27,16 +27,23 @@
 #include "TClonesArray.h"
 #include "get_cross_section.h"
 
-Long64_t get_num_entries(const char *process_name) {
-    std::string inputFileName = std::string(process_name) + "_inputs.txt";
-    std::ifstream inputFile(inputFileName.c_str());
-    std::string line;
-    TChain chain("Delphes");
-    while (std::getline(inputFile, line)) {
-        chain.Add(line.c_str());
-    }
-    ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
-    return treeReader->GetEntries();
+Long64_t get_num_entries(const char *inputName) {
+  TChain chain("Delphes");
+  chain.Add(inputName);
+  ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
+  return treeReader->GetEntries();
+}
+
+Long64_t get_total_num_entries(const char *process_name) {
+  std::string inputFileName = std::string(process_name) + "_inputs.txt";
+  std::ifstream inputFile(inputFileName.c_str());
+  std::string line;
+  TChain chain("Delphes");
+  Long64_t total = 0;
+  while (std::getline(inputFile, line)) {
+    total += get_num_entries(line.c_str());
+  }
+  return total;
 }
 
 //------------------------------------------------------------------------------
@@ -61,7 +68,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   // Create object of class ExRootTreeReader
   ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
   Long64_t numberOfEntries = treeReader->GetEntries();
-  Long64_t totalEntries = get_num_entries(process_name);
+  Long64_t totalEntries = get_total_num_entries(process_name);
   // Get pointers to branches used in this analysis
   TClonesArray *branchJet = (TClonesArray*)treeReader->UseBranch("Jet");
   TClonesArray *branchElectron = (TClonesArray*)treeReader->UseBranch("Electron");

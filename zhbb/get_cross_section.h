@@ -1,7 +1,7 @@
 #include <string>
 
 double get_cross_section(const char *process_name) {
-  std::string ttbar_012j = "ttbar012j";
+  std::string ttbar012j = "ttbar012j";
   std::string zll_123j = "zll_123j";
   std::string zh_zll_hbb_012j = "zh_zll_hbb_012j";
   std::string ttHbb = "ttHbb";
@@ -10,7 +10,7 @@ double get_cross_section(const char *process_name) {
   std::string wz_wjj_123j = "wz_wjj_123j";
   std::string zzjj_j = "zzjj_j";
   std::string zz_zjj_123j = "zz_zjj_123j";
-  if (process_name == ttbar_012j) return 88.29;
+  if (process_name == ttbar012j) return 88.29;
   else if (process_name == zll_123j) return 830.4;
   else if (process_name == zh_zll_hbb_012j) return 0.04718;
   else if (process_name == ttHbb) return 0.01805;
