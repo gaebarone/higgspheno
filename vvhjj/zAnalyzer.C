@@ -1,12 +1,32 @@
-#ifdef __CLING__
 R__LOAD_LIBRARY(libDelphes)
 #include "classes/DelphesClasses.h"
-#include "external/ExRootAnalysis/ExRootTreeReader.h"
-#include "combinations.h"     
-#include "DSCBf.h"
-#include "TH1.h"
-#include "TCanvas.h"
-#endif
+#include "ExRootAnalysis/ExRootTreeReader.h"
+#include "ghost_tagging.h"
+#include "get_cross_section.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TClonesArray.h"
+#include "TTree.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <TROOT.h>
+#include <TLorentzVector.h>
+#include <TFile.h>
+#include <TTree.h>
+#include <TBranch.h>
+#include <TMath.h>
+#include <Rtypes.h>
+#include <TString.h>
+#include <TRandom.h>
+#include <TRandom3.h>
+#include "TParticle.h"
+#include <vector>
+#include "combinations.h" 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // initialize combinations
@@ -63,7 +83,7 @@ std::vector <std::vector <int>> getAllCombinations(vector<int> inputVector, int 
 void PrintCanvas(TCanvas *c=nullptr,string name="default"){
   std::vector <string> types={"jpg"}; 
   for(std::vector<string>::iterator it=types.begin(); it!=types.end(); it++) {
-    c->Print(Form("zzhjj_plots/%s.%s",name.c_str(),(*it).c_str()),(*it).c_str());
+    c->Print(Form("jpg/%s.%s",name.c_str(),(*it).c_str()),(*it).c_str());
   }
 }
 
@@ -71,8 +91,9 @@ void draw_hist(TH1 *histo, const char *name, const char *title, const char *axis
   TCanvas *c = new TCanvas(name, title, 1500,1200);
   c->cd();
   histo->GetXaxis()->SetTitle(axistitle);
-  histo->Draw("axis");
-//  PrintCanvas(c, name);
+  histo->SetMinimum(0.0);
+  histo->Draw("hist e");
+  PrintCanvas(c, name);
 }
 
 void draw_hist2(TH2 *histo, const char *name, const char *title, const char *xaxistitle, const char *yaxistitle) {
@@ -80,7 +101,7 @@ void draw_hist2(TH2 *histo, const char *name, const char *title, const char *xax
   histo->GetXaxis()->SetTitle(xaxistitle);
   histo->GetYaxis()->SetTitle(yaxistitle);
   histo->Draw("COLZ");
-//  PrintCanvas(c, name);
+  PrintCanvas(c, name);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -116,13 +137,36 @@ GenParticle* find_status1_child(TClonesArray *branchGenParticle, GenParticle *pa
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// z analyzer
+// num_entries
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+Long64_t get_num_entries(const char *inputName) {
+  TChain chain("Delphes");
+  chain.Add(inputName);
+  ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
+  return treeReader->GetEntries();
+}
+
+Long64_t get_total_num_entries(const char *process_name) {
+  std::string inputFileName = std::string(process_name) + "_inputs.txt";
+  std::ifstream inputFile(inputFileName.c_str());
+  std::string line;
+  TChain chain("Delphes");
+  Long64_t total = 0;
+  while (std::getline(inputFile, line)) {
+    total += get_num_entries(line.c_str());
+  }
+  return total;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// z analyzer
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void zAnalyzer(const char *inputFile,const char *outputFile) {
   gSystem->Load("libDelphes");
 
+ // const double cross_section = get_cross_section(process_name);
   TChain chain("Delphes");
   chain.Add(inputFile);
 
@@ -136,90 +180,399 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
   TClonesArray *branchGenParticle = treeReader->UseBranch("Particle");
   TClonesArray *branchGenJet = treeReader->UseBranch("GenJet");
 
+  bool fill_1D = true;
+  bool fill_2D = true;
+
+  const double mBins = 20;
+  const double pTBins = 20;
+  const double phiBins = 20;
+  const double etaBins = 20;
+  const double RBins = 20;
+  const double cosBins = 20;
+
+  const double hpTmin = 0;
+  const double jpTmin = 0;
+  const double zpTmin = 0;
+  const double lpTmin = 0;
+  const double hpTmax = 1000;
+  const double jpTmax = 1000;
+  const double zpTmax = 1000;
+  const double lpTmax = 1000;
+
+  const double hmmin = 0;
+  const double jmmin = 0;
+  const double zmmin = 0;
+  const double hmmax = 200;
+  const double jmmax = 1000;
+  const double zmmax = 200;
+
+  const double hetamin = -10;
+  const double jetamin = -10;
+  const double zetamin = -10;
+  const double letamin = -10;
+  const double hetamax = 10;
+  const double jetamax = 10;
+  const double zetamax = 10;
+  const double letamax = 10;
+
+  const double hRmin = 0;
+  const double jRmin = 0;
+  const double zRmin = 0;
+  const double lRmin = 0;
+  const double hRmax = 10;
+  const double jRmax = 10;
+  const double zRmax = 10;
+  const double lRmax = 10;
+
 // higgs
     // 1D
     // reco 
         // pT + m
-        TH1 *hHpTreco = new TH1F("H_pT_reco", "p^{T}_{h}", 100, 0, 500);
-        TH1 *hHmreco = new TH1F("H_m_reco", "m_{h}", 50, 0, 250);
+        TH1F *hHpTreco = new TH1F("hbb_pT_reco", "p^{T}_{hbb}_reco", pTBins, hpTmin, hpTmax);
+        TH1F *hHmreco = new TH1F("hbb_m_reco", "m_{hbb}_reco", mBins, hmmin, hmmax);
+        TH1F *hb1pTreco = new TH1F("b1_pT_reco", "p^{T}_{b1}_reco", pTBins, hpTmin, hpTmax);
+        TH1F *hb1mreco = new TH1F("b1_m_reco", "m_{b1}_reco", mBins, hmmin, hmmax);
+        TH1F *hb2pTreco = new TH1F("b2_pT_reco", "p^{T}_{b2}_reco", pTBins, hpTmin, hpTmax);
+        TH1F *hb2mreco = new TH1F("b2_m_reco", "m_{b2}_reco", mBins, hmmin, hmmax);
+        // phi
+        TH1F *hHphireco = new TH1F("hbb_#phi_reco", "#phi_{hbb}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hb1phireco = new TH1F("b1_#phi_reco", "#phi_{b1}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hb2phireco = new TH1F("b2_#phi_reco", "#phi_{b2}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hbbdeltaPhireco = new TH1F("bb_#Delta#phi_reco", "#Delta#phi_{bb}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hHetareco = new TH1F("hbb_#eta_reco", "#eta_{hbb}_reco", etaBins, hetamin, hetamax);
+        TH1F *hb1etareco = new TH1F("b1_#eta_reco", "#eta_{b1}_reco", etaBins, hetamin, hetamax);
+        TH1F *hb2etareco = new TH1F("b2_#eta_reco", "#eta_{b2}_reco", etaBins, hetamin, hetamax);
+        TH1F *hbbdeltaEtareco = new TH1F("bb_#Delta#eta_reco", "#Delta#eta_{bb}_reco", etaBins, hetamin, hetamax);
+        // R
+        TH1F *hHRreco = new TH1F("hbb_R_reco", "R_{hbb}_reco", RBins, hRmin, hRmax);
+        TH1F *hb1Rreco = new TH1F("b1_R_reco", "R_{b1}_reco", RBins, hRmin, hRmax);
+        TH1F *hb2Rreco = new TH1F("b2_R_reco", "R_{b2}_reco", RBins, hRmin, hRmax);
+        TH1F *hbbdeltaRreco = new TH1F("bb_#DeltaR_reco", "#DeltaR_{bb}_reco", RBins, hRmin, hRmax);
+
+
     // particle
         // pT + m
-        TH1 *hHpTparticle = new TH1F("H_pT_particle", "p^{T}_{h}", 100, 0, 500);
-        TH1 *hHmparticle = new TH1F("H_m_particle", "m_{h}", 50, 0, 250);
+        TH1F *hHpTparticle = new TH1F("hbb_pT_particle", "p^{T}_{hbb}_particle", pTBins, hpTmin, hpTmax);
+        TH1F *hHmparticle = new TH1F("hbb_m_particle", "m_{hbb}_particle", mBins, hmmin, hmmax);
+        TH1F *hb1pTparticle = new TH1F("b1_pT_particle", "p^{T}_{b1}_particle", pTBins, hpTmin, hpTmax);
+        TH1F *hb1mparticle = new TH1F("b1_m_particle", "m_{b1}_particle", mBins, hmmin, hmmax);
+        TH1F *hb2pTparticle = new TH1F("b2_pT_particle", "p^{T}_{b2}_particle", pTBins, hpTmin, hpTmax);
+        TH1F *hb2mparticle = new TH1F("b2_m_particle", "m_{b2}_particle", mBins, hmmin, hmmax);
+        // phi
+        TH1F *hHphiparticle = new TH1F("hbb_#phi_particle", "#phi_{hbb}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hb1phiparticle = new TH1F("b1_#phi_particle", "#phi_{b1}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hb2phiparticle = new TH1F("b2_#phi_particle", "#phi_{b2}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hbbdeltaPhiparticle = new TH1F("bb_#Delta#phi_particle", "#Delta#phi_{bb}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hHetaparticle = new TH1F("hbb_#eta_particle", "#eta_{hbb}_particle", etaBins, hetamin, hetamax);
+        TH1F *hb1etaparticle = new TH1F("b1_#eta_particle", "#eta_{b1}_particle", etaBins, hetamin, hetamax);
+        TH1F *hb2etaparticle = new TH1F("b2_#eta_particle", "#eta_{b2}_particle", etaBins, hetamin, hetamax);
+        TH1F *hbbdeltaEtaparticle = new TH1F("bb_#Delta#eta_particle", "#Delta#eta_{bb}_particle", etaBins, hetamin, hetamax);
+        // R
+        TH1F *hHRparticle = new TH1F("hbb_R_particle", "R_{hbb}_particle", RBins, hRmin, hRmax);
+        TH1F *hb1Rparticle = new TH1F("b1_R_particle", "R_{b1}_particle", RBins, hRmin, hRmax);
+        TH1F *hb2Rparticle = new TH1F("b2_R_particle", "R_{b2}_particle", RBins, hRmin, hRmax);
+        TH1F *hbbdeltaRparticle = new TH1F("bb_#DeltaR_particle", "#DeltaR_{bb}_particle", RBins, hRmin, hRmax);
+
     // parton
         // pT + m
-        TH1 *hHpTparton = new TH1F("H_pT_parton", "p^{T}_{h}", 100, 0, 500);
-        TH1 *hHmparton = new TH1F("H_m_parton", "m_{h}", 50, 0,  250);
-    //2D
-        TH2 *hHpTComp = new TH2F("H_pT_comp", "p_{T}^{h}", 20, 0.0, 500, 20, 0.0, 500);
-        TH2 *hHmComp = new TH2F("H_m_comp", "m_{h}", 20, 0.0, 500, 20, 0.0, 500);
-
+        TH1F *hHpTparton = new TH1F("hbb_pT_parton", "p^{T}_{hbb}_parton", pTBins, hpTmin, hpTmax);
+        TH1F *hHmparton = new TH1F("hbb_m_parton", "m_{hbb}_parton", mBins, hmmin,  hmmax);
+        TH1F *hb1pTparton = new TH1F("b1_pT_parton", "p^{T}_{b1}_parton", pTBins, hpTmin, hpTmax);
+        TH1F *hb1mparton = new TH1F("b1_m_parton", "m_{b1}_parton", mBins, hmmin, hmmax);
+        TH1F *hb2pTparton = new TH1F("b2_pT_parton", "p^{T}_{b2}_parton", pTBins, hpTmin, hpTmax);
+        TH1F *hb2mparton = new TH1F("b2_m_parton", "m_{b2}_parton", mBins, hmmin, hmmax);
+        // phi
+        TH1F *hHphiparton = new TH1F("hbb_#phi_parton", "#phi_{hbb}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hb1phiparton = new TH1F("b1_#phi_parton", "#phi_{b1}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hb2phiparton = new TH1F("b2_#phi_parton", "#phi_{b2}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hbbdeltaPhiparton = new TH1F("bb_#Delta#phi_parton", "#Delta#phi_{bb}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hHetaparton = new TH1F("hbb_#eta_parton", "#eta_{hbb}_parton", etaBins, hetamin, hetamax);
+        TH1F *hb1etaparton = new TH1F("b1_#eta_parton", "#eta_{b1}_parton", etaBins, hetamin, hetamax);
+        TH1F *hb2etaparton = new TH1F("b2_#eta_parton", "#eta_{b2}_parton", etaBins, hetamin, hetamax);
+        TH1F *hbbdeltaEtaparton = new TH1F("bb_#Delta#eta_parton", "#Delta#eta_{bb}_parton", etaBins, hetamin, hetamax);
+        // R
+        TH1F *hHRparton = new TH1F("hbb_R_parton", "R_{hbb}_parton", RBins, hRmin, hRmax);
+        TH1F *hb1Rparton = new TH1F("b1_R_parton", "R_{b1}_parton", RBins, hRmin, hRmax);
+        TH1F *hb2Rparton = new TH1F("b2_R_parton", "R_{b2}_parton", RBins, hRmin, hRmax);
+        TH1F *hbbdeltaRparton = new TH1F("bb_#DeltaR_parton", "#DeltaR_{bb}_parton", RBins, hRmin, hRmax);
 
 // jets
     // reco 
         // pT + m
-        TH1 *hjjv1pTreco = new TH1F("jj_pT_reco_v1", "p^{T}_{jj}", 100, 0, 1000);
-        TH1 *hjjv1mreco = new TH1F("jj_m_reco_v1", "m_{jj}", 100, 0, 500);
-        TH1 *hjjv2pTreco = new TH1F("jj_pT_reco_v2", "p^{T}_{jj}", 100, 0, 1000);
-        TH1 *hjjv2mreco = new TH1F("jj_m_reco_v2", "m_{jj}", 100, 0, 500);
-        TH1 *hj1pTreco = new TH1F("j1_pT_reco", "p^{T}_{j1}", 100, 0, 1000);
-        TH1 *hj1mreco = new TH1F("j1_m_reco", "m_{j1}", 100, 0, 100);
-        TH1 *hj2pTreco = new TH1F("j2_pT_reco", "p^{T}_{j2}", 100, 0, 1000);
-        TH1 *hj2mreco = new TH1F("j2_m_reco", "m_{j2}", 100, 0, 100);
-        // eta
-        TH1 *hj1etareco = new TH1F("j1_eta_reco", "eta_{j1}", 100, -5, 5);
-        TH1 *hj2etareco = new TH1F("j2_eta_reco", "eta_{j2}", 100, -5, 5);
+        TH1F *hjjpTreco = new TH1F("jj_pT_reco", "p^{T}_{jj}_reco", pTBins, jpTmin, jpTmax);
+        TH1F *hjjmreco = new TH1F("jj_m_reco", "m_{jj}_reco", mBins, jmmin, jmmax);
+        TH1F *hj1pTreco = new TH1F("j1_pT_reco", "p^{T}_{j1}_reco", pTBins, jpTmin, jpTmax);
+        TH1F *hj1mreco = new TH1F("j1_m_reco", "m_{j1}_reco", mBins, jmmin, jmmax);
+        TH1F *hj2pTreco = new TH1F("j2_pT_reco", "p^{T}_{j2}_reco", pTBins, jpTmin, jpTmax);
+        TH1F *hj2mreco = new TH1F("j2_m_reco", "m_{j2}_reco", mBins, jmmin, jmmax);
         // phi
-        TH1F *hjjdeltaPhireco = new TH1F("jj_#phi_reco", "#phi_{jj}",10,-TMath::Pi(),+TMath::Pi());
+        TH1F *hj1phireco = new TH1F("j1_#phi_reco", "#phi_{j1}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hj2phireco = new TH1F("j2_#phi_reco", "#phi_{j2}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hjjdeltaPhireco = new TH1F("jj_#Delta#phi_reco", "#Delta#phi_{jj}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hj1etareco = new TH1F("j1_#eta_reco", "#eta_{j1}_reco", etaBins, jetamin, jetamax);
+        TH1F *hj2etareco = new TH1F("j2_#eta_reco", "#eta_{j2}_reco", etaBins, jetamin, jetamax);
+        TH1F *hjjdeltaEtareco = new TH1F("jj_#Delta#eta_reco", "#Delta#eta_{jj}_reco", etaBins, jetamin, jetamax);
+        // R
+        TH1F *hj1Rreco = new TH1F("j1_R_reco", "R_{j1}_reco", RBins, jRmin, jRmax);
+        TH1F *hj2Rreco = new TH1F("j2_R_reco", "R_{j2}_reco", RBins, jRmin, jRmax);
+        TH1F *hjjdeltaRreco = new TH1F("jj_#DeltaR_reco", "#DeltaR_{jj}_reco", RBins, jRmin, jRmax);
+
+
+      // particle
+        // pT + m
+        TH1F *hjjpTparticle = new TH1F("jj_pT_particle", "p^{T}_{jj}_particle", pTBins, jpTmin, jpTmax);
+        TH1F *hjjmparticle = new TH1F("jj_m_particle", "m_{jj}_particle", mBins, jmmin, jmmax);
+        TH1F *hj1pTparticle = new TH1F("j1_pT_particle", "p^{T}_{j1}_particle", pTBins, jpTmin, jpTmax);
+        TH1F *hj1mparticle = new TH1F("j1_m_particle", "m_{j1}_particle", mBins, jmmin, jmmax);
+        TH1F *hj2pTparticle = new TH1F("j2_pT_particle", "p^{T}_{j2}_particle", pTBins, jpTmin, jpTmax);
+        TH1F *hj2mparticle = new TH1F("j2_m_particle", "m_{j2}_particle", mBins, jmmin, jmmax);
+        // phi
+        TH1F *hj1phiparticle = new TH1F("j1_#phi_particle", "#phi_{j1}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hj2phiparticle = new TH1F("j2_#phi_particle", "#phi_{j2}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hjjdeltaPhiparticle = new TH1F("jj_#Delta#phi_particle", "#Delta#phi_{jj}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hj1etaparticle = new TH1F("j1_#eta_particle", "#eta_{j1}_particle", etaBins, jetamin, jetamax);
+        TH1F *hj2etaparticle = new TH1F("j2_#eta_particle", "#eta_{j2}_particle", etaBins, jetamin, jetamax);
+        TH1F *hjjdeltaEtaparticle = new TH1F("jj_#Delta#eta_particle", "#Delta#eta_{jj}_particle", etaBins, jetamin, jetamax);
+        // R
+        TH1F *hj1Rparticle = new TH1F("j1_R_particle", "R_{j1}_particle", RBins, jRmin, jRmax);
+        TH1F *hj2Rparticle = new TH1F("j2_R_particle", "R_{j2}_particle", RBins, jRmin, jRmax);
+        TH1F *hjjdeltaRparticle = new TH1F("jj_#DeltaR_particle", "#DeltaR_{jj}_particle", RBins, jRmin, jRmax);
 
 // z 
     // reco
         // pT + m
-        TH1 *hz1pTreco = new TH1F("z1_pT_reco", "p^{T}_{z1}", 100, 0, 1000);
-        TH1 *hz2pTreco = new TH1F("z2_pT_reco", "p^{T}_{z2}", 100, 0, 1000);
-        TH1 *hz1mreco = new TH1F("z1_m_reco", "m_{z1}", 100, 0, 250);
-        TH1 *hz2mreco = new TH1F("z2_m_reco", "m_{z2}", 100, 0, 250);
-        // cos
-        TH1 *hz1cosThetareco = new TH1F("z1_cos#theta_reco", "cos#theta_{z1}",10,-1,1);
-        TH1 *hz2cosThetareco = new TH1F("z2_cos#theta_reco", "cos#theta_{z1}",10,-1,1);
+        TH1F *hz1pTreco = new TH1F("z1_pT_reco", "p^{T}_{z1}_reco", pTBins, zpTmin, zpTmax);
+        TH1F *hz2pTreco = new TH1F("z2_pT_reco", "p^{T}_{z2}_reco", pTBins, zpTmin, zpTmax);
+        TH1F *hz1mreco = new TH1F("z1_m_reco", "m_{z1}_reco", mBins, zmmin, zmmax);
+        TH1F *hz2mreco = new TH1F("z2_m_reco", "m_{z2}_reco", mBins, zmmin, zmmax);
         // phi
-        TH1 *hzzdeltaPhireco = new TH1F("zz_#phi_reco", "#phi_{zz}",10,-TMath::Pi(),+TMath::Pi());
+        TH1F *hz1phireco = new TH1F("z1_#phi_reco", "#phi_{z1}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hz2phireco = new TH1F("z2_#phi_reco", "#phi_{z2}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hzzdeltaPhireco = new TH1F("zz_#Delta#phi_reco", "#Delta#phi_{zz}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hz1etareco = new TH1F("z1_#eta_reco", "#eta_{z1}_reco", etaBins, zetamin, zetamax);
+        TH1F *hz2etareco = new TH1F("z2_#eta_reco", "#eta_{z2}_reco", etaBins, zetamin, zetamax);
+        TH1F *hzzdeltaEtareco = new TH1F("zz_#Delta#eta_reco", "#Delta#eta_{zz}_reco", etaBins, zetamin, zetamax);
+        // R
+        TH1F *hz1Rreco = new TH1F("z1_R_reco", "R_{z1}_reco", RBins, zRmin, zRmax);
+        TH1F *hz2Rreco = new TH1F("z2_R_reco", "R_{z2}_reco", RBins, zRmin, zRmax);
+        TH1F *hzzdeltaRreco = new TH1F("zz_#DeltaR_reco", "#DeltaR_{zz}_reco", RBins, zRmin, zRmax);
+        // cos
+        TH1F *hz1cosThetareco = new TH1F("z1_cos#theta_reco", "cos#theta_{z1}_reco", cosBins, -1, 1);
+        TH1F *hz2cosThetareco = new TH1F("z2_cos#theta_reco", "cos#theta_{z2}_reco", cosBins, -1, 1);
     // particle
         // pT + m
-        TH1 *hz1pTparticle = new TH1F("z1_pT_particle", "p^{T}_{z1}", 100, 0, 1000);
-        TH1 *hz2pTparticle = new TH1F("z2_pT_particle", "p^{T}_{z2}", 100, 0, 1000);
-        TH1 *hz1mparticle = new TH1F("z1_m_particle", "m_{z1}", 100, 0, 250);
-        TH1 *hz2mparticle = new TH1F("z2_m_particle", "m_{z2}", 100, 0, 250);
+        TH1F *hz1pTparticle = new TH1F("z1_pT_particle", "p^{T}_{z1}_particle", pTBins, zpTmin, zpTmax);
+        TH1F *hz2pTparticle = new TH1F("z2_pT_particle", "p^{T}_{z2}_particle", pTBins, zpTmin, zpTmax);
+        TH1F *hz1mparticle = new TH1F("z1_m_particle", "m_{z1}_particle", mBins, zmmin, zmmax);
+        TH1F *hz2mparticle = new TH1F("z2_m_particle", "m_{z2}_particle", mBins, zmmin, zmmax);
+        // phi
+        TH1F *hz1phiparticle = new TH1F("z1_#phi_particle", "#phi_{z1}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hz2phiparticle = new TH1F("z2_#phi_particle", "#phi_{z2}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hzzdeltaPhiparticle = new TH1F("zz_#Delta#phi_particle", "#Delta#phi_{zz}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hz1etaparticle = new TH1F("z1_#eta_particle", "#eta_{z1}_particle", etaBins, zetamin, zetamax);
+        TH1F *hz2etaparticle = new TH1F("z2_#eta_particle", "#eta_{z2}_particle", etaBins, zetamin, zetamax);
+        TH1F *hzzdeltaEtaparticle = new TH1F("zz_#Delta#eta_particle", "#Delta#eta_{zz}_particle", etaBins, zetamin, zetamax);
+        // R
+        TH1F *hz1Rparticle = new TH1F("z1_R_particle", "R_{z1}_particle", RBins, zRmin, zRmax);
+        TH1F *hz2Rparticle = new TH1F("z2_R_particle", "R_{z2}_particle", RBins, zRmin, zRmax);
+        TH1F *hzzdeltaRparticle = new TH1F("zz_#DeltaR_particle", "#DeltaR_{zz}_particle", RBins, zRmin, zRmax);
     // parton
         // pT + m
-        TH1 *hz1pTparton = new TH1F("z1_pT_parton", "p^{T}_{z1}", 100, 0, 1000);
-        TH1 *hz2pTparton = new TH1F("z2_pT_parton", "p^{T}_{z2}", 100, 0, 1000);
-        TH1 *hz1mparton = new TH1F("z1_m_parton", "m_{z1}", 100, 0, 250);
-        TH1 *hz2mparton = new TH1F("z2_m_parton", "m_{z2}", 100, 0, 250);
-    //2D
-        TH2 *hz1pTComp = new TH2F("z1_pT_comp", "p^{T}_{z1}", 20, 0.0, 500, 20, 0.0, 500);
-        TH2 *hz1mComp = new TH2F("z1_m_comp", "m_{z1}", 20, 0.0, 500, 20, 0.0, 500);
-        TH2 *hz2pTComp = new TH2F("z2_pT_comp", "p^{T}_{z2}", 20, 0.0, 500, 20, 0.0, 500);
-        TH2 *hz2mComp = new TH2F("z2_m_comp", "m_{z2}", 20, 0.0, 500, 20, 0.0, 500);
+        TH1F *hz1pTparton = new TH1F("z1_pT_parton", "p^{T}_{z1}_parton", pTBins, zpTmin, zpTmax);
+        TH1F *hz2pTparton = new TH1F("z2_pT_parton", "p^{T}_{z2}_parton", pTBins, zpTmin, zpTmax);
+        TH1F *hz1mparton = new TH1F("z1_m_parton", "m_{z1}_parton", mBins, zmmin, zmmax);
+        TH1F *hz2mparton = new TH1F("z2_m_parton", "m_{z2}_parton", mBins, zmmin, zmmax);
+        // phi
+        TH1F *hz1phiparton = new TH1F("z1_#phi_parton", "#phi_{z1}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hz2phiparton = new TH1F("z2_#phi_parton", "#phi_{z2}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hzzdeltaPhiparton = new TH1F("zz_#Delta#phi_parton", "#Delta#phi_{zz}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hz1etaparton = new TH1F("z1_#eta_parton", "#eta_{z1}_parton", etaBins, zetamin, zetamax);
+        TH1F *hz2etaparton = new TH1F("z2_#eta_parton", "#eta_{z2}_parton", etaBins, zetamin, zetamax);
+        TH1F *hzzdeltaEtaparton = new TH1F("zz_#Delta#eta_parton", "#Delta#eta_{zz}_parton", etaBins, zetamin, zetamax);
+        // R
+        TH1F *hz1Rparton = new TH1F("z1_R_parton", "R_{z1}_parton", RBins, zRmin, zRmax);
+        TH1F *hz2Rparton = new TH1F("z2_R_parton", "R_{z2}_parton", RBins, zRmin, zRmax);
+        TH1F *hzzdeltaRparton = new TH1F("zz_#DeltaR_parton", "#DeltaR_{zz}_parton", RBins, zRmin, zRmax);
 
 // leptons
     // reco
-        // pT + m
-        TH1 *hl1pTreco = new TH1F("l1_pT_reco", "p^{T}_{l1}", 100, 0, 1000);
-        TH1 *hl2pTreco = new TH1F("l2_pT_reco", "p^{T}_{l2}", 100, 0, 1000);
-        TH1 *hl3pTreco = new TH1F("l3_pT_reco", "p^{T}_{l3}", 100, 0, 1000);
-        TH1 *hl4pTreco = new TH1F("l4_pT_reco", "p^{T}_{l4}", 100, 0, 1000);
+        // pT
+        TH1F *hl1pTreco = new TH1F("l1_pT_reco", "p^{T}_{l1}_reco", pTBins, lpTmin, lpTmax);
+        TH1F *hl2pTreco = new TH1F("l2_pT_reco", "p^{T}_{l2}_reco", pTBins, lpTmin, lpTmax);
+        TH1F *hl3pTreco = new TH1F("l3_pT_reco", "p^{T}_{l3}_reco", pTBins, lpTmin, lpTmax);
+        TH1F *hl4pTreco = new TH1F("l4_pT_reco", "p^{T}_{l4}_reco", pTBins, lpTmin, lpTmax);
         // phi
-        TH1 *hl1l2deltaPhireco = new TH1F("l1l2_#phi_reco", "#phi_{l1l2}",10,-TMath::Pi(),+TMath::Pi());
-        TH1 *hl3l4deltaPhireco = new TH1F("l3l4_#phi_reco", "#phi_{l3l4}",10,-TMath::Pi(),+TMath::Pi());
-  
+        TH1F *hl1phireco = new TH1F("l1_#phi_reco", "#phi_{l1}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl2phireco = new TH1F("l2_#phi_reco", "#phi_{l2}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl3phireco = new TH1F("l3_#phi_reco", "#phi_{l3}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl4phireco = new TH1F("l4_#phi_reco", "#phi_{l4}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl1l2deltaPhireco = new TH1F("l1l2_#Delta#phi_reco", "#Delta#phi_{l1l2}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl3l4deltaPhireco = new TH1F("l3l4_#Delta#phi_reco", "#Delta#phi_{l3l4}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl1l2deltaPhiBoostreco = new TH1F("l1l2_#Delta#phi_Boost_reco", "#Delta#phi_{l1l2}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl3l4deltaPhiBoostreco = new TH1F("l3l4_#Delta#phi_Boost_reco", "#Delta#phi_{l3l4}_reco", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hl1etareco = new TH1F("l1_#eta_reco", "#eta_{l1}_reco", etaBins, letamin, letamax);
+        TH1F *hl2etareco = new TH1F("l2_#eta_reco", "#eta_{l2}_reco", etaBins, letamin, letamax);
+        TH1F *hl3etareco = new TH1F("l3_#eta_reco", "#eta_{l3}_reco", etaBins, letamin, letamax);
+        TH1F *hl4etareco = new TH1F("l4_#eta_reco", "#eta_{l4}_reco", etaBins, letamin, letamax);
+        TH1F *hl1l2deltaEtareco = new TH1F("l1l2_#Delta#eta_reco", "#Delta#eta_{l1l2}_reco", etaBins, letamin, letamax);
+        TH1F *hl3l4deltaEtareco = new TH1F("l3l4_#Delta#eta_reco", "#Delta#eta_{l3l4}_reco", etaBins, letamin, letamax);
+        TH1F *hl1l2deltaEtaBoostreco = new TH1F("l1l2_#Delta#eta_Boost_reco", "#Delta#eta_{l1l2}_Boost_reco", etaBins, letamin, letamax);
+        TH1F *hl3l4deltaEtaBoostreco = new TH1F("l3l4_#Delta#eta_Boost_reco", "#Delta#eta_{l3l4}_Boost_reco", etaBins, letamin, letamax);
+        // R
+        TH1F *hl1Rreco = new TH1F("l1_R_reco", "R_{l1}_reco", RBins, lRmin, lRmax);
+        TH1F *hl2Rreco = new TH1F("l2_R_reco", "R_{l2}_reco", RBins, lRmin, lRmax);
+        TH1F *hl3Rreco = new TH1F("l3_R_reco", "R_{l3}_reco", RBins, lRmin, lRmax);
+        TH1F *hl4Rreco = new TH1F("l4_R_reco", "R_{l4}_reco", RBins, lRmin, lRmax);
+        TH1F *hl1l2deltaRreco = new TH1F("l1l2_#Delta R_reco", "#Delta R_{l1l2}_reco", RBins, lRmin, lRmax);
+        TH1F *hl3l4deltaRreco = new TH1F("l3l4_#Delta R_reco", "#Delta R_{l3l4}_reco", RBins, lRmin, lRmax);
+        // cos
+        TH1F *hl1cosThetareco = new TH1F("l1_cos#theta_reco", "cos#theta_{l1}_reco", cosBins, -1, 1);
+        TH1F *hl2cosThetareco = new TH1F("l2_cos#theta_reco", "cos#theta_{l2}_reco", cosBins, -1, 1);
+        TH1F *hl3cosThetareco = new TH1F("l3_cos#theta_reco", "cos#theta_{l3}_reco", cosBins, -1, 1);
+        TH1F *hl4cosThetareco = new TH1F("l4_cos#theta_reco", "cos#theta_{l4}_reco", cosBins, -1, 1);
+        TH1F *hfourlcosThetareco = new TH1F("fourl_cos#theta_reco", "cos#theta_{fourl}_reco", cosBins, -1, 1);
+        TH1F *hl1cosThetaBoostreco = new TH1F("l1_cos#theta_Boost_reco", "cos#theta_{l1}_Boost_reco", cosBins, -1, 1);
+        TH1F *hl2cosThetaBoostreco = new TH1F("l2_cos#theta_Boost_reco", "cos#theta_{l2}_Boost_reco", cosBins, -1, 1);
+        TH1F *hl3cosThetaBoostreco = new TH1F("l3_cos#theta_Boost_reco", "cos#theta_{l3}_Boost_reco", cosBins, -1, 1);
+        TH1F *hl4cosThetaBoostreco = new TH1F("l4_cos#theta_Boost_reco", "cos#theta_{l4}_Boost_reco", cosBins, -1, 1);
+        TH1F *hfourlcosThetaBoostreco = new TH1F("fourl_cos#theta_Boost_reco", "cos#theta_{fourl}_Boost_reco", cosBins, -1, 1);
+        TH1F *hl1l2CScosThetareco = new TH1F("l1l2_cos#theta_{CS}_reco", "cos#theta_{CSl1l2}_reco", cosBins, -1, 1);
+        TH1F *hl3l4CScosThetareco = new TH1F("l3l4_cos#theta_{CS}_reco", "cos#theta_{CSl3l4}_reco", cosBins, -1, 1);
+
+    // particle
+        // pT
+        TH1F *hl1pTparticle = new TH1F("l1_pT_particle", "p^{T}_{l1}_particle", pTBins, lpTmin, lpTmax);
+        TH1F *hl2pTparticle = new TH1F("l2_pT_particle", "p^{T}_{l2}_particle", pTBins, lpTmin, lpTmax);
+        TH1F *hl3pTparticle = new TH1F("l3_pT_particle", "p^{T}_{l3}_particle", pTBins, lpTmin, lpTmax);
+        TH1F *hl4pTparticle = new TH1F("l4_pT_particle", "p^{T}_{l4}_particle", pTBins, lpTmin, lpTmax);
+        // phi
+        TH1F *hl1phiparticle = new TH1F("l1_#phi_particle", "#phi_{l1}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl2phiparticle = new TH1F("l2_#phi_particle", "#phi_{l2}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl3phiparticle = new TH1F("l3_#phi_particle", "#phi_{l3}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl4phiparticle = new TH1F("l4_#phi_particle", "#phi_{l4}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl1l2deltaPhiparticle = new TH1F("l1l2_#Delta#phi_particle", "#Delta#phi_{l1l2}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl3l4deltaPhiparticle = new TH1F("l3l4_#Delta#phi_particle", "#Delta#phi_{l3l4}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl1l2deltaPhiBoostparticle = new TH1F("l1l2_#Delta#phi_Boost_particle", "#Delta#phi_{l1l2}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl3l4deltaPhiBoostparticle = new TH1F("l3l4_#Delta#phi_Boost_particle", "#Delta#phi_{l3l4}_particle", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hl1etaparticle = new TH1F("l1_#eta_particle", "#eta_{l1}_particle", etaBins, letamin, letamax);
+        TH1F *hl2etaparticle = new TH1F("l2_#eta_particle", "#eta_{l2}_particle", etaBins, letamin, letamax);
+        TH1F *hl3etaparticle = new TH1F("l3_#eta_particle", "#eta_{l3}_particle", etaBins, letamin, letamax);
+        TH1F *hl4etaparticle = new TH1F("l4_#eta_particle", "#eta_{l4}_particle", etaBins, letamin, letamax);
+        TH1F *hl1l2deltaEtaparticle = new TH1F("l1l2_#Delta#eta_particle", "#Delta#eta_{l1l2}_particle", etaBins, letamin, letamax);
+        TH1F *hl3l4deltaEtaparticle = new TH1F("l3l4_#Delta#eta_particle", "#Delta#eta_{l3l4}_particle", etaBins, letamin, letamax);
+        TH1F *hl1l2deltaEtaBoostparticle = new TH1F("l1l2_#Delta#eta_Boost_particle", "#Delta#eta_{l1l2}_Boost_particle", etaBins, letamin, letamax);
+        TH1F *hl3l4deltaEtaBoostparticle = new TH1F("l3l4_#Delta#eta_Boost_particle", "#Delta#eta_{l3l4}_Boost_particle", etaBins, letamin, letamax);
+        // R
+        TH1F *hl1Rparticle = new TH1F("l1_R_particle", "R_{l1}_particle", RBins, lRmin, lRmax);
+        TH1F *hl2Rparticle = new TH1F("l2_R_particle", "R_{l2}_particle", RBins, lRmin, lRmax);
+        TH1F *hl3Rparticle = new TH1F("l3_R_particle", "R_{l3}_particle", RBins, lRmin, lRmax);
+        TH1F *hl4Rparticle = new TH1F("l4_R_particle", "R_{l4}_particle", RBins, lRmin, lRmax);
+        TH1F *hl1l2deltaRparticle = new TH1F("l1l2_#Delta R_particle", "#Delta R_{l1l2}_particle", RBins, lRmin, lRmax);
+        TH1F *hl3l4deltaRparticle = new TH1F("l3l4_#Delta R_particle", "#Delta R_{l3l4}_particle", RBins, lRmin, lRmax);
+        // cos
+        TH1F *hl1cosThetaparticle = new TH1F("l1_cos#theta_particle", "cos#theta_{l1}_particle", cosBins, -1, 1);
+        TH1F *hl2cosThetaparticle = new TH1F("l2_cos#theta_particle", "cos#theta_{l2}_particle", cosBins, -1, 1);
+        TH1F *hl3cosThetaparticle = new TH1F("l3_cos#theta_particle", "cos#theta_{l3}_particle", cosBins, -1, 1);
+        TH1F *hl4cosThetaparticle = new TH1F("l4_cos#theta_particle", "cos#theta_{l4}_particle", cosBins, -1, 1);
+        TH1F *hfourlcosThetaparticle = new TH1F("fourl_cos#theta_particle", "cos#theta_{fourl}_particle", cosBins, -1, 1);
+        TH1F *hl1cosThetaBoostparticle = new TH1F("l1_cos#theta_Boost_particle", "cos#theta_{l1}_Boost_particle", cosBins, -1, 1);
+        TH1F *hl2cosThetaBoostparticle = new TH1F("l2_cos#theta_Boost_particle", "cos#theta_{l2}_Boost_particle", cosBins, -1, 1);
+        TH1F *hl3cosThetaBoostparticle = new TH1F("l3_cos#theta_Boost_particle", "cos#theta_{l3}_Boost_particle", cosBins, -1, 1);
+        TH1F *hl4cosThetaBoostparticle = new TH1F("l4_cos#theta_Boost_particle", "cos#theta_{l4}_Boost_particle", cosBins, -1, 1);
+        TH1F *hfourlcosThetaBoostparticle = new TH1F("fourl_cos#theta_Boost_particle", "cos#theta_{fourl}_Boost_particle", cosBins, -1, 1);
+        TH1F *hl1l2CScosThetaparticle = new TH1F("l1l2_cos#theta_{CS}_particle", "cos#theta_{CSl1l2}_particle", cosBins, -1, 1);
+        TH1F *hl3l4CScosThetaparticle = new TH1F("l3l4_cos#theta_{CS}_particle", "cos#theta_{CSl3l4}_particle", cosBins, -1, 1);
+
+    // parton
+        // pT
+        TH1F *hl1pTparton = new TH1F("l1_pT_parton", "p^{T}_{l1}_parton", pTBins, lpTmin, lpTmax);
+        TH1F *hl2pTparton = new TH1F("l2_pT_parton", "p^{T}_{l2}_parton", pTBins, lpTmin, lpTmax);
+        TH1F *hl3pTparton = new TH1F("l3_pT_parton", "p^{T}_{l3}_parton", pTBins, lpTmin, lpTmax);
+        TH1F *hl4pTparton = new TH1F("l4_pT_parton", "p^{T}_{l4}_parton", pTBins, lpTmin, lpTmax);
+        // phi
+        TH1F *hl1phiparton = new TH1F("l1_#phi_parton", "#phi_{l1}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl2phiparton = new TH1F("l2_#phi_parton", "#phi_{l2}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl3phiparton = new TH1F("l3_#phi_parton", "#phi_{l3}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl4phiparton = new TH1F("l4_#phi_parton", "#phi_{l4}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl1l2deltaPhiparton = new TH1F("l1l2_#Delta#phi_parton", "#Delta#phi_{l1l2}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl3l4deltaPhiparton = new TH1F("l3l4_#Delta#phi_parton", "#Delta#phi_{l3l4}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl1l2deltaPhiBoostparton = new TH1F("l1l2_#Delta#phi_Boost_parton", "#Delta#phi_{l1l2}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        TH1F *hl3l4deltaPhiBoostparton = new TH1F("l3l4_#Delta#phi_Boost_parton", "#Delta#phi_{l3l4}_parton", phiBins, -TMath::Pi(), +TMath::Pi());
+        // eta
+        TH1F *hl1etaparton = new TH1F("l1_#eta_parton", "#eta_{l1}_parton", etaBins, letamin, letamax);
+        TH1F *hl2etaparton = new TH1F("l2_#eta_parton", "#eta_{l2}_parton", etaBins, letamin, letamax);
+        TH1F *hl3etaparton = new TH1F("l3_#eta_parton", "#eta_{l3}_parton", etaBins, letamin, letamax);
+        TH1F *hl4etaparton = new TH1F("l4_#eta_parton", "#eta_{l4}_parton", etaBins, letamin, letamax);
+        TH1F *hl1l2deltaEtaparton = new TH1F("l1l2_#Delta#eta_parton", "#Delta#eta_{l1l2}_parton", etaBins, letamin, letamax);
+        TH1F *hl3l4deltaEtaparton = new TH1F("l3l4_#Delta#eta_parton", "#Delta#eta_{l3l4}_parton", etaBins, letamin, letamax);
+        TH1F *hl1l2deltaEtaBoostparton = new TH1F("l1l2_#Delta#eta_Boost_parton", "#Delta#eta_{l1l2}_Boost_parton", etaBins, letamin, letamax);
+        TH1F *hl3l4deltaEtaBoostparton = new TH1F("l3l4_#Delta#eta_Boost_parton", "#Delta#eta_{l3l4}_Boost_parton", etaBins, letamin, letamax);
+        // R
+        TH1F *hl1Rparton = new TH1F("l1_R_parton", "R_{l1}_parton", RBins, lRmin, lRmax);
+        TH1F *hl2Rparton = new TH1F("l2_R_parton", "R_{l2}_parton", RBins, lRmin, lRmax);
+        TH1F *hl3Rparton = new TH1F("l3_R_parton", "R_{l3}_parton", RBins, lRmin, lRmax);
+        TH1F *hl4Rparton = new TH1F("l4_R_parton", "R_{l4}_parton", RBins, lRmin, lRmax);
+        TH1F *hl1l2deltaRparton = new TH1F("l1l2_#Delta R_parton", "#Delta R_{l1l2}_parton", RBins, lRmin, lRmax);
+        TH1F *hl3l4deltaRparton = new TH1F("l3l4_#Delta R_parton", "#Delta R_{l3l4}_parton", RBins, lRmin, lRmax);
+        // cos
+        TH1F *hl1cosThetaparton = new TH1F("l1_cos#theta_parton", "cos#theta_{l1}_parton", cosBins, -1, 1);
+        TH1F *hl2cosThetaparton = new TH1F("l2_cos#theta_parton", "cos#theta_{l2}_parton", cosBins, -1, 1);
+        TH1F *hl3cosThetaparton = new TH1F("l3_cos#theta_parton", "cos#theta_{l3}_parton", cosBins, -1, 1);
+        TH1F *hl4cosThetaparton = new TH1F("l4_cos#theta_parton", "cos#theta_{l4}_parton", cosBins, -1, 1);
+        TH1F *hfourlcosThetaparton = new TH1F("fourl_cos#theta_parton", "cos#theta_{fourl}_parton", cosBins, -1, 1);
+        TH1F *hl1cosThetaBoostparton = new TH1F("l1_cos#theta_Boost_parton", "cos#theta_{l1}_Boost_parton", cosBins, -1, 1);
+        TH1F *hl2cosThetaBoostparton = new TH1F("l2_cos#theta_Boost_parton", "cos#theta_{l2}_Boost_parton", cosBins, -1, 1);
+        TH1F *hl3cosThetaBoostparton = new TH1F("l3_cos#theta_Boost_parton", "cos#theta_{l3}_Boost_parton", cosBins, -1, 1);
+        TH1F *hl4cosThetaBoostparton = new TH1F("l4_cos#theta_Boost_parton", "cos#theta_{l4}_Boost_parton", cosBins, -1, 1);
+        TH1F *hfourlcosThetaBoostparton = new TH1F("fourl_cos#theta_Boost_parton", "cos#theta_{fourl}_Boost_parton", cosBins, -1, 1);
+        TH1F *hl1l2CScosThetaparton = new TH1F("l1l2_cos#theta_{CS}_parton", "cos#theta_{CSl1l2}_parton", cosBins, -1, 1);
+        TH1F *hl3l4CScosThetaparton = new TH1F("l3l4_cos#theta_{CS}_parton", "cos#theta_{CSl3l4}_parton", cosBins, -1, 1);
+
+// comp
+// 2D - parton(1) particle(2) reco(3)
+
+    // higgs
+      // pT + m
+        TH2 *hHpTComp = new TH2F("H_pT_comp", "p_{T}^{hbb}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hHmComp = new TH2F("H_m_comp", "m_{hbb}", 20, 0.0, 500, 20, 0.0, 500);
+    // jets
+        TH2 *hjjpT23Comp = new TH2F("jj_pT_comp", "p^{T}_{jj}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hjjdeltaPhi23Comp = new TH2F("jj_#Delta#phi_comp", "#Delta#phi_{jj}", 20, -TMath::Pi(),+TMath::Pi(), 20, -TMath::Pi(),+TMath::Pi());
+    //z
+      // pT + m
+        TH2 *hz1pT13Comp = new TH2F("z1_pT_comp_13", "p^{T}_{z1}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hz1m13Comp = new TH2F("z1_m_comp_13", "m_{z1}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hz2pT13Comp = new TH2F("z2_pT_comp_13", "p^{T}_{z2}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hz2m13Comp = new TH2F("z2_m_comp_13", "m_{z2}", 20, 0.0, 500, 20, 0.0, 500);
+
+        TH2 *hz1pT12Comp = new TH2F("z1_pT_comp_23", "p^{T}_{z1}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hz1m12Comp = new TH2F("z1_m_comp_23", "m_{z1}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hz2pT12Comp = new TH2F("z2_pT_comp_23", "p^{T}_{z2}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hz2m12Comp = new TH2F("z2_m_comp_23", "m_{z2}", 20, 0.0, 500, 20, 0.0, 500);
+
+        TH2 *hz1pT23Comp = new TH2F("z1_pT_comp_12", "p^{T}_{z1}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hz1m23Comp = new TH2F("z1_m_comp_12", "m_{z1}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hz2pT23Comp = new TH2F("z2_pT_comp_12", "p^{T}_{z2}", 20, 0.0, 500, 20, 0.0, 500);
+        TH2 *hz2m23Comp = new TH2F("z2_m_comp_12", "m_{z2}", 20, 0.0, 500, 20, 0.0, 500);
+
+        TH2 *hl1l2deltaPhiHpTcompreco = new TH2F("l1l2_delta#phi_H_pT_comp_reco", "l1l2_delta#phi_H_pT_comp_reco", 20, -TMath::Pi(),+TMath::Pi(), 20, 0.0, 500);
+        TH2 *hl3l4deltaPhiHpTcompreco = new TH2F("l3l4_delta#phi_H_pT_comp_reco", "l1l2_delta#phi_H_pT_comp_reco", 20, -TMath::Pi(),+TMath::Pi(), 20, 0.0, 500);
+
   double  nPassed=0;
   double Lumi=3e3;
   double totWeightedEntries=0;
   int  nPassedRaw=0;
-  int bjets = 0;
   int nQuads=0;
-  bool electronEvent;
 
   GenParticle *daughter1;
   GenParticle *daughter2;
@@ -260,8 +613,19 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
   TLorentzVector fourl_reco, fourl_particle, fourl_parton; 
 
+  int q1_reco=0;
+  int q2_reco=0;
+  int q3_reco=0;
+  int q4_reco=0;
+
+  int q1_particle=0;
+  int q2_particle=0;
+  int q3_particle=0;
+  int q4_particle=0;
+
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// reco
+// loop
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
@@ -271,6 +635,10 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     
     Float_t weight = event->Weight/numberOfEntries*Lumi;
     totWeightedEntries+=weight;
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// reco
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // higgs
 
@@ -286,7 +654,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
       else noBtag.push_back(i);
            goodJetIndex.push_back(i);
     }
-    
+
     sort(btagIndex.begin(), btagIndex.end(), [branchJet](const int& lhs, const int& rhs) {
 	    return ((Jet*)branchJet->At(lhs))->PT < ((Jet*)branchJet->At(rhs))->PT;
     });
@@ -297,8 +665,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 	    return ((Jet*)branchJet->At(lhs))->PT < ((Jet*)branchJet->At(rhs))->PT;
     });
 
-    if(btagIndex.size() <1) continue ; // at least one b tag 
-    if(goodJetIndex.size() < 2) continue ; // at least two jets 
+   if(btagIndex.size() <1) continue ; // at least one b tag 
+   if(goodJetIndex.size() < 2) continue ; // at least two jets 
 
     Jet *b1=nullptr;
     Jet *b2=nullptr;
@@ -307,17 +675,15 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     vector<vector <int>> bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
 //  vector<vector <int>> bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
 
-    if( bJetPairsComb.size() < 1) continue; // need at least two good jets; 
+   if( bJetPairsComb.size() < 1) continue; // need at least two good jets; 
     for(int i=0; i<(int)bJetPairsComb.size(); i++)
       bJetPairs.push_back(make_pair(bJetPairsComb[i][0],bJetPairsComb[i][1]));
-
 
     if( bJetPairs.size() > 1) 
       sort(bJetPairs.begin(), bJetPairs.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
 	  return fabs(((((Jet*)branchJet->At(lhs.first))->P4() + ((Jet*)branchJet->At(lhs.second))->P4())).M() - 125 ) <
 	    fabs( ((((Jet*)branchJet->At(rhs.first))->P4() + ((Jet*)branchJet->At(rhs.second))->P4()).M()) - 125 ) ; 
 	});
-
     
     pair <int,int> higgsbbcandidate;
     bool foundBjet=false; 
@@ -330,8 +696,13 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 	  break;
       }
     }
+    b1_reco = b1->P4();
+    b2_reco = b2->P4();
+    h_reco = b1_reco + b2_reco;
 
-    h_reco = b1->P4() + b2->P4();
+    double bbdeltaPhireco=(b1_reco.Phi() > b2_reco.Phi() ? -1:+1)*TMath::Abs(b2_reco.Phi() - b1_reco.Phi());
+    double bbdeltaEtareco=(b1_reco.Eta() > b2_reco.Eta() ? -1:+1)*TMath::Abs(b2_reco.Eta() - b1_reco.Eta());
+    double bbdeltaRreco=sqrt((bbdeltaPhireco*bbdeltaPhireco)+(bbdeltaEtareco*bbdeltaEtareco));
 
     if(!foundBjet) continue; 
     
@@ -352,13 +723,18 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
       vbfJetIndex.push_back(make_pair(vbfJetIndexComb[i][0],vbfJetIndexComb[i][1]));
     if( branchMuon->GetEntries() + branchElectron->GetEntries() < 4) continue;
 
+  // order by pT
+
     Jet *jet1 = (Jet*) branchJet->At(vbfJetIndex[0].first);
     Jet *jet2 = (Jet*) branchJet->At(vbfJetIndex[0].second);
 
     j1_reco=jet1->P4();
     j2_reco=jet2->P4();
 
-    double jjdeltaPhireco=(j1_reco.Phi() > j2_reco.Phi() ? -1:+1)*TMath::Abs(j1_reco.Phi() - j2_reco.Phi());
+    //double jjdeltaPhireco=(j1_reco.Phi() > j2_reco.Phi() ? -1:+1)*TMath::Abs(j2_reco.Phi() - j1_reco.Phi());
+    double jjdeltaPhireco= (j1_reco.Phi() - j2_reco.Phi()) ;
+    double jjdeltaEtareco=(j1_reco.Eta() > j2_reco.Eta() ? -1:+1)*TMath::Abs(j2_reco.Eta() - j1_reco.Eta());
+    double jjdeltaRreco=sqrt((jjdeltaPhireco*jjdeltaPhireco)+(jjdeltaEtareco*jjdeltaEtareco));
 
 // leptons + z
 
@@ -368,18 +744,21 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
       // pT and eta cuts 
       if( el_reco->PT > 1 && fabs(el_reco->Eta) < 2.5) goodE_reco_indices.push_back(i);
+
     }
 
     // sort the indices by pT ;
     sort(goodE_reco_indices.begin(), goodE_reco_indices.end(), [branchElectron](const int& lhs, const int& rhs) {
 	return ((Electron*)branchElectron->At(lhs))->PT < ((Electron*)branchElectron->At(rhs))->PT;
       });
-    
+
     vector <int> goodMu_reco_indices; 
     for(int i=0; i<(int)branchMuon->GetEntries(); i++){
-    // pT and eta cuts 
       Muon *mu_reco = (Muon *) branchMuon->At(i);
+    
+    // pT and eta cuts 
       if( mu_reco->PT > 1 && fabs(mu_reco->Eta) < 2.5) goodMu_reco_indices.push_back(i);
+
     }
 
     // sort the indices by pT ;
@@ -466,14 +845,16 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     	double mass2_reco=0;
 	
       if( lhs.first==0 ) mass1_reco = (((Electron*)branchElectron->At(lhs.second.first))->P4() + ((Electron*)branchElectron->At(lhs.second.second))->P4()).M();
-      else mass1_reco = ((((Muon*)branchMuon->At(lhs.second.first))->P4() + ((Muon*)branchMuon->At(lhs.second.second))->P4())).M();
+      else mass1_reco = (((Muon*)branchMuon->At(lhs.second.first))->P4() + ((Muon*)branchMuon->At(lhs.second.second))->P4()).M();
           
       if( rhs.first==0 ) mass2_reco = (((Electron*)branchElectron->At(rhs.second.first))->P4() + ((Electron*)branchElectron->At(rhs.second.second))->P4()).M();
       else mass2_reco = (((Muon*)branchMuon->At(rhs.second.first))->P4() + ((Muon*)branchMuon->At(rhs.second.second))->P4()).M();
           
 	    return fabs(mass1_reco ) <  fabs(mass2_reco) ;
+
     });
-  
+
+
   if( RecoPairIndices[0].first == 1 && RecoPairIndices[1].first == 1) thisRecoEventType=0;
   else if( RecoPairIndices[0].first == 0 && RecoPairIndices[1].first == 0) thisRecoEventType=1;
   else if( RecoPairIndices[0].first == 1 && RecoPairIndices[1].first == 0) thisRecoEventType=2;
@@ -489,10 +870,10 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     Muon *muon3_reco = (Muon *) branchMuon->At( RecoPairIndices[1].second.first);
     Muon *muon4_reco = (Muon *) branchMuon->At( RecoPairIndices[1].second.second);
 
-    fourl_reco=muon1_reco->P4() + muon2_reco->P4() + muon3_reco->P4() + muon4_reco->P4(); 
-    
-    z1_reco=muon1_reco->P4() + muon2_reco->P4() ;
-    z2_reco=muon3_reco->P4() + muon4_reco->P4() ;
+    q1_reco = muon1_reco->Charge;
+    q2_reco = muon2_reco->Charge;
+    q3_reco = muon3_reco->Charge;
+    q4_reco = muon4_reco->Charge;
 
     l1_reco=muon1_reco->P4();
     l2_reco=muon2_reco->P4();
@@ -511,10 +892,10 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     Electron *muon3_reco = (Electron *) branchElectron->At( RecoPairIndices[1].second.first);
     Electron *muon4_reco = (Electron *) branchElectron->At( RecoPairIndices[1].second.second);
 
-    fourl_reco=muon1_reco->P4() + muon2_reco->P4() + muon3_reco->P4() + muon4_reco->P4(); 
-
-    z1_reco=muon1_reco->P4() + muon2_reco->P4() ;
-    z2_reco=muon3_reco->P4() + muon4_reco->P4() ;
+    q1_reco = muon1_reco->Charge;
+    q2_reco = muon2_reco->Charge;
+    q3_reco = muon3_reco->Charge;
+    q4_reco = muon4_reco->Charge;
 
     l1_reco=muon1_reco->P4();
     l2_reco=muon2_reco->P4();
@@ -532,10 +913,10 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     Electron *muon3_reco = (Electron *) branchElectron->At( RecoPairIndices[1].second.first);
     Electron *muon4_reco = (Electron *) branchElectron->At( RecoPairIndices[1].second.second);
 
-    fourl_reco=muon1_reco->P4() + muon2_reco->P4() + muon3_reco->P4() + muon4_reco->P4(); 
-
-    z1_reco=muon1_reco->P4() + muon2_reco->P4() ;
-    z2_reco=muon3_reco->P4() + muon4_reco->P4() ;
+    q1_reco = muon1_reco->Charge;
+    q2_reco = muon2_reco->Charge;
+    q3_reco = muon3_reco->Charge;
+    q4_reco = muon4_reco->Charge;
 
     l1_reco=muon1_reco->P4();
     l2_reco=muon2_reco->P4();
@@ -553,10 +934,10 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     Muon *muon3_reco = (Muon *) branchMuon->At( RecoPairIndices[1].second.first);
     Muon *muon4_reco = (Muon *) branchMuon->At( RecoPairIndices[1].second.second);
 
-    fourl_reco=muon1_reco->P4() + muon2_reco->P4() + muon3_reco->P4() + muon4_reco->P4(); 
-
-    z1_reco=muon1_reco->P4() + muon2_reco->P4() ;
-    z2_reco=muon3_reco->P4() + muon4_reco->P4() ;
+    q1_reco = muon1_reco->Charge;
+    q2_reco = muon2_reco->Charge;
+    q3_reco = muon3_reco->Charge;
+    q4_reco = muon4_reco->Charge;
 
     l1_reco=muon1_reco->P4();
     l2_reco=muon2_reco->P4();
@@ -565,33 +946,203 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
    }
 
-    double zzdeltaPhireco=(z2_reco.Phi() > z1_reco.Phi() ? -1:+1)*TMath::Abs(z1_reco.Phi() - z2_reco.Phi());
-    double l1l2deltaPhireco=(l2_reco.Phi() > l1_reco.Phi() ? -1:+1)*TMath::Abs(l1_reco.Phi() - l2_reco.Phi());
-    double l3l4deltaPhireco=(l4_reco.Phi() > l3_reco.Phi() ? -1:+1)*TMath::Abs(l3_reco.Phi() - l4_reco.Phi());
+    z1_reco=l1_reco + l2_reco;
+    z2_reco=l3_reco + l4_reco;
+    fourl_reco=l1_reco + l2_reco + l3_reco + l4_reco;
+
+
+    double l1l2deltaPhireco=(l1_reco.Phi() > l2_reco.Phi() ? -1:+1)*TMath::Abs(l2_reco.Phi() - l1_reco.Phi());
+    double l3l4deltaPhireco=(l3_reco.Phi() > l4_reco.Phi() ? -1:+1)*TMath::Abs(l4_reco.Phi() - l3_reco.Phi());
+
+    double l1l2deltaEtareco=(l1_reco.Eta() > l2_reco.Eta() ? -1:+1)*TMath::Abs(l2_reco.Eta() - l1_reco.Eta());
+    double l3l4deltaEtareco=(l3_reco.Eta() > l4_reco.Eta() ? -1:+1)*TMath::Abs(l4_reco.Eta() - l3_reco.Eta());
+
+    double l1l2deltaRreco=sqrt((l1l2deltaPhireco*l1l2deltaPhireco)+(l1l2deltaEtareco*l1l2deltaEtareco));
+    double l3l4deltaRreco=sqrt((l3l4deltaPhireco*l3l4deltaPhireco)+(l3l4deltaEtareco*l3l4deltaEtareco));
+
+    double l1cosThetareco=l1_reco.CosTheta();
+    double l2cosThetareco=l2_reco.CosTheta();
+    double l3cosThetareco=l3_reco.CosTheta();
+    double l4cosThetareco=l4_reco.CosTheta();
+    double fourlcosThetareco=fourl_reco.CosTheta();
+
+    l1_reco.Boost(-z1_reco.BoostVector());
+    l2_reco.Boost(-z1_reco.BoostVector());
+    l3_reco.Boost(-z2_reco.BoostVector());
+    l4_reco.Boost(-z2_reco.BoostVector());
+    double l1cosThetaBoostreco=l1_reco.CosTheta();
+    double l2cosThetaBoostreco=l2_reco.CosTheta();
+    double l3cosThetaBoostreco=l3_reco.CosTheta();
+    double l4cosThetaBoostreco=l4_reco.CosTheta();
+    double fourlcosThetaBoostreco=fourl_reco.CosTheta();
+    double l1l2deltaPhiBoostreco=(l1_reco.Phi() > l2_reco.Phi() ? -1:+1)*TMath::Abs(l2_reco.Phi() - l1_reco.Phi());
+    double l3l4deltaPhiBoostreco=(l3_reco.Phi() > l4_reco.Phi() ? -1:+1)*TMath::Abs(l4_reco.Phi() - l3_reco.Phi());
+    double l1l2deltaEtaBoostreco=(l1_reco.Eta() > l2_reco.Eta() ? -1:+1)*TMath::Abs(l2_reco.Eta() - l1_reco.Eta());
+    double l3l4deltaEtaBoostreco=(l3_reco.Eta() > l4_reco.Eta() ? -1:+1)*TMath::Abs(l4_reco.Eta() - l3_reco.Eta());
+    l1_reco.Boost(z1_reco.BoostVector());
+    l2_reco.Boost(z1_reco.BoostVector());
+    l3_reco.Boost(z2_reco.BoostVector());
+    l4_reco.Boost(z2_reco.BoostVector());
+
+  // collins soper frame
+    double l1l2CScosThetareco=(q1_reco > q2_reco ? -1:+1)*TMath::Abs(2*(l2_reco.Pz()*l1_reco.E()-l1_reco.Pz()*l2_reco.E())/(z1_reco.M()*sqrt(z1_reco.M()*z1_reco.M()+z1_reco.Pt()*z1_reco.Pt())));
+    double l3l4CScosThetareco=(q3_reco > q4_reco ? -1:+1)*TMath::Abs(2*(l4_reco.Pz()*l3_reco.E()-l3_reco.Pz()*l4_reco.E())/(z2_reco.M()*sqrt(z2_reco.M()*z2_reco.M()+z2_reco.Pt()*z2_reco.Pt())));
+
+    double zzdeltaPhireco=(z1_reco.Phi() > z2_reco.Phi() ? -1:+1)*TMath::Abs(z2_reco.Phi() - z1_reco.Phi());
+    double zzdeltaEtareco=(z1_reco.Eta() > z2_reco.Eta() ? -1:+1)*TMath::Abs(z2_reco.Eta() - z1_reco.Eta());
+    double zzdeltaRreco=sqrt((zzdeltaPhireco*zzdeltaPhireco)+(zzdeltaEtareco*zzdeltaEtareco));
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // particle
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// higgs
+// higgs + jets
 
+/*
+    int bjets = 0;
     for(int i=0; i<(int)branchGenJet->GetEntries(); i++){
       Jet *genjet=(Jet*) branchGenJet->At(i);
-      if (genjet -> Flavor == 5) bjets += 1; 
-      else continue;
+      if (ghost_btag(branchGenParticle, genjet)){
+        bjets += 1; 
       if (bjets == 1) {
         b1_particle = genjet->P4();
       } else if (bjets == 2){
         b2_particle = genjet->P4();
-        break;
-      }
+      } else break;
     }
+  }
+
 
     h_particle = b1_particle + b2_particle;
 
+    double bbdeltaPhiparticle=(b1_particle.Phi() > b2_particle.Phi() ? -1:+1)*TMath::Abs(b2_particle.Phi() - b1_particle.Phi());
+    double bbdeltaEtaparticle=(b1_particle.Eta() > b2_particle.Eta() ? -1:+1)*TMath::Abs(b2_particle.Eta() - b1_particle.Eta());
+    double bbdeltaRparticle=sqrt((bbdeltaPhiparticle*bbdeltaPhiparticle)+(bbdeltaEtaparticle*bbdeltaEtaparticle));
+
+
+
+    int jetsParticle = 0;
+    for(int i=0; i<(int)branchGenJet->GetEntries(); i++){
+      Jet *genjet=(Jet*) branchGenJet->At(i);
+      if (!ghost_btag(branchGenParticle, genjet)){
+       jetsParticle += 1;
+      if (jetsParticle == 1) {
+        j1_particle = genjet->P4();
+      } else if (jetsParticle == 2){
+        j2_particle = genjet->P4();
+      } else break;
+    }
+  }
+
+    double jjdeltaPhiparticle=(j1_particle.Phi() > j2_particle.Phi() ? -1:+1)*TMath::Abs(j2_particle.Phi() - j1_particle.Phi());
+    double jjdeltaEtaparticle=(j1_particle.Eta() > j2_particle.Eta() ? -1:+1)*TMath::Abs(j2_particle.Eta() - j1_particle.Eta());
+    double jjdeltaRparticle=sqrt((jjdeltaPhiparticle*jjdeltaPhiparticle)+(jjdeltaEtaparticle*jjdeltaEtaparticle));
+*/
+
+//---------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+
+// higgs
+
+    vector <int> btagIndexParticle;
+    vector <int> noBtagParticle;
+    vector <int> goodJetIndexParticle;
+
+    for(int i=0; i<(int)branchGenJet->GetEntries(); i++){
+      Jet *jet=(Jet*) branchGenJet->At(i);
+    //if( jet->PT < 20) continue;
+    //if (fabs(jet->Eta) > 4.4) continue; 
+      if( ghost_btag(branchGenParticle, jet)) btagIndexParticle.push_back(i);
+      else noBtagParticle.push_back(i);
+           goodJetIndexParticle.push_back(i);
+    }
+
+    sort(btagIndexParticle.begin(), btagIndexParticle.end(), [branchGenJet](const int& lhs, const int& rhs) {
+	    return ((Jet*)branchGenJet->At(lhs))->PT < ((Jet*)branchGenJet->At(rhs))->PT;
+    });
+    sort(noBtagParticle.begin(), noBtagParticle.end(), [branchGenJet](const int& lhs, const int& rhs) {
+	    return ((Jet*)branchGenJet->At(lhs))->PT < ((Jet*)branchGenJet->At(rhs))->PT;
+    });
+    sort(goodJetIndexParticle.begin(), goodJetIndexParticle.end(), [branchGenJet](const int& lhs, const int& rhs) {
+	    return ((Jet*)branchGenJet->At(lhs))->PT < ((Jet*)branchGenJet->At(rhs))->PT;
+    });
+
+   if(btagIndexParticle.size() <1) continue ; // at least one b tag 
+   if(goodJetIndexParticle.size() < 2) continue ; // at least two jets 
+
+    Jet *b1Particle=nullptr;
+    Jet *b2Particle=nullptr;
+
+    vector<pair<int,int>> bJetPairsParticle;
+    vector<vector <int>> bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndexParticle);
+  //vector<vector <int>> bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndexParticle);
+
+   if( bJetPairsCombParticle.size() < 1) continue; // need at least two good jets; 
+    for(int i=0; i<(int)bJetPairsCombParticle.size(); i++)
+      bJetPairsParticle.push_back(make_pair(bJetPairsCombParticle[i][0],bJetPairsCombParticle[i][1]));
+
+    if( bJetPairsParticle.size() > 1) 
+      sort(bJetPairsParticle.begin(), bJetPairsParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
+	  return fabs(((((Jet*)branchGenJet->At(lhs.first))->P4() + ((Jet*)branchGenJet->At(lhs.second))->P4())).M() - 125 ) <
+	    fabs( ((((Jet*)branchGenJet->At(rhs.first))->P4() + ((Jet*)branchGenJet->At(rhs.second))->P4()).M()) - 125 ) ; 
+	});
+    
+    pair <int,int> higgsbbcandidateParticle;
+    bool foundBjetParticle=false; 
+    for(int i=0; i<(int) bJetPairsParticle.size(); i++){
+      b1Particle=(Jet*)branchGenJet->At(bJetPairsParticle[i].first);
+      b2Particle=(Jet*)branchGenJet->At(bJetPairsParticle[i].second);
+      if( ghost_btag(branchGenParticle, b1Particle) || ghost_btag(branchGenParticle, b2Particle)) {
+    higgsbbcandidateParticle=bJetPairsParticle[i];
+    foundBjetParticle=true;
+	  break;
+      }
+    }
+    b1_particle = b1Particle->P4();
+    b2_particle = b2Particle->P4();
+    h_particle = b1_particle + b2_particle;
+
+    double bbdeltaPhiparticle=(b1_particle.Phi() > b2_particle.Phi() ? -1:+1)*TMath::Abs(b2_particle.Phi() - b1_particle.Phi());
+    double bbdeltaEtaparticle=(b1_particle.Eta() > b2_particle.Eta() ? -1:+1)*TMath::Abs(b2_particle.Eta() - b1_particle.Eta());
+    double bbdeltaRparticle=sqrt((bbdeltaPhiparticle*bbdeltaPhiparticle)+(bbdeltaEtaparticle*bbdeltaEtaparticle));
+
+    if(!foundBjetParticle) continue; 
+    
+// jets
+
+    vector <int> nonHiggsJetParticle;
+
+    for(int i=0; i<(int)goodJetIndexParticle.size(); i++){
+      if( goodJetIndexParticle[i] == higgsbbcandidateParticle.first  || goodJetIndexParticle[i] == higgsbbcandidateParticle.second) continue;
+      nonHiggsJetParticle.push_back(i);
+    }
+
+    if(nonHiggsJetParticle.size() < 2) continue ; 
+    vector<pair<int,int>> vbfJetIndexParticle;
+    vector<vector <int>> vbfJetIndexCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJetParticle);
+    if( vbfJetIndexCombParticle.size() < 1 ) continue; 
+    for(int i=0; i<(int)vbfJetIndexCombParticle.size(); i++)
+      vbfJetIndexParticle.push_back(make_pair(vbfJetIndexCombParticle[i][0],vbfJetIndexCombParticle[i][1]));
+    // if( branchMuon->GetEntries() + branchElectron->GetEntries() < 4) continue;
+
+  // order by pT
+
+    Jet *jet1Particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].first);
+    Jet *jet2Particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].second);
+
+    j1_particle=jet1Particle->P4();
+    j2_particle=jet2Particle->P4();
+
+    //double jjdeltaPhiparticle=(j1_particle.Phi() > j2_particle.Phi() ? -1:+1)*TMath::Abs(j2_particle.Phi() - j1_particle.Phi());
+    double jjdeltaPhiparticle= (j1_particle.Phi() - j2_particle.Phi()) ;
+    double jjdeltaEtaparticle=(j1_particle.Eta() > j2_particle.Eta() ? -1:+1)*TMath::Abs(j2_particle.Eta() - j1_particle.Eta());
+    double jjdeltaRparticle=sqrt((jjdeltaPhiparticle*jjdeltaPhiparticle)+(jjdeltaEtaparticle*jjdeltaEtaparticle));
+
+//---------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
+
 // z + leptons
 
-// electrons 
 vector <int> goodE_particle_indices; 
 for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     GenParticle *particle=(GenParticle*) branchGenParticle->At(i);  
@@ -599,8 +1150,7 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     if( fabs(particle->PID) == 11 && fabs(particle->Eta)< 2.5 && particle->PT > 2.5) 
             goodE_particle_indices.push_back(i); 
 }
-
-// muons  
+ 
 vector <int> goodMu_particle_indices; 
 for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     GenParticle *particle=(GenParticle*) branchGenParticle->At(i);  
@@ -608,8 +1158,6 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     // electrons 
     if( fabs(particle->PID) == 13 && fabs(particle->Eta)< 2.5 && particle->PT > 2.5) 
             goodMu_particle_indices.push_back(i); 
-// neutrinos 
-// jets we use the GenJet container.. 
 }
 
     // sort the indices by pT ;
@@ -696,7 +1244,7 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     // sort all of the indices by closeness to mZ
     sort(ParticlePairIndices.begin(), ParticlePairIndices.end(), [branchGenParticle]  ( const pair<int,pair<int,int>>  lhs , const pair<int,pair<int,int>>   rhs ){
 
-	    double mass1_particle=0 ;
+	    double mass1_particle=0;
     	double mass2_particle=0;
 	
       if( lhs.first==0 ) mass1_particle = (((GenParticle*) branchGenParticle->At(lhs.second.first))->P4() + ((GenParticle*) branchGenParticle->At(lhs.second.second))->P4()).M();
@@ -722,11 +1270,11 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     // take first two muons
     GenParticle *muon3_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.first);
     GenParticle *muon4_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.second);
-
-    fourl_particle=muon1_particle->P4() + muon2_particle->P4() + muon3_particle->P4() + muon4_particle->P4(); 
     
-    z1_particle=muon1_particle->P4() + muon2_particle->P4() ;
-    z2_particle=muon3_particle->P4() + muon4_particle->P4() ;
+    q1_particle = muon1_particle->Charge;
+    q2_particle = muon2_particle->Charge;
+    q3_particle = muon3_particle->Charge;
+    q4_particle = muon4_particle->Charge;
 
     l1_particle=muon1_particle->P4();
     l2_particle=muon2_particle->P4();
@@ -745,10 +1293,10 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     GenParticle *muon3_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.first);
     GenParticle *muon4_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.second);
 
-    fourl_particle=muon1_particle->P4() + muon2_particle->P4() + muon3_particle->P4() + muon4_particle->P4(); 
-
-    z1_particle=muon1_particle->P4() + muon2_particle->P4() ;
-    z2_particle=muon3_particle->P4() + muon4_particle->P4() ;
+    q1_particle = muon1_particle->Charge;
+    q2_particle = muon2_particle->Charge;
+    q3_particle = muon3_particle->Charge;
+    q4_particle = muon4_particle->Charge;
 
     l1_particle=muon1_particle->P4();
     l2_particle=muon2_particle->P4();
@@ -765,11 +1313,11 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     // take first two electrons
     GenParticle *muon3_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.first);
     GenParticle *muon4_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.second);
-
-    fourl_particle=muon1_particle->P4() + muon2_particle->P4() + muon3_particle->P4() + muon4_particle->P4(); 
-
-    z1_particle=muon1_particle->P4() + muon2_particle->P4() ;
-    z2_particle=muon3_particle->P4() + muon4_particle->P4() ;
+  
+    q1_particle = muon1_particle->Charge;
+    q2_particle = muon2_particle->Charge;
+    q3_particle = muon3_particle->Charge;
+    q4_particle = muon4_particle->Charge;
 
     l1_particle=muon1_particle->P4();
     l2_particle=muon2_particle->P4();
@@ -787,10 +1335,10 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     GenParticle *muon3_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.first);
     GenParticle *muon4_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.second);
 
-    fourl_particle=muon1_particle->P4() + muon2_particle->P4() + muon3_particle->P4() + muon4_particle->P4(); 
-
-    z1_particle=muon1_particle->P4() + muon2_particle->P4() ;
-    z2_particle=muon3_particle->P4() + muon4_particle->P4() ;
+    q1_particle = muon1_particle->Charge;
+    q2_particle = muon2_particle->Charge;
+    q3_particle = muon3_particle->Charge;
+    q4_particle = muon4_particle->Charge;
 
     l1_particle=muon1_particle->P4();
     l2_particle=muon2_particle->P4();
@@ -798,6 +1346,51 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     l4_particle=muon4_particle->P4(); 
 
    }
+
+    z1_particle=l1_particle + l2_particle;
+    z2_particle=l3_particle + l4_particle;
+    fourl_particle=l1_particle + l2_particle + l3_particle + l4_particle;
+
+
+    double l1l2deltaPhiparticle=(l1_particle.Phi() > l2_particle.Phi() ? -1:+1)*TMath::Abs(l2_particle.Phi() - l1_particle.Phi());
+    double l3l4deltaPhiparticle=(l3_particle.Phi() > l4_particle.Phi() ? -1:+1)*TMath::Abs(l4_particle.Phi() - l3_particle.Phi());
+
+    double l1l2deltaEtaparticle=(l1_particle.Eta() > l2_particle.Eta() ? -1:+1)*TMath::Abs(l2_particle.Eta() - l1_particle.Eta());
+    double l3l4deltaEtaparticle=(l3_particle.Eta() > l4_particle.Eta() ? -1:+1)*TMath::Abs(l4_particle.Eta() - l3_particle.Eta());
+
+    double l1l2deltaRparticle=sqrt((l1l2deltaPhiparticle*l1l2deltaPhiparticle)+(l1l2deltaEtaparticle*l1l2deltaEtaparticle));
+    double l3l4deltaRparticle=sqrt((l3l4deltaPhiparticle*l3l4deltaPhiparticle)+(l3l4deltaEtaparticle*l3l4deltaEtaparticle));
+
+    double l1cosThetaparticle=l1_particle.CosTheta();
+    double l2cosThetaparticle=l2_particle.CosTheta();
+    double l3cosThetaparticle=l3_particle.CosTheta();
+    double l4cosThetaparticle=l4_particle.CosTheta();
+    double fourlcosThetaparticle=fourl_particle.CosTheta();
+
+    l1_particle.Boost(-z1_particle.BoostVector());
+    l2_particle.Boost(-z1_particle.BoostVector());
+    l3_particle.Boost(-z2_particle.BoostVector());
+    l4_particle.Boost(-z2_particle.BoostVector());
+    double l1cosThetaBoostparticle=l1_particle.CosTheta();
+    double l2cosThetaBoostparticle=l2_particle.CosTheta();
+    double l3cosThetaBoostparticle=l3_particle.CosTheta();
+    double l4cosThetaBoostparticle=l4_particle.CosTheta();
+    double fourlcosThetaBoostparticle=fourl_particle.CosTheta();
+    l1_particle.Boost(z1_particle.BoostVector());
+    l2_particle.Boost(z1_particle.BoostVector());
+    l3_particle.Boost(z2_particle.BoostVector());
+    l4_particle.Boost(z2_particle.BoostVector());
+
+  // collins soper frame
+    double l1l2CScosThetaparticle=(q1_particle > q2_particle ? -1:+1)*TMath::Abs(2*(l2_particle.Pz()*l1_particle.E()-l1_particle.Pz()*l2_particle.E())/(z1_particle.M()*sqrt(z1_particle.M()*z1_particle.M()+z1_particle.Pt()*z1_particle.Pt())));
+    double l3l4CScosThetaparticle=(q3_particle > q4_particle ? -1:+1)*TMath::Abs(2*(l4_particle.Pz()*l3_particle.E()-l3_particle.Pz()*l4_particle.E())/(z2_particle.M()*sqrt(z2_particle.M()*z2_particle.M()+z2_particle.Pt()*z2_particle.Pt())));
+
+    double zzdeltaPhiparticle=(z1_particle.Phi() > z2_particle.Phi() ? -1:+1)*TMath::Abs(z2_particle.Phi() - z1_particle.Phi());
+    double zzdeltaEtaparticle=(z1_particle.Eta() > z2_particle.Eta() ? -1:+1)*TMath::Abs(z2_particle.Eta() - z1_particle.Eta());
+    double zzdeltaRparticle=sqrt((zzdeltaPhiparticle*zzdeltaPhiparticle)+(zzdeltaEtaparticle*zzdeltaEtaparticle));
+
+// neutrinos 
+// jets we use the GenJet container
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // parton
@@ -818,10 +1411,10 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
         d2_pid = daughter2 -> PID;
       } 
       // higgs parton
-      if (particle->PID == 25 && d1_pid != 25) {
+      if (particle->PID == 25 && d1_pid != 25 && d2_pid != 25) {
         h_parton = particle->P4();
         // check for b parton children
-        if (abs(d1_pid) == 5) {
+        if (abs(d1_pid) == 5 && abs(d2_pid) == 5) {
           if (daughter1 -> PT > daughter2 -> PT) {
             b1_parton = daughter1 -> P4();
             b2_parton = daughter2 -> P4();
@@ -833,6 +1426,10 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
       }
     }
 
+  double bbdeltaPhiparton=(b1_parton.Phi() > b2_parton.Phi() ? -1:+1)*TMath::Abs(b2_parton.Phi() - b1_parton.Phi());
+  double bbdeltaEtaparton=(b1_parton.Eta() > b2_parton.Eta() ? -1:+1)*TMath::Abs(b2_parton.Eta() - b1_parton.Eta());
+  double bbdeltaRparton=sqrt((bbdeltaPhiparton*bbdeltaPhiparton)+(bbdeltaEtaparton*bbdeltaEtaparton));
+  
 // z + leptons
 
 vector <int> genZBosons; 
@@ -851,52 +1448,6 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     sort(genZBosons.begin(), genZBosons.end(), [branchGenParticle](const int& lhs, const int& rhs) {
 	return ((GenParticle*)branchGenParticle->At(lhs))->P4().M() < (((GenParticle*)branchGenParticle->At(rhs))->P4()).M(); 
     });
-/**
-    vector< pair<int,int>> ZPairIndices;
-    vector< pair<int,int>> ZPairIndicesIn;
-    vector <vector<int>> ZPairIndices_;
-    if( genZBosons.size() > 1 )
-    ZPairIndices_=combinationsNoRepetitionAndOrderDoesNotMatter(2,genZBosons);
-
-    for(int i=0;i<(int)ZPairIndices_.size(); i++){
-      int Z1Index=ZPairIndices_[i].at(0);
-      int Z2Index=ZPairIndices_[i].at(1);
-      
-      GenParticle *particle1=(GenParticle*)branchGenParticle->At(Z1Index);
-      GenParticle *particle2=(GenParticle*)branchGenParticle->At(Z2Index);
-      
-      ZPairIndicesIn.push_back(make_pair(Z1Index,Z2Index));
-    }
-
-    ZPairIndices=ZPairIndicesIn;
-*/
-/*
-    sort(ZPairIndices.begin(), ZPairIndices.end(), [branchGenParticle](const pair<int,int> lhs, const pair<int,int> rhs) {
-    	return fabs(((((GenParticle*)branchGenParticle->At(lhs.first))->P4() + ((GenParticle*)branchGenParticle->At(lhs.second))->P4())).M() -182 ) <
-	  fabs( ((((GenParticle*)branchGenParticle->At(rhs.first))->P4() + ((GenParticle*)branchGenParticle->At(rhs.second))->P4()).M()) -182 ) ; 
-      });
-*/
-/*
-     // sort all of the indices by closeness to mZ
-    sort(ZPairIndices.begin(), ZPairIndices.end(), [branchGenParticle]  ( const pair<int,pair<int,int>>  lhs , const pair<int,pair<int,int>>   rhs ){
-
-	    double z1mass=0 ;
-    	double z2mass=0;
-	
-      if( lhs.first==0 ) z1mass = (((GenParticle*)branchGenParticle->At(lhs.first))->P4()).M();
-      else z1mass = (((GenParticle*)branchGenParticle->At(lhs.second))->P4()).M();;
-          
-      if( rhs.first==0 ) z2mass = (((GenParticle*)branchGenParticle->At(rhs.first))->P4()).M();
-      else z2mass = (((GenParticle*)branchGenParticle->At(rhs.first))->P4()).M();
-          
-	    return fabs(z1mass) < fabs(z2mass) ;
-    });
-
-    remove_overlaps(ZPairIndices);
-*/
-
-//for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
-  //  GenParticle *particle=(GenParticle*)branchGenParticle->At(i);
 
 z1_parton = ((GenParticle*)branchGenParticle->At(genZBosons[0]))->P4(); 
 z2_parton = ((GenParticle*)branchGenParticle->At(genZBosons[1]))->P4(); 
@@ -909,94 +1460,57 @@ vector <int> Z2children;
 Z2children.push_back( ((GenParticle*)branchGenParticle->At(genZBosons[1]))->D1 );
 Z2children.push_back( ((GenParticle*)branchGenParticle->At(genZBosons[1]))->D2 ); 
 
-p1daughter1 = (GenParticle*) branchGenParticle->At(Z1children[0]);
-p1daughter2 = (GenParticle*) branchGenParticle->At(Z1children[1]);
-/*
-p1_d1_pid = p1daughter1 -> PID;
-p1_d2_pid = p1daughter2 -> PID;
-*/
-p2daughter1 = (GenParticle*) branchGenParticle->At(Z2children[0]);
-p2daughter2 = (GenParticle*) branchGenParticle->At(Z2children[1]);
-/*
-p2_d1_pid = p2daughter1 -> PID;
-p2_d2_pid = p2daughter2 -> PID;
-*/
+l1_parton = ((GenParticle*) branchGenParticle->At(Z1children[0]))->P4();
+l2_parton = ((GenParticle*) branchGenParticle->At(Z1children[1]))->P4();
+l3_parton = ((GenParticle*) branchGenParticle->At(Z2children[0]))->P4();
+l4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->P4();
 
-/*
-      int p1_d1_pid = 9999;
-      if (particle1->D1 != -1) {
-        p1daughter1 = (GenParticle*) branchGenParticle->At(particle1->D1);
-        p1_d1_pid = p1daughter1 -> PID;
-      }
-      int p1_d2_pid = 9999;
-      if (particle1->D2 != -1) {
-        p1daughter2 = (GenParticle*) branchGenParticle->At(particle1->D2);
-        p1_d2_pid = p2daughter2 -> PID;
-      }
-      int p2_d1_pid = 9999;
-      if (particle2->D1 != -1) {
-        p2daughter1 = (GenParticle*) branchGenParticle->At(particle2->D1);
-        p2_d1_pid = p2daughter1 -> PID;
-      }
-      int p2_d2_pid = 9999;
-      if (particle2->D2 != -1) {
-        p2daughter2 = (GenParticle*) branchGenParticle->At(particle2->D2);
-        p2_d2_pid = p2daughter2 -> PID;
-      } 
-*/
+int q1_parton = ((GenParticle*) branchGenParticle->At(Z1children[0]))->Charge;
+int q2_parton = ((GenParticle*) branchGenParticle->At(Z1children[1]))->Charge;
+int q3_parton = ((GenParticle*) branchGenParticle->At(Z2children[0]))->Charge;
+int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
 
-/*
-        if ((abs(p1_d1_pid) == 11) && (abs(p1_d2_pid) == 11)) {
-          if (p1daughter1 -> PT > p1daughter2 -> PT) {
-            e1_parton = p1daughter1 -> P4();
-            e2_parton = p1daughter2 -> P4();
-            e1_particle = find_status1_child(branchGenParticle, p1daughter1, 11) -> P4();
-            e2_particle = find_status1_child(branchGenParticle, p1daughter2, 11) -> P4();
-          } else {
-            e1_parton = p1daughter2 -> P4();
-            e2_parton = p1daughter1 -> P4();
-            e1_particle = find_status1_child(branchGenParticle, p1daughter2, 11) -> P4();
-            e2_particle = find_status1_child(branchGenParticle, p1daughter1, 11) -> P4();
-          }
-        } else if (abs(p2_d1_pid) == 11) {
-          if (p2daughter1 -> PT > p2daughter2 -> PT) {
-            e1_parton = p2daughter1 -> P4();
-            e2_parton = p2daughter2 -> P4();
-            e1_particle = find_status1_child(branchGenParticle, p2daughter1, 11) -> P4();
-            e2_particle = find_status1_child(branchGenParticle, p2daughter2, 11) -> P4();
-          } else {
-            e1_parton = p2daughter2 -> P4();
-            e2_parton = p2daughter1 -> P4();
-            e1_particle = find_status1_child(branchGenParticle, p2daughter2, 11) -> P4();
-            e2_particle = find_status1_child(branchGenParticle, p2daughter1, 11) -> P4();
-          }
-        // check for muon daughters
-        } else if (abs(p1_d1_pid) == 13) {
-          if (p1daughter1 -> PT > p1daughter2 -> PT) {
-            m1_parton = p1daughter1 -> P4();
-            m2_parton = p1daughter2 -> P4();
-            m1_particle = find_status1_child(branchGenParticle, p1daughter1, 13) -> P4();
-            m2_particle = find_status1_child(branchGenParticle, p1daughter2, 13) -> P4();
-          } else {
-            m1_parton = p1daughter2 -> P4();
-            m2_parton = p1daughter1 -> P4();
-            m1_particle = find_status1_child(branchGenParticle, p1daughter2, 13) -> P4();
-            m2_particle = find_status1_child(branchGenParticle, p1daughter1, 13) -> P4();
-          }
-        } else if (abs(p2_d1_pid) == 13) {
-          if (p2daughter1 -> PT > p2daughter2 -> PT) {
-            m1_parton = p2daughter1 -> P4();
-            m2_parton = p2daughter2 -> P4();
-            m1_particle = find_status1_child(branchGenParticle, p2daughter1, 13) -> P4();
-            m2_particle = find_status1_child(branchGenParticle, p2daughter2, 13) -> P4();
-          } else {
-            m1_parton = p2daughter2 -> P4();
-            m2_parton = p2daughter1 -> P4();
-            m1_particle = find_status1_child(branchGenParticle, p2daughter2, 13) -> P4();
-            m2_particle = find_status1_child(branchGenParticle, p2daughter1, 13) -> P4();
-          }
-        }
-*/
+    //z1_parton=l1_parton + l2_parton;
+    //z2_parton=l3_parton + l4_parton;
+    fourl_parton=l1_parton + l2_parton + l3_parton + l4_parton;
+
+    double l1l2deltaPhiparton=(l1_parton.Phi() > l2_parton.Phi() ? -1:+1)*TMath::Abs(l2_parton.Phi() - l1_parton.Phi());
+    double l3l4deltaPhiparton=(l3_parton.Phi() > l4_parton.Phi() ? -1:+1)*TMath::Abs(l4_parton.Phi() - l3_parton.Phi());
+
+    double l1l2deltaEtaparton=(l1_parton.Eta() > l2_parton.Eta() ? -1:+1)*TMath::Abs(l2_parton.Eta() - l1_parton.Eta());
+    double l3l4deltaEtaparton=(l3_parton.Eta() > l4_parton.Eta() ? -1:+1)*TMath::Abs(l4_parton.Eta() - l3_parton.Eta());
+
+    double l1l2deltaRparton=sqrt((l1l2deltaPhiparton*l1l2deltaPhiparton)+(l1l2deltaEtaparton*l1l2deltaEtaparton));
+    double l3l4deltaRparton=sqrt((l3l4deltaPhiparton*l3l4deltaPhiparton)+(l3l4deltaEtaparton*l3l4deltaEtaparton));
+
+    double l1cosThetaparton=l1_parton.CosTheta();
+    double l2cosThetaparton=l2_parton.CosTheta();
+    double l3cosThetaparton=l3_parton.CosTheta();
+    double l4cosThetaparton=l4_parton.CosTheta();
+    double fourlcosThetaparton=fourl_parton.CosTheta();
+
+    l1_parton.Boost(-z1_parton.BoostVector());
+    l2_parton.Boost(-z1_parton.BoostVector());
+    l3_parton.Boost(-z2_parton.BoostVector());
+    l4_parton.Boost(-z2_parton.BoostVector());
+    double l1cosThetaBoostparton=l1_parton.CosTheta();
+    double l2cosThetaBoostparton=l2_parton.CosTheta();
+    double l3cosThetaBoostparton=l3_parton.CosTheta();
+    double l4cosThetaBoostparton=l4_parton.CosTheta();
+    double fourlcosThetaBoostparton=fourl_parton.CosTheta();
+    l1_parton.Boost(z1_parton.BoostVector());
+    l2_parton.Boost(z1_parton.BoostVector());
+    l3_parton.Boost(z2_parton.BoostVector());
+    l4_parton.Boost(z2_parton.BoostVector());
+
+  // collins soper frame
+    double l1l2CScosThetaparton=(q1_parton > q2_parton ? -1:+1)*TMath::Abs(2*(l2_parton.Pz()*l1_parton.E()-l1_parton.Pz()*l2_parton.E())/(z1_parton.M()*sqrt(z1_parton.M()*z1_parton.M()+z1_parton.Pt()*z1_parton.Pt())));
+    double l3l4CScosThetaparton=(q3_parton > q4_parton ? -1:+1)*TMath::Abs(2*(l4_parton.Pz()*l3_parton.E()-l3_parton.Pz()*l4_parton.E())/(z2_parton.M()*sqrt(z2_parton.M()*z2_parton.M()+z2_parton.Pt()*z2_parton.Pt())));
+
+    double zzdeltaPhiparton=(z1_parton.Phi() > z2_parton.Phi() ? -1:+1)*TMath::Abs(z2_parton.Phi() - z1_parton.Phi());
+    double zzdeltaEtaparton=(z1_parton.Eta() > z2_parton.Eta() ? -1:+1)*TMath::Abs(z2_parton.Eta() - z1_parton.Eta());
+    double zzdeltaRparton=sqrt((zzdeltaPhiparton*zzdeltaPhiparton)+(zzdeltaEtaparton*zzdeltaEtaparton));
+
 
     nPassed+=weight;
     nPassedRaw++;
@@ -1005,37 +1519,119 @@ p2_d2_pid = p2daughter2 -> PID;
 // fill histos
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// higgs
+// higgs + b
     // reco
-    hHpTreco -> Fill(h_reco.Pt(),weight);
-    hHmreco -> Fill(h_reco.M(),weight); 
+      // pT + m
+      hHpTreco -> Fill(h_reco.Pt(),weight);
+      hHmreco -> Fill(h_reco.M(),weight); 
+      hb1pTreco -> Fill(b1_reco.Pt(),weight);
+      hb1mreco -> Fill(b1_reco.M(),weight); 
+      hb2pTreco -> Fill(b2_reco.Pt(),weight);
+      hb2mreco -> Fill(b2_reco.M(),weight); 
+      // phi
+      hHphireco -> Fill(h_reco.Phi(),weight);
+      hb1phireco -> Fill(b1_reco.Phi(),weight);
+      hb2phireco -> Fill(b2_reco.Phi(),weight);
+      hbbdeltaPhireco -> Fill(bbdeltaPhireco,weight);
+      // eta
+      hHetareco -> Fill(h_reco.Eta(),weight);
+      hb1etareco -> Fill(b1_reco.Eta(),weight);
+      hb2etareco -> Fill(b2_reco.Eta(),weight);
+      hbbdeltaEtareco -> Fill(bbdeltaEtareco,weight);
+      // R = sqrt[phi^2 + eta^2]^1/2
+      hHRreco -> Fill(sqrt((h_reco.Phi()*h_reco.Phi())+(h_reco.Eta()*h_reco.Eta())),weight);
+      hb1Rreco -> Fill(sqrt((b1_reco.Phi()*b1_reco.Phi())+(b1_reco.Eta()*b1_reco.Eta())),weight);
+      hb2Rreco -> Fill(sqrt((b2_reco.Phi()*b2_reco.Phi())+(b2_reco.Eta()*b2_reco.Eta())),weight);
+      hbbdeltaRreco -> Fill(bbdeltaRreco,weight);
     // particle
-    hHpTparticle -> Fill(h_particle.Pt(), weight);
-    hHmparticle -> Fill(h_particle.M(), weight);
+      // pT + m
+      hHpTparticle -> Fill(h_particle.Pt(), weight);
+      hHmparticle -> Fill(h_particle.M(), weight);
+      hb1pTparticle -> Fill(b1_particle.Pt(),weight);
+      hb1mparticle -> Fill(b1_particle.M(),weight); 
+      hb2pTparticle -> Fill(b2_particle.Pt(),weight);
+      hb2mparticle -> Fill(b2_particle.M(),weight); 
+      // phi
+      hHphiparticle -> Fill(h_particle.Phi(),weight);
+      hb1phiparticle -> Fill(b1_particle.Phi(),weight);
+      hb2phiparticle -> Fill(b2_particle.Phi(),weight);
+      hbbdeltaPhiparticle->Fill(bbdeltaPhiparticle,weight);
+      // eta
+      hHetaparticle -> Fill(h_particle.Eta(),weight);
+      hb1etaparticle -> Fill(b1_particle.Eta(),weight);
+      hb2etaparticle -> Fill(b2_particle.Eta(),weight);
+      hbbdeltaEtaparticle -> Fill(bbdeltaEtaparticle,weight);
+      // R = sqrt[phi^2 + eta^2]^1/2
+      hHRparticle -> Fill(sqrt((h_particle.Phi()*h_particle.Phi())+(h_particle.Eta()*h_particle.Eta())),weight);
+      hb1Rparticle -> Fill(sqrt((b1_particle.Phi()*b1_particle.Phi())+(b1_particle.Eta()*b1_particle.Eta())),weight);
+      hb2Rparticle -> Fill(sqrt((b2_particle.Phi()*b2_particle.Phi())+(b2_particle.Eta()*b2_particle.Eta())),weight);
+      hbbdeltaRparticle -> Fill(bbdeltaRparticle,weight);
     // parton
-    hHpTparton -> Fill(h_parton.Pt(), weight);
-    hHmparton -> Fill(h_parton.M(), weight);
-    // comp
-    hHpTComp -> Fill(h_parton.Pt(), h_reco.Pt(), weight);
-    hHmComp -> Fill(h_parton.M(), h_reco.M(), weight);
+      // pT + m
+      hHpTparton -> Fill(h_parton.Pt(), weight);
+      hHmparton -> Fill(h_parton.M(), weight);
+      hb1pTparton-> Fill(b1_parton.Pt(),weight);
+      hb1mparton -> Fill(b1_parton.M(),weight); 
+      hb2pTparton -> Fill(b2_parton.Pt(),weight);
+      hb2mparton -> Fill(b2_parton.M(),weight); 
+      // phi
+      hHphiparton -> Fill(h_parton.Phi(),weight);
+      hb1phiparton -> Fill(b1_parton.Phi(),weight);
+      hb2phiparton -> Fill(b2_parton.Phi(),weight);
+      hbbdeltaPhiparton->Fill(bbdeltaPhiparton,weight);
+      // eta
+      hHetaparton -> Fill(h_parton.Eta(),weight);
+      hb1etaparton -> Fill(b1_parton.Eta(),weight);
+      hb2etaparton -> Fill(b2_parton.Eta(),weight);
+      hbbdeltaEtaparton -> Fill(bbdeltaEtaparton,weight);
+      // R = sqrt[phi^2 + eta^2]^1/2
+      hHRparton -> Fill(sqrt((h_parton.Phi()*h_parton.Phi())+(h_parton.Eta()*h_parton.Eta())),weight);
+      hb1Rparton -> Fill(sqrt((b1_parton.Phi()*b1_parton.Phi())+(b1_parton.Eta()*b1_parton.Eta())),weight);
+      hb2Rparton -> Fill(sqrt((b2_parton.Phi()*b2_parton.Phi())+(b2_parton.Eta()*b2_parton.Eta())),weight);
+      hbbdeltaRparton -> Fill(bbdeltaRparton,weight);
 
 // jets
     // reco
         // pT + m
-        hjjv1pTreco->Fill((j1_reco+j2_reco).Pt(),weight);
-        hjjv1mreco->Fill((j1_reco+j2_reco).M(),weight);
-        hjjv2pTreco->Fill(j1_reco.Pt()+j2_reco.Pt(),weight);
-        hjjv2mreco->Fill(j1_reco.M()+j2_reco.M(),weight);
+        hjjpTreco->Fill(j1_reco.Pt()+j2_reco.Pt(),weight);
+        hjjmreco->Fill(j1_reco.M()+j2_reco.M(),weight);
         hj1pTreco->Fill(j1_reco.Pt(),weight);
         hj1mreco->Fill(j1_reco.M(),weight);
         hj2pTreco->Fill(j2_reco.Pt(),weight);
         hj2mreco->Fill(j2_reco.M(),weight);
-        // eta
-        hj1etareco->Fill(j1_reco.Eta(), weight); 
-        hj2etareco->Fill(j2_reco.Eta(), weight); 
         // phi
+        hj1phireco->Fill(j1_reco.Phi(),weight); 
+        hj2phireco->Fill(j2_reco.Phi(),weight); 
         hjjdeltaPhireco->Fill(jjdeltaPhireco,weight); 
-        // cos
+        // eta
+        hj1etareco->Fill(j1_reco.Eta(),weight); 
+        hj2etareco->Fill(j2_reco.Eta(),weight);
+        hjjdeltaEtareco->Fill(jjdeltaEtareco, weight);
+        // R = sqrt[phi^2 + eta^2]^1/2
+        hj1Rreco -> Fill(sqrt((j1_reco.Phi()*j1_reco.Phi())+(j1_reco.Eta()*j1_reco.Eta())),weight);
+        hj2Rreco -> Fill(sqrt((j2_reco.Phi()*j2_reco.Phi())+(j2_reco.Eta()*j2_reco.Eta())),weight);
+        hjjdeltaRreco -> Fill(jjdeltaRreco,weight);
+
+    // particle
+      // pT + m
+        hjjpTparticle->Fill(j1_particle.Pt()+j2_particle.Pt(),weight);
+        hjjmparticle->Fill(j1_particle.M()+j2_particle.M(),weight);
+        hj1pTparticle->Fill(j1_particle.Pt(),weight);
+        hj1mparticle->Fill(j1_particle.M(),weight);
+        hj2pTparticle->Fill(j2_particle.Pt(),weight);
+        hj2mparticle->Fill(j2_particle.M(),weight);
+        // phi
+        hj1phiparticle->Fill(j1_particle.Phi(),weight); 
+        hj2phiparticle->Fill(j2_particle.Phi(),weight); 
+        hjjdeltaPhiparticle->Fill(jjdeltaPhiparticle,weight); 
+        // eta
+        hj1etaparticle->Fill(j1_particle.Eta(),weight); 
+        hj2etaparticle->Fill(j2_particle.Eta(),weight);
+        hjjdeltaEtaparticle->Fill(jjdeltaEtaparticle, weight);
+        // R = sqrt[phi^2 + eta^2]^1/2
+        hj1Rparticle -> Fill(sqrt((j1_particle.Phi()*j1_particle.Phi())+(j1_particle.Eta()*j1_particle.Eta())),weight);
+        hj2Rparticle -> Fill(sqrt((j2_particle.Phi()*j2_particle.Phi())+(j2_particle.Eta()*j2_particle.Eta())),weight);
+        hjjdeltaRparticle -> Fill(jjdeltaRparticle,weight);
 
 // z
     //reco
@@ -1048,23 +1644,55 @@ p2_d2_pid = p2daughter2 -> PID;
         hz1cosThetareco->Fill(z1_reco.CosTheta(),weight);
         hz2cosThetareco->Fill(z2_reco.CosTheta(),weight);
         // phi
-        hzzdeltaPhireco->Fill(zzdeltaPhireco,weight);
+        hz1phireco->Fill(z1_reco.Phi(),weight); 
+        hz2phireco->Fill(z2_reco.Phi(),weight); 
+        hzzdeltaPhireco->Fill(zzdeltaPhireco,weight); 
+        // eta
+        hz1etareco->Fill(z1_reco.Eta(),weight); 
+        hz2etareco->Fill(z2_reco.Eta(),weight);
+        hzzdeltaEtareco->Fill(zzdeltaEtareco, weight);
+        // R = sqrt[phi^2 + eta^2]^1/2
+        hz1Rreco -> Fill(sqrt((z1_reco.Phi()*z1_reco.Phi())+(z1_reco.Eta()*z1_reco.Eta())),weight);
+        hz2Rreco -> Fill(sqrt((z2_reco.Phi()*z2_reco.Phi())+(z2_reco.Eta()*z2_reco.Eta())),weight);
+        hzzdeltaRreco -> Fill(zzdeltaRreco,weight);
+
     // particle
         // pT + m
         hz1pTparticle->Fill(z1_particle.Pt(), weight);
         hz2pTparticle->Fill(z2_particle.Pt(), weight);
         hz1mparticle -> Fill(z1_particle.M(), weight);
         hz2mparticle -> Fill(z2_particle.M(), weight);
+        // phi
+        hz1phiparticle->Fill(z1_particle.Phi(),weight); 
+        hz2phiparticle->Fill(z2_particle.Phi(),weight); 
+        hzzdeltaPhiparticle->Fill(zzdeltaPhiparticle,weight); 
+        // eta
+        hz1etaparticle->Fill(z1_particle.Eta(),weight); 
+        hz2etaparticle->Fill(z2_particle.Eta(),weight);
+        hzzdeltaEtaparticle->Fill(zzdeltaEtaparticle, weight);
+        // R = sqrt[phi^2 + eta^2]^1/2
+        hz1Rparticle -> Fill(sqrt((z1_particle.Phi()*z1_particle.Phi())+(z1_particle.Eta()*z1_particle.Eta())),weight);
+        hz2Rparticle -> Fill(sqrt((z2_particle.Phi()*z2_particle.Phi())+(z2_particle.Eta()*z2_particle.Eta())),weight);
+        hzzdeltaRparticle -> Fill(zzdeltaRparticle,weight);
+
     // parton
+        // pT + m
         hz1pTparton->Fill(z1_parton.Pt(),weight);
         hz2pTparton->Fill(z2_parton.Pt(),weight);
         hz1mparton->Fill(z1_parton.M(),weight);
         hz2mparton->Fill(z2_parton.M(),weight);
-    // comp
-        hz1pTComp->Fill(z1_parton.Pt(), z1_reco.Pt(), weight);
-        hz1mComp->Fill(z1_parton.M(), z1_reco.M(), weight);
-        hz2pTComp->Fill(z2_parton.Pt(), z2_reco.Pt(), weight);
-        hz2mComp->Fill(z2_parton.M(), z2_reco.M(), weight);
+        // phi
+        hz1phiparton->Fill(z1_parton.Phi(),weight); 
+        hz2phiparton->Fill(z2_parton.Phi(),weight); 
+        hzzdeltaPhiparton->Fill(zzdeltaPhiparton,weight); 
+        // eta
+        hz1etaparton->Fill(z1_parton.Eta(),weight); 
+        hz2etaparton->Fill(z2_parton.Eta(),weight);
+        hzzdeltaEtaparton->Fill(zzdeltaEtaparton, weight);
+        // R = sqrt[phi^2 + eta^2]^1/2
+        hz1Rparton -> Fill(sqrt((z1_parton.Phi()*z1_parton.Phi())+(z1_parton.Eta()*z1_parton.Eta())),weight);
+        hz2Rparton -> Fill(sqrt((z2_parton.Phi()*z2_parton.Phi())+(z2_parton.Eta()*z2_parton.Eta())),weight);
+        hzzdeltaRparton -> Fill(zzdeltaRparton,weight);
 
 
 //leptons
@@ -1074,45 +1702,256 @@ p2_d2_pid = p2daughter2 -> PID;
         hl2pTreco->Fill(l2_reco.Pt(),weight);
         hl3pTreco->Fill(l3_reco.Pt(),weight);
         hl4pTreco->Fill(l4_reco.Pt(),weight);
-        // eta
         // phi
-        hl1l2deltaPhireco->Fill(l1l2deltaPhireco,weight);
-        hl3l4deltaPhireco->Fill(l3l4deltaPhireco,weight);
+        hl1phireco->Fill(l1_reco.Phi() ,weight);
+        hl2phireco->Fill(l2_reco.Phi() ,weight);
+        hl3phireco->Fill(l3_reco.Phi() ,weight);
+        hl4phireco->Fill(l4_reco.Phi() ,weight);
+        hl1l2deltaPhireco->Fill(l1l2deltaPhireco ,weight);
+        hl3l4deltaPhireco->Fill(l3l4deltaPhireco ,weight);
+        hl1l2deltaPhiBoostreco->Fill(l1l2deltaPhiBoostreco ,weight);
+        hl3l4deltaPhiBoostreco->Fill(l3l4deltaPhiBoostreco ,weight);
+        // eta
+        hl1etareco->Fill(l1_reco.Eta() ,weight);
+        hl2etareco->Fill(l2_reco.Eta() ,weight);
+        hl3etareco->Fill(l3_reco.Eta() ,weight);
+        hl4etareco->Fill(l4_reco.Eta() ,weight);
+        hl1l2deltaEtareco->Fill(l1l2deltaEtareco ,weight);
+        hl3l4deltaEtareco->Fill(l3l4deltaEtareco ,weight);
+        hl1l2deltaEtaBoostreco->Fill(l1l2deltaEtaBoostreco ,weight);
+        hl3l4deltaEtaBoostreco->Fill(l3l4deltaEtaBoostreco ,weight);
+        // R
+        hl1Rreco->Fill(sqrt((l1_reco.Phi()*l1_reco.Phi())+(l1_reco.Eta()*l1_reco.Eta())) ,weight);
+        hl2Rreco->Fill(sqrt((l2_reco.Phi()*l2_reco.Phi())+(l2_reco.Eta()*l2_reco.Eta())) ,weight);
+        hl3Rreco->Fill(sqrt((l3_reco.Phi()*l3_reco.Phi())+(l3_reco.Eta()*l3_reco.Eta())) ,weight);
+        hl4Rreco->Fill(sqrt((l4_reco.Phi()*l4_reco.Phi())+(l4_reco.Eta()*l4_reco.Eta())) ,weight);
+        hl1l2deltaRreco->Fill(l1l2deltaRreco ,weight);
+        hl3l4deltaRreco->Fill(l3l4deltaRreco ,weight);
         // cos
+        hl1cosThetareco->Fill(l1cosThetareco,weight);
+        hl2cosThetareco->Fill(l2cosThetareco,weight);
+        hl3cosThetareco->Fill(l3cosThetareco,weight);
+        hl4cosThetareco->Fill(l4cosThetareco,weight);
+        hfourlcosThetareco->Fill(fourlcosThetareco,weight);
+        hl1cosThetaBoostreco->Fill(l1cosThetaBoostreco,weight);
+        hl2cosThetaBoostreco->Fill(l2cosThetaBoostreco,weight);
+        hl3cosThetaBoostreco->Fill(l3cosThetaBoostreco,weight);
+        hl4cosThetaBoostreco->Fill(l4cosThetaBoostreco,weight);
+        hfourlcosThetaBoostreco->Fill(fourlcosThetaBoostreco,weight);
+        hl1l2CScosThetareco->Fill(l1l2CScosThetareco,weight);
+        hl3l4CScosThetareco->Fill(l3l4CScosThetareco,weight);
 
+      // particle
+        // pT + m
+        hl1pTparticle->Fill(l1_particle.Pt(),weight);
+        hl2pTparticle->Fill(l2_particle.Pt(),weight);
+        hl3pTparticle->Fill(l3_particle.Pt(),weight);
+        hl4pTparticle->Fill(l4_particle.Pt(),weight);
+        // phi
+        hl1phiparticle->Fill(l1_particle.Phi() ,weight);
+        hl2phiparticle->Fill(l2_particle.Phi() ,weight);
+        hl3phiparticle->Fill(l3_particle.Phi() ,weight);
+        hl4phiparticle->Fill(l4_particle.Phi() ,weight);
+        hl1l2deltaPhiparticle->Fill(l1l2deltaPhiparticle ,weight);
+        hl3l4deltaPhiparticle->Fill(l3l4deltaPhiparticle ,weight);
+        // eta
+        hl1etaparticle->Fill(l1_particle.Eta() ,weight);
+        hl2etaparticle->Fill(l2_particle.Eta() ,weight);
+        hl3etaparticle->Fill(l3_particle.Eta() ,weight);
+        hl4etaparticle->Fill(l4_particle.Eta() ,weight);
+        hl1l2deltaEtaparticle->Fill(l1l2deltaEtaparticle ,weight);
+        hl3l4deltaEtaparticle->Fill(l3l4deltaEtaparticle ,weight);
+        // R
+        hl1Rparticle->Fill(sqrt((l1_particle.Phi()*l1_particle.Phi())+(l1_particle.Eta()*l1_particle.Eta())) ,weight);
+        hl2Rparticle->Fill(sqrt((l2_particle.Phi()*l2_particle.Phi())+(l2_particle.Eta()*l2_particle.Eta())) ,weight);
+        hl3Rparticle->Fill(sqrt((l3_particle.Phi()*l3_particle.Phi())+(l3_particle.Eta()*l3_particle.Eta())) ,weight);
+        hl4Rparticle->Fill(sqrt((l4_particle.Phi()*l4_particle.Phi())+(l4_particle.Eta()*l4_particle.Eta())) ,weight);
+        hl1l2deltaRparticle->Fill(l1l2deltaRparticle ,weight);
+        hl3l4deltaRparticle->Fill(l3l4deltaRparticle ,weight);
+        // cos
+        hl1cosThetaparticle->Fill(l1cosThetaparticle,weight);
+        hl2cosThetaparticle->Fill(l2cosThetaparticle,weight);
+        hl3cosThetaparticle->Fill(l3cosThetaparticle,weight);
+        hl4cosThetaparticle->Fill(l4cosThetaparticle,weight);
+        hfourlcosThetaparticle->Fill(fourlcosThetaparticle,weight);
+        hl1cosThetaBoostparticle->Fill(l1cosThetaBoostparticle,weight);
+        hl2cosThetaBoostparticle->Fill(l2cosThetaBoostparticle,weight);
+        hl3cosThetaBoostparticle->Fill(l3cosThetaBoostparticle,weight);
+        hl4cosThetaBoostparticle->Fill(l4cosThetaBoostparticle,weight);
+        hfourlcosThetaBoostparticle->Fill(fourlcosThetaBoostparticle,weight);
+        hl1l2CScosThetaparticle->Fill(l1l2CScosThetaparticle,weight);
+        hl3l4CScosThetaparticle->Fill(l3l4CScosThetaparticle,weight);
+
+      // parton
+        // pT + m
+        hl1pTparton->Fill(l1_parton.Pt(),weight);
+        hl2pTparton->Fill(l2_parton.Pt(),weight);
+        hl3pTparton->Fill(l3_parton.Pt(),weight);
+        hl4pTparton->Fill(l4_parton.Pt(),weight);
+        // phi
+        hl1phiparton->Fill(l1_parton.Phi() ,weight);
+        hl2phiparton->Fill(l2_parton.Phi() ,weight);
+        hl3phiparton->Fill(l3_parton.Phi() ,weight);
+        hl4phiparton->Fill(l4_parton.Phi() ,weight);
+        hl1l2deltaPhiparton->Fill(l1l2deltaPhiparton ,weight);
+        hl3l4deltaPhiparton->Fill(l3l4deltaPhiparton ,weight);
+        // eta
+        hl1etaparton->Fill(l1_parton.Eta() ,weight);
+        hl2etaparton->Fill(l2_parton.Eta() ,weight);
+        hl3etaparton->Fill(l3_parton.Eta() ,weight);
+        hl4etaparton->Fill(l4_parton.Eta() ,weight);
+        hl1l2deltaEtaparton->Fill(l1l2deltaEtaparton ,weight);
+        hl3l4deltaEtaparton->Fill(l3l4deltaEtaparton ,weight);
+        // R
+        hl1Rparton->Fill(sqrt((l1_parton.Phi()*l1_parton.Phi())+(l1_parton.Eta()*l1_parton.Eta())) ,weight);
+        hl2Rparton->Fill(sqrt((l2_parton.Phi()*l2_parton.Phi())+(l2_parton.Eta()*l2_parton.Eta())) ,weight);
+        hl3Rparton->Fill(sqrt((l3_parton.Phi()*l3_parton.Phi())+(l3_parton.Eta()*l3_parton.Eta())) ,weight);
+        hl4Rparton->Fill(sqrt((l4_parton.Phi()*l4_parton.Phi())+(l4_parton.Eta()*l4_parton.Eta())) ,weight);
+        hl1l2deltaRparton->Fill(l1l2deltaRparton ,weight);
+        hl3l4deltaRparton->Fill(l3l4deltaRparton ,weight);
+        // cos
+        hl1cosThetaparton->Fill(l1cosThetaparton,weight);
+        hl2cosThetaparton->Fill(l2cosThetaparton,weight);
+        hl3cosThetaparton->Fill(l3cosThetaparton,weight);
+        hl4cosThetaparton->Fill(l4cosThetaparton,weight);
+        hfourlcosThetaparton->Fill(fourlcosThetaparton,weight);
+        hl1cosThetaBoostparton->Fill(l1cosThetaBoostparton,weight);
+        hl2cosThetaBoostparton->Fill(l2cosThetaBoostparton,weight);
+        hl3cosThetaBoostparton->Fill(l3cosThetaBoostparton,weight);
+        hl4cosThetaBoostparton->Fill(l4cosThetaBoostparton,weight);
+        hfourlcosThetaBoostparton->Fill(fourlcosThetaBoostparton,weight);
+        hl1l2CScosThetaparton->Fill(l1l2CScosThetaparton,weight);
+        hl3l4CScosThetaparton->Fill(l3l4CScosThetaparton,weight);
+
+// comp
+  // higgs + b       
+    // pT + m
+    hHpTComp -> Fill(h_parton.Pt(), h_reco.Pt(), weight);
+    hHmComp -> Fill(h_parton.M(), h_reco.M(), weight);
+  // jets
+    hjjpT23Comp -> Fill((j1_particle.Pt()+j2_particle.Pt()), (j1_reco.Pt()+j2_reco.Pt()), weight);
+    hjjdeltaPhi23Comp -> Fill(jjdeltaPhiparticle, jjdeltaPhireco, weight);
+  // z 
+    hz1pT13Comp->Fill(z1_parton.Pt(), z1_reco.Pt(), weight);
+    hz1m13Comp->Fill(z1_parton.M(), z1_reco.M(), weight);
+    hz2pT13Comp->Fill(z2_parton.Pt(), z2_reco.Pt(), weight);
+    hz2m13Comp->Fill(z2_parton.M(), z2_reco.M(), weight);
+
+    hz1pT12Comp->Fill(z1_particle.Pt(), z1_reco.Pt(), weight);
+    hz1m12Comp->Fill(z1_particle.M(), z1_reco.M(), weight);
+    hz2pT12Comp->Fill(z2_particle.Pt(), z2_reco.Pt(), weight);
+    hz2m12Comp->Fill(z2_particle.M(), z2_reco.M(), weight);
+
+    hz1pT23Comp->Fill(z1_parton.Pt(), z1_particle.Pt(), weight);
+    hz1m23Comp->Fill(z1_parton.M(), z1_particle.M(), weight);
+    hz2pT23Comp->Fill(z2_parton.Pt(), z2_particle.Pt(), weight);
+    hz2m23Comp->Fill(z2_parton.M(), z2_particle.M(), weight);
+
+  // l vs h
+    hl1l2deltaPhiHpTcompreco->Fill(l1l2deltaPhiparton, h_reco.Pt(), weight);
+    hl3l4deltaPhiHpTcompreco->Fill(l3l4deltaPhiparton, h_reco.Pt(), weight);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// write+draw histos
+// write histos
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
    
    TFile *hists= new TFile(outputFile,"recreate");
    hists->cd();
 
 // higgs
+
     hHpTreco -> Write();
     hHmreco -> Write();
+    hb1pTreco -> Write();
+    hb1mreco -> Write();
+    hb2pTreco -> Write();
+    hb2mreco -> Write();
+    hHphireco -> Write();
+    hb1phireco -> Write();
+    hb2phireco -> Write();
+    hbbdeltaPhireco -> Write();
+    hHetareco -> Write();
+    hb1etareco -> Write();
+    hb2etareco -> Write();
+    hbbdeltaEtareco -> Write();
+    hHRreco -> Write();
+    hb1Rreco -> Write();
+    hb2Rreco -> Write();
+    hbbdeltaRreco -> Write();
+
     hHpTparticle -> Write();
     hHmparticle -> Write();
+    hb1pTparticle -> Write();
+    hb1mparticle -> Write();
+    hb2pTparticle -> Write();
+    hb2mparticle -> Write();
+    hHphiparticle -> Write();
+    hb1phiparticle -> Write();
+    hb2phiparticle -> Write();
+    hbbdeltaPhiparticle -> Write();
+    hHetaparticle -> Write();
+    hb1etaparticle -> Write();
+    hb2etaparticle -> Write();
+    hbbdeltaEtaparticle -> Write();
+    hHRparticle -> Write();
+    hb1Rparticle -> Write();
+    hb2Rparticle -> Write();
+    hbbdeltaRparticle -> Write();
+
     hHpTparton -> Write();
     hHmparton -> Write();
-    hHpTComp -> Write();
-    hHmComp -> Write();
+    hb1pTparton -> Write();
+    hb1mparton -> Write();
+    hb2pTparton -> Write();
+    hb2mparton -> Write();
+    hHphiparton -> Write();
+    hb1phiparton -> Write();
+    hb2phiparton -> Write();
+    hbbdeltaPhiparton -> Write();
+    hHetaparton -> Write();
+    hb1etaparton -> Write();
+    hb2etaparton -> Write();
+    hbbdeltaEtaparton -> Write();
+    hHRparton -> Write();
+    hb1Rparton -> Write();
+    hb2Rparton -> Write();
+    hbbdeltaRparton -> Write();
 
 // jets
-    hjjv1pTreco -> Write();
-    hjjv1mreco -> Write();
-    hjjv2pTreco -> Write();
-    hjjv2mreco -> Write();
 
+    hjjpTreco -> Write();
+    hjjmreco -> Write();
     hj1pTreco -> Write();
     hj1mreco -> Write();
     hj2pTreco -> Write();
     hj2mreco -> Write();
+    hj1phireco -> Write();
+    hj2phireco -> Write();
+    hjjdeltaPhireco -> Write();
     hj1etareco -> Write();
     hj2etareco -> Write();
+    hjjdeltaEtareco -> Write();
+    hj1Rreco -> Write();
+    hj2Rreco -> Write();
+    hjjdeltaRreco -> Write();
 
-    hjjdeltaPhireco -> Write();
+    hjjpTparticle -> Write();
+    hjjmparticle -> Write();
+    hj1pTparticle -> Write();
+    hj1mparticle -> Write();
+    hj2pTparticle -> Write();
+    hj2mparticle -> Write();
+    hj1phiparticle -> Write();
+    hj2phiparticle -> Write();
+    hjjdeltaPhiparticle -> Write();
+    hj1etaparticle -> Write();
+    hj2etaparticle -> Write();
+    hjjdeltaEtaparticle -> Write();
+    hj1Rparticle -> Write();
+    hj2Rparticle -> Write();
+    hjjdeltaRparticle -> Write();
+
 
 // z 
 
@@ -1120,25 +1959,45 @@ p2_d2_pid = p2daughter2 -> PID;
     hz2pTreco -> Write();
     hz1mreco -> Write();
     hz2mreco -> Write();
-
     hz1cosThetareco -> Write();
     hz2cosThetareco -> Write();
-
+    hz1phireco -> Write();
+    hz2phireco -> Write();
     hzzdeltaPhireco -> Write();
+    hz1etareco -> Write();
+    hz2etareco -> Write();
+    hzzdeltaEtareco -> Write();
+    hz1Rreco -> Write();
+    hz2Rreco -> Write();
+    hzzdeltaRreco -> Write();
 
     hz1pTparticle -> Write();
     hz2pTparticle -> Write();
     hz1mparticle -> Write();
     hz2mparticle -> Write();
+    hz1phiparticle -> Write();
+    hz2phiparticle -> Write();
+    hzzdeltaPhiparticle -> Write();
+    hz1etaparticle -> Write();
+    hz2etaparticle -> Write();
+    hzzdeltaEtaparticle -> Write();
+    hz1Rparticle -> Write();
+    hz2Rparticle -> Write();
+    hzzdeltaRparticle -> Write();
 
     hz1pTparton -> Write();
     hz2pTparton -> Write();
     hz1mparton -> Write();
     hz2mparton -> Write();
-    hz1pTComp -> Write();
-    hz1mComp -> Write();
-    hz2pTComp -> Write();
-    hz2mComp -> Write();
+    hz1phiparton -> Write();
+    hz2phiparton -> Write();
+    hzzdeltaPhiparton -> Write();
+    hz1etaparton -> Write();
+    hz2etaparton -> Write();
+    hzzdeltaEtaparton -> Write();
+    hz1Rparton -> Write();
+    hz2Rparton -> Write();
+    hzzdeltaRparton -> Write();
 
 // leptons 
 
@@ -1146,62 +2005,705 @@ p2_d2_pid = p2daughter2 -> PID;
     hl2pTreco -> Write();
     hl3pTreco -> Write();
     hl4pTreco -> Write();
+    hl1phireco -> Write();
+    hl2phireco -> Write();
+    hl3phireco -> Write();
+    hl4phireco -> Write();
     hl1l2deltaPhireco -> Write();
     hl3l4deltaPhireco -> Write();
+    hl1l2deltaPhiBoostreco -> Write();
+    hl3l4deltaPhiBoostreco -> Write();
+    hl1etareco -> Write();
+    hl2etareco -> Write();
+    hl3etareco -> Write();
+    hl4etareco -> Write();
+    hl1l2deltaEtareco -> Write();
+    hl3l4deltaEtareco -> Write();
+    hl1l2deltaEtaBoostreco -> Write();
+    hl3l4deltaEtaBoostreco -> Write();
+    hl1Rreco -> Write();
+    hl2Rreco -> Write();
+    hl3Rreco -> Write();
+    hl4Rreco -> Write();
+    hl1l2deltaRreco -> Write();
+    hl3l4deltaRreco -> Write();
+    hl1cosThetareco -> Write();
+    hl2cosThetareco -> Write();
+    hl3cosThetareco -> Write();
+    hl4cosThetareco -> Write();
+    hfourlcosThetareco -> Write();
+    hl1cosThetaBoostreco -> Write();
+    hl2cosThetaBoostreco -> Write();
+    hl3cosThetaBoostreco -> Write();
+    hl4cosThetaBoostreco -> Write();
+    hfourlcosThetaBoostreco -> Write();
+    hl1l2CScosThetareco -> Write();
+    hl3l4CScosThetareco -> Write();
 
-    gROOT->SetBatch(kTRUE);
+    hl1pTparticle -> Write();
+    hl2pTparticle -> Write();
+    hl3pTparticle -> Write();
+    hl4pTparticle -> Write();
+    hl1phiparticle -> Write();
+    hl2phiparticle -> Write();
+    hl3phiparticle -> Write();
+    hl4phiparticle -> Write();
+    hl1l2deltaPhiparticle -> Write();
+    hl3l4deltaPhiparticle -> Write();
+    hl1l2deltaPhiBoostparticle -> Write();
+    hl3l4deltaPhiBoostparticle -> Write();
+    hl1etaparticle -> Write();
+    hl2etaparticle -> Write();
+    hl3etaparticle -> Write();
+    hl4etaparticle -> Write();
+    hl1l2deltaEtaparticle -> Write();
+    hl3l4deltaEtaparticle -> Write();
+    hl1l2deltaEtaBoostparticle -> Write();
+    hl3l4deltaEtaBoostparticle -> Write();
+    hl1Rparticle -> Write();
+    hl2Rparticle -> Write();
+    hl3Rparticle -> Write();
+    hl4Rparticle -> Write();
+    hl1l2deltaRparticle -> Write();
+    hl3l4deltaRparticle -> Write();
+    hl1cosThetaparticle -> Write();
+    hl2cosThetaparticle -> Write();
+    hl3cosThetaparticle -> Write();
+    hl4cosThetaparticle -> Write();
+    hfourlcosThetaparticle -> Write();
+    hl1cosThetaBoostparticle -> Write();
+    hl2cosThetaBoostparticle -> Write();
+    hl3cosThetaBoostparticle -> Write();
+    hl4cosThetaBoostparticle -> Write();
+    hfourlcosThetaBoostparticle -> Write();
+    hl1l2CScosThetaparticle -> Write();
+    hl3l4CScosThetaparticle -> Write();
 
-    draw_hist(hHpTreco,"H_pT_reco", "p^{T}_{h}", "pT (GeV)");
-    draw_hist(hHpTparticle,"H_pT_particle", "p^{T}_{h}", "pT (GeV)");
-    draw_hist(hHpTparton,"H_pT_parton", "p^{T}_{h}", "pT (GeV)");
-    draw_hist(hHmreco,"H_m_reco", "m_{h}", "mass (GeV)");
-    draw_hist(hHmparticle,"H_m_particle", "m_{h}", "mass (GeV)");
-    draw_hist(hHmparton,"H_m_parton", "m_{h}", "mass (GeV)");
+    hl1pTparton -> Write();
+    hl2pTparton -> Write();
+    hl3pTparton -> Write();
+    hl4pTparton -> Write();
+    hl1phiparton -> Write();
+    hl2phiparton -> Write();
+    hl3phiparton -> Write();
+    hl4phiparton -> Write();
+    hl1l2deltaPhiparton -> Write();
+    hl3l4deltaPhiparton -> Write();
+    hl1l2deltaPhiBoostparton -> Write();
+    hl3l4deltaPhiBoostparton -> Write();
+    hl1etaparton -> Write();
+    hl2etaparton -> Write();
+    hl3etaparton -> Write();
+    hl4etaparton -> Write();
+    hl1l2deltaEtaparton -> Write();
+    hl3l4deltaEtaparton -> Write();
+    hl1l2deltaEtaBoostparton -> Write();
+    hl3l4deltaEtaBoostparton -> Write();
+    hl1Rparton -> Write();
+    hl2Rparton -> Write();
+    hl3Rparton -> Write();
+    hl4Rparton -> Write();
+    hl1l2deltaRparton -> Write();
+    hl3l4deltaRparton -> Write();
+    hl1cosThetaparton -> Write();
+    hl2cosThetaparton -> Write();
+    hl3cosThetaparton -> Write();
+    hl4cosThetaparton -> Write();
+    hfourlcosThetaparton -> Write();
+    hl1cosThetaBoostparton -> Write();
+    hl2cosThetaBoostparton -> Write();
+    hl3cosThetaBoostparton -> Write();
+    hl4cosThetaBoostparton -> Write();
+    hfourlcosThetaBoostparton -> Write();
+    hl1l2CScosThetaparton -> Write();
+    hl3l4CScosThetaparton -> Write();
+
+// comp
+
+    hHpTComp -> Write();
+    hHmComp -> Write();
+
+    hjjpT23Comp  -> Write();
+    hjjdeltaPhi23Comp -> Write();
+
+    hz1pT13Comp -> Write();
+    hz1m13Comp -> Write();
+    hz2pT13Comp -> Write();
+    hz2m13Comp -> Write();
+    hz1pT23Comp -> Write();
+    hz1m23Comp -> Write();
+    hz2pT23Comp -> Write();
+    hz2m23Comp -> Write();
+    hz1pT12Comp -> Write();
+    hz1m12Comp -> Write();
+    hz2pT12Comp -> Write();
+    hz2m12Comp -> Write();
+
+    hl1l2deltaPhiHpTcompreco -> Write();
+    hl3l4deltaPhiHpTcompreco -> Write();
+
+    hists->Close();
+    // gROOT->SetBatch(kTRUE);
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// draw histos
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// higgs
+
+    draw_hist(hHpTreco,"hbb_pT_reco", "p^{T}_{hbb}_reco", "pT (GeV)");
+    draw_hist(hHmreco,"hbb_m_reco", "m_{hbb}_reco", "mass (GeV)");
+    draw_hist(hb1pTreco,"b1_pT_reco", "p^{T}_{b1}_reco", "pT (GeV)");
+    draw_hist(hb1mreco,"b1_m_reco", "m_{b1}_reco", "mass (GeV)");
+    draw_hist(hb2pTreco,"b2_pT_reco", "p^{T}_{b2}_reco", "pT (GeV)");
+    draw_hist(hb2mreco,"b2_m_reco", "m_{b2}_reco", "mass (GeV)");
+    draw_hist(hHphireco,"hbb_phi_reco", "#phi_{hbb}_reco", "#phi");
+    draw_hist(hb1phireco,"b1_phi_reco", "#phi_{b1}_reco", "#phi");
+    draw_hist(hb2phireco,"b2_phi_reco", "#phi_{b2}_reco", "#phi");
+    draw_hist(hbbdeltaPhireco,"bb_Deltaphi_reco", "#Delta#phi_{bb}_reco", "#Delta#phi");
+    draw_hist(hHetareco,"hbb_eta_reco", "#eta_{hbb}_reco", "#eta");
+    draw_hist(hb1etareco,"b1_eta_reco", "#eta_{b1}_reco", "#eta");
+    draw_hist(hb2etareco,"b2_eta_reco", "#eta_{b2}_reco", "#eta");
+    draw_hist(hbbdeltaEtareco,"bb_Deltaeta_reco", "#Delta#eta_{bb}_reco", "#Delta#eta");
+    draw_hist(hHRreco,"hbb_R_reco", "R_{hbb}_reco", "R");
+    draw_hist(hb1Rreco,"b1_R_reco", "R_{b1}_reco", "R");
+    draw_hist(hb2Rreco,"b2_R_reco", "R_{b2}_reco", "R");
+    draw_hist(hbbdeltaRreco,"bb_DeltaR_reco", "#DeltaR_{bb}_reco", "#DeltaR");
+
+    draw_hist(hHpTparticle,"hbb_pT_particle", "p^{T}_{hbb}_particle", "pT (GeV)");
+    draw_hist(hHmparticle,"hbb_m_particle", "m_{hbb}_particle", "mass (GeV)");
+    draw_hist(hb1pTparticle,"b1_pT_particle", "p^{T}_{b1}_particle", "pT (GeV)");
+    draw_hist(hb1mparticle,"b1_m_particle", "m_{b1}_particle", "mass (GeV)");
+    draw_hist(hb2pTparticle,"b2_pT_particle", "p^{T}_{b2}_particle", "pT (GeV)");
+    draw_hist(hb2mparticle,"b2_m_particle", "m_{b2}_particle", "mass (GeV)");
+    draw_hist(hHphiparticle,"hbb_#phi_particle", "#phi_{hbb}_particle", "#phi");
+    draw_hist(hb1phiparticle,"b1_#phi_particle", "#phi_{b1}_particle", "#phi");
+    draw_hist(hb2phiparticle,"b2_#phi_particle", "#phi_{b2}_particle", "#phi");
+    draw_hist(hbbdeltaPhiparticle,"bb_#Delta#phi_particle", "#Delta#phi_{bb}_particle", "#Delta#phi");
+    draw_hist(hHetaparticle,"hbb_#eta_particle", "#eta_{hbb}_particle", "#eta");
+    draw_hist(hb1etaparticle,"b1_#eta_particle", "#eta_{b1}_particle", "#eta");
+    draw_hist(hb2etaparticle,"b2_#eta_particle", "#eta_{b2}_particle", "#eta");
+    draw_hist(hbbdeltaEtaparticle,"bb_#Delta#eta_particle", "#Delta#eta_{bb}_particle", "#Delta#eta");
+    draw_hist(hHRparticle,"hbb_R_particle", "R_{hbb}_particle", "R");
+    draw_hist(hb1Rparticle,"b1_R_particle", "R_{b1}_particle", "R");
+    draw_hist(hb2Rparticle,"b2_R_particle", "R_{b2}_particle", "R");
+    draw_hist(hbbdeltaRparticle,"bb_#DeltaR_particle", "#DeltaR_{bb}_particle", "#DeltaR");
+
+    draw_hist(hHpTparton,"hbb_pT_parton", "p^{T}_{hbb}_parton", "pT (GeV)");
+    draw_hist(hHmparton,"hbb_m_parton", "m_{hbb}_parton", "mass (GeV)");
+    draw_hist(hb1pTparton,"b1_pT_parton", "p^{T}_{b1}_parton", "pT (GeV)");
+    draw_hist(hb1mparton,"b1_m_parton", "m_{b1}_parton", "mass (GeV)");
+    draw_hist(hb2pTparton,"b2_pT_parton", "p^{T}_{b2}_parton", "pT (GeV)");
+    draw_hist(hb2mparton,"b2_m_parton", "m_{b2}_parton", "mass (GeV)");
+    draw_hist(hHphiparton,"hbb_#phi_parton", "#phi_{hbb}_parton", "#phi");
+    draw_hist(hb1phiparton,"b1_#phi_parton", "#phi_{b1}_parton", "#phi");
+    draw_hist(hb2phiparton,"b2_#phi_parton", "#phi_{b2}_parton", "#phi");
+    draw_hist(hbbdeltaPhiparton,"bb_#Delta#phi_parton", "#Delta#phi_{bb}_parton", "#Delta#phi");
+    draw_hist(hHetaparton,"hbb_#eta_parton", "#eta_{hbb}_parton", "#eta");
+    draw_hist(hb1etaparton,"b1_#eta_parton", "#eta_{b1}_parton", "#eta");
+    draw_hist(hb2etaparton,"b2_#eta_parton", "#eta_{b2}_parton", "#eta");
+    draw_hist(hbbdeltaEtaparton,"bb_#Delta#eta_parton", "#Delta#eta_{bb}_parton", "#Delta#eta");
+    draw_hist(hHRparton,"hbb_R_parton", "R_{hbb}_parton", "R");
+    draw_hist(hb1Rparton,"b1_R_parton", "R_{b1}_parton", "R");
+    draw_hist(hb2Rparton,"b2_R_parton", "R_{b2}_parton", "R");
+    draw_hist(hbbdeltaRparton,"bb_#DeltaR_parton", "#DeltaR_{bb}_parton", "#DeltaR");
+
+// jets
+
+    draw_hist(hjjpTreco,"jj_pT_reco", "p^{T}_{jj}_reco", "pT (GeV)");
+    draw_hist(hjjmreco,"jj_m_reco", "m_{jj}_reco", "mass (GeV)");
+    draw_hist(hj1pTreco,"j1_pT_reco", "p^{T}_{j1}_reco", "pT (GeV)");
+    draw_hist(hj1mreco,"j1_m_reco", "m_{j1}_reco", "mass (GeV)");
+    draw_hist(hj2pTreco,"j2_pT_reco", "p^{T}_{j2}_reco", "pT (GeV)");
+    draw_hist(hj2mreco,"j2_m_reco", "m_{j2}_reco", "mass (GeV)");
+    draw_hist(hj1phireco,"j1_#phi_reco", "#phi_{j1}_reco", "#phi");
+    draw_hist(hj2phireco,"j2_#phi_reco", "#phi_{j2}_reco", "#phi");
+    draw_hist(hjjdeltaPhireco,"jj_#Delta#phi_reco", "#Delta#phi_{jj}_reco", "#Delta#phi");
+    draw_hist(hj1etareco,"j1_#eta_reco", "#eta_{j1}_reco", "#eta");
+    draw_hist(hj2etareco,"j2_#eta_reco", "#eta_{j2}_reco", "#eta");
+    draw_hist(hjjdeltaEtareco,"jj_#Delta#eta_reco", "#Delta#eta_{jj}_reco", "#Delta#eta");
+    draw_hist(hj1Rreco,"j1_R_reco", "R_{j1}_reco", "R");
+    draw_hist(hj2Rreco,"j2_R_reco", "R_{j2}_reco", "R");
+    draw_hist(hjjdeltaRreco,"jj_#DeltaR_reco", "#DeltaR_{jj}_reco", "#DeltaR");
+
+    draw_hist(hjjpTparticle,"jj_pT_particle", "p^{T}_{jj}_particle", "pT (GeV)");
+    draw_hist(hjjmparticle,"jj_m_particle", "m_{jj}_particle", "mass (GeV)");
+    draw_hist(hj1pTparticle,"j1_pT_particle", "p^{T}_{j1}_particle", "pT (GeV)");
+    draw_hist(hj1mparticle,"j1_m_particle", "m_{j1}_particle", "mass (GeV)");
+    draw_hist(hj2pTparticle,"j2_pT_particle", "p^{T}_{j2}_particle", "pT (GeV)");
+    draw_hist(hj2mparticle,"j2_m_particle", "m_{j2}_particle", "mass (GeV)");
+    draw_hist(hj1phiparticle,"j1_#phi_particle", "#phi_{j1}_particle", "#phi");
+    draw_hist(hj2phiparticle,"j2_#phi_particle", "#phi_{j2}_particle", "#phi");
+    draw_hist(hjjdeltaPhiparticle,"jj_#Delta#phi_particle", "#Delta#phi_{jj}_particle", "#Delta#phi");
+    draw_hist(hj1etaparticle,"j1_#eta_particle", "#eta_{j1}_particle", "#eta");
+    draw_hist(hj2etaparticle,"j2_#eta_particle", "#eta_{j2}_particle", "#eta");
+    draw_hist(hjjdeltaEtaparticle,"jj_#Delta#eta_particle", "#Delta#eta_{jj}_particle", "#Delta#eta");
+    draw_hist(hj1Rparticle,"j1_R_particle", "R_{j1}_particle", "R");
+    draw_hist(hj2Rparticle,"j2_R_particle", "R_{j2}_particle", "R");
+    draw_hist(hjjdeltaRparticle,"jj_#DeltaR_particle", "#DeltaR_{jj}_particle", "#DeltaR");
+
+// z 
+
+    draw_hist(hz1pTreco,"z1_pT_reco", "p^{T}_{z1}_reco", "pT (GeV)");
+    draw_hist(hz2pTreco,"z2_pT_reco", "p^{T}_{z2}_reco", "pT (GeV)");
+    draw_hist(hz1mreco,"z1_m_reco", "m_{z1}_reco", "pT (GeV)");
+    draw_hist(hz2mreco,"z2_m_reco", "m_{z2}_reco", "pT (GeV)");
+    draw_hist(hz1phireco,"z1_#phi_reco", "#phi_{z1}_reco", "#phi");
+    draw_hist(hz2phireco,"z2_#phi_reco", "#phi_{z2}_reco", "#phi");
+    draw_hist(hzzdeltaPhireco,"zz_#Delta#phi_reco", "#Delta#phi_{zz}_reco", "#Delta#phi");
+    draw_hist(hz1etareco,"z1_#eta_reco", "#eta_{z1}_reco", "#eta");
+    draw_hist(hz2etareco,"z2_#eta_reco", "#eta_{z2}_reco", "#eta");
+    draw_hist(hzzdeltaEtareco,"zz_#Delta#eta_reco", "#Delta#eta_{zz}_reco", "#Delta#eta");
+    draw_hist(hz1Rreco,"z1_R_reco", "R_{z1}_reco", "R");
+    draw_hist(hz2Rreco,"z2_R_reco", "R_{z2}_reco", "R");
+    draw_hist(hzzdeltaRreco,"zz_#DeltaR_reco", "#DeltaR_{zz}_reco", "#DeltaR");
+    draw_hist(hz1cosThetareco,"z1_cos#theta_reco", "cos#theta_{z1}_reco", "cos#theta");
+    draw_hist(hz2cosThetareco,"z2_cos#theta_reco", "cos#theta_{z1}_reco", "cos#theta");
+
+    draw_hist(hz1pTparticle,"z1_pT_particle", "p^{T}_{z1}_particle", "pT (GeV)");
+    draw_hist(hz2pTparticle,"z2_pT_particle", "p^{T}_{z2}_particle", "pT (GeV)");
+    draw_hist(hz1mparticle,"z1_m_particle", "m_{z1}_particle", "mass (GeV)");
+    draw_hist(hz2mparticle,"z2_m_particle", "m_{z2}_particle", "mass (GeV)");
+    draw_hist(hz1phiparticle,"z1_#phi_particle", "#phi_{z1}_particle", "#phi");
+    draw_hist(hz2phiparticle,"z2_#phi_particle", "#phi_{z2}_particle", "#phi");
+    draw_hist(hzzdeltaPhiparticle,"zz_#Delta#phi_particle", "#Delta#phi_{zz}_particle", "#Delta#phi");
+    draw_hist(hz1etaparticle,"z1_#eta_particle", "#eta_{z1}_particle", "#eta");
+    draw_hist(hz2etaparticle,"z2_#eta_particle", "#eta_{z2}_particle", "#eta");
+    draw_hist(hzzdeltaEtaparticle,"zz_#Delta#eta_particle", "#Delta#eta_{zz}_particle", "#Delta#eta");
+    draw_hist(hz1Rparticle,"z1_R_particle", "R_{z1}_particle", "R");
+    draw_hist(hz2Rparticle,"z2_R_particle", "R_{z2}_particle", "R");
+    draw_hist(hzzdeltaRparticle,"zz_#DeltaR_particle", "#DeltaR_{zz}_particle", "#DeltaR");
+
+    draw_hist(hz1pTparton,"z1_pT_parton", "p^{T}_{z1}_parton", "pT (GeV)");
+    draw_hist(hz2pTparton,"z2_pT_parton", "p^{T}_{z2}_parton", "pT (GeV)");
+    draw_hist(hz1mparton,"z1_m_parton", "m_{z1}_parton", "mass (GeV)");
+    draw_hist(hz2mparton,"z2_m_parton", "m_{z2}_parton", "mass (GeV)");
+    draw_hist(hz1phiparton,"z1_#phi_parton", "#phi_{z1}_parton", "#phi");
+    draw_hist(hz2phiparton,"z2_#phi_parton", "#phi_{z2}_parton", "#phi");
+    draw_hist(hzzdeltaPhiparton,"zz_#Delta#phi_parton", "#Delta#phi_{zz}_parton", "#Delta#phi");
+    draw_hist(hz1etaparton,"z1_#eta_parton", "#eta_{z1}_parton", "#eta");
+    draw_hist(hz2etaparton,"z2_#eta_parton", "#eta_{z2}_parton", "#eta");
+    draw_hist(hzzdeltaEtaparton,"zz_#Delta#eta_parton", "#Delta#eta_{zz}_parton", "#Delta#eta");
+    draw_hist(hz1Rparton,"z1_R_parton", "R_{z1}_parton", "R");
+    draw_hist(hz2Rparton,"z2_R_parton", "R_{z2}_parton", "R");
+    draw_hist(hzzdeltaRparton,"zz_#DeltaR_parton", "#DeltaR_{zz}_parton", "#DeltaR");
+
+// leptons
+
+    draw_hist(hl1pTreco,"l1_pT_reco", "p^{T}_{l1}_reco", "pT (GeV)");
+    draw_hist(hl2pTreco,"l2_pT_reco", "p^{T}_{l2}_reco", "pT (GeV)");
+    draw_hist(hl3pTreco,"l3_pT_reco", "p^{T}_{l3}_reco", "pT (GeV)");
+    draw_hist(hl4pTreco,"l4_pT_reco", "p^{T}_{l4}_reco", "pT (GeV)");
+    draw_hist(hl1phireco,"l1_#phi_reco", "#phi_{l1}_reco", "#phi");
+    draw_hist(hl2phireco,"l2_#phi_reco", "#phi_{l2}_reco", "#phi");
+    draw_hist(hl3phireco,"l3_#phi_reco", "#phi_{l3}_reco", "#phi");
+    draw_hist(hl4phireco,"l4_#phi_reco", "#phi_{l4}_reco", "#phi");
+    draw_hist(hl1l2deltaPhireco,"l1l2_#Delta#phi_reco", "#Delta#phi_{l1l2}_reco", "#Delta#phi");
+    draw_hist(hl3l4deltaPhireco,"l3l4_#Delta#phi_reco", "#Delta#phi_{l3l4}_reco", "#Delta#phi");
+    draw_hist(hl1l2deltaPhiBoostreco,"l1l2_#Delta#phi_Boost_reco", "#Delta#phi_{l1l2}_Boost_reco", "#Delta#phi");
+    draw_hist(hl3l4deltaPhiBoostreco,"l3l4_#Delta#phi_Boost_reco", "#Delta#phi_{l3l4}_Boost_reco", "#Delta#phi");
+    draw_hist(hl1etareco,"l1_#eta_reco", "#eta_{l1}_reco", "#eta");
+    draw_hist(hl2etareco,"l2_#eta_reco", "#eta_{l2}_reco", "#eta");
+    draw_hist(hl3etareco,"l3_#eta_reco", "#eta_{l3}_reco", "#eta");
+    draw_hist(hl4etareco,"l4_#eta_reco", "#eta_{l4}_reco", "#eta");
+    draw_hist(hl1l2deltaEtareco,"l1l2_#Delta#eta_reco", "#Delta#eta_{l1l2}_reco", "#Delta#eta");
+    draw_hist(hl3l4deltaEtareco,"l3l4_#Delta#eta_reco", "#Delta#eta_{l3l4}_reco", "#Delta#eta");
+    draw_hist(hl1l2deltaEtaBoostreco,"l1l2_#Delta#eta_Boost_reco", "#Delta#eta_{l1l2}_Boost_reco", "#Delta#eta");
+    draw_hist(hl3l4deltaEtaBoostreco,"l3l4_#Delta#eta_Boost_reco", "#Delta#eta_{l3l4}_Boost_reco", "#Delta#eta");
+    draw_hist(hl1Rreco,"l1_R_reco", "R_{l1}_reco", "R");
+    draw_hist(hl2Rreco,"l2_R_reco", "R_{l2}_reco", "R");
+    draw_hist(hl3Rreco,"l3_R_reco", "R_{l3}_reco", "R");
+    draw_hist(hl4Rreco,"l4_R_reco", "R_{l4}_reco", "R");
+    draw_hist(hl1l2deltaRreco,"l1l2_#Delta R_reco", "#DeltaR_{l1l2}_reco", "#DeltaR");
+    draw_hist(hl3l4deltaRreco,"l3l4_#Delta R_reco", "#DeltaR_{l3l4}_reco", "#DeltaR");
+    draw_hist(hl1l2CScosThetareco,"l1l2_cos#theta_{CS}_reco", "cos#theta_{CS l1l2}_reco", "cos#theta_{CS}");
+    draw_hist(hl3l4CScosThetareco,"l3l4_cos#theta_{CS}_reco", "cos#theta_{CS l3l4}_reco", "cos#theta_{CS}");
+    draw_hist(hl1cosThetareco,"l1_cos#theta_reco", "cos#theta_{l1}_reco", "cos#theta");
+    draw_hist(hl2cosThetareco,"l2_cos#theta_reco", "cos#theta_{l2}_reco", "cos#theta");
+    draw_hist(hl3cosThetareco,"l3_cos#theta_reco", "cos#theta_{l3}_reco", "cos#theta");
+    draw_hist(hl4cosThetareco,"l4_cos#theta_reco", "cos#theta_{l4}_reco", "cos#theta");
+    draw_hist(hfourlcosThetareco,"four_cos#theta_reco", "cos#theta_{fourl}_reco", "cos#theta");
+    draw_hist(hl1cosThetaBoostreco,"l1_cos#theta_Boost_reco", "cos#theta_{l1}_Boost_reco", "cos#theta");
+    draw_hist(hl2cosThetaBoostreco,"l2_cos#theta_Boost_reco", "cos#theta_{l2}_Boost_reco", "cos#theta");
+    draw_hist(hl3cosThetaBoostreco,"l3_cos#theta_Boost_reco", "cos#theta_{l3}_Boost_reco", "cos#theta");
+    draw_hist(hl4cosThetaBoostreco,"l4_cos#theta_Boost_reco", "cos#theta_{l4}_Boost_reco", "cos#theta");
+    draw_hist(hfourlcosThetaBoostreco,"four_cos#theta_Boost_reco", "cos#theta_{fourl}_Boost_reco", "cos#theta");
+
+    draw_hist(hl1pTparticle,"l1_pT_particle", "p^{T}_{l1}_particle", "pT (GeV)");
+    draw_hist(hl2pTparticle,"l2_pT_particle", "p^{T}_{l2}_particle", "pT (GeV)");
+    draw_hist(hl3pTparticle,"l3_pT_particle", "p^{T}_{l3}_particle", "pT (GeV)");
+    draw_hist(hl4pTparticle,"l4_pT_particle", "p^{T}_{l4}_particle", "pT (GeV)");
+    draw_hist(hl1phiparticle,"l1_#phi_particle", "#phi_{l1}_particle", "#phi");
+    draw_hist(hl2phiparticle,"l2_#phi_particle", "#phi_{l2}_particle", "#phi");
+    draw_hist(hl3phiparticle,"l3_#phi_particle", "#phi_{l3}_particle", "#phi");
+    draw_hist(hl4phiparticle,"l4_#phi_particle", "#phi_{l4}_particle", "#phi");
+    draw_hist(hl1l2deltaPhiparticle,"l1l2_#Delta#phi_particle", "#Delta#phi_{l1l2}_particle", "#Delta#phi");
+    draw_hist(hl3l4deltaPhiparticle,"l3l4_#Delta#phi_particle", "#Delta#phi_{l3l4}_particle", "#Delta#phi");
+    draw_hist(hl1l2deltaPhiBoostparticle,"l1l2_#Delta#phi_Boost_particle", "#Delta#phi_{l1l2}_Boost_particle", "#Delta#phi");
+    draw_hist(hl3l4deltaPhiBoostparticle,"l3l4_#Delta#phi_Boost_particle", "#Delta#phi_{l3l4}_Boost_particle", "#Delta#phi");
+    draw_hist(hl1etaparticle,"l1_#eta_particle", "#eta_{l1}_particle", "#eta");
+    draw_hist(hl2etaparticle,"l2_#eta_particle", "#eta_{l2}_particle", "#eta");
+    draw_hist(hl3etaparticle,"l3_#eta_particle", "#eta_{l3}_particle", "#eta");
+    draw_hist(hl4etaparticle,"l4_#eta_particle", "#eta_{l4}_particle", "#eta");
+    draw_hist(hl1l2deltaEtaparticle,"l1l2_#Delta#eta_particle", "#Delta#eta_{l1l2}_particle", "#Delta#eta");
+    draw_hist(hl3l4deltaEtaparticle,"l3l4_#Delta#eta_particle", "#Delta#eta_{l3l4}_particle", "#Delta#eta");
+    draw_hist(hl1l2deltaEtaBoostparticle,"l1l2_#Delta#eta_Boost_particle", "#Delta#eta_{l1l2}_Boost_particle", "#Delta#eta");
+    draw_hist(hl3l4deltaEtaBoostparticle,"l3l4_#Delta#eta_Boost_particle", "#Delta#eta_{l3l4}_Boost_particle", "#Delta#eta");
+    draw_hist(hl1Rparticle,"l1_R_particle", "R_{l1}_particle", "R");
+    draw_hist(hl2Rparticle,"l2_R_particle", "R_{l2}_particle", "R");
+    draw_hist(hl3Rparticle,"l3_R_particle", "R_{l3}_particle", "R");
+    draw_hist(hl4Rparticle,"l4_R_particle", "R_{l4}_particle", "R");
+    draw_hist(hl1l2deltaRparticle,"l1l2_#DeltaR_particle", "#DeltaR_{l1l2}_particle", "#Delta_R");
+    draw_hist(hl3l4deltaRparticle,"l3l4_#DeltaR_particle", "#DeltaR_{l3l4}_particle", "#Delta_R");
+    draw_hist(hl1l2CScosThetaparticle,"l1l2_cos#theta_{CS}_particle", "cos#theta_{CSl1l2}_particle", "cos#theta_{CS}");
+    draw_hist(hl3l4CScosThetaparticle,"l3l4_cos#theta_{CS}_particle", "cos#theta_{CSl3l4}_particle", "cos#theta_{CS}");
+    draw_hist(hl1cosThetaparticle,"l1_cos#theta_particle", "cos#theta_{l1}_particle", "cos#theta");
+    draw_hist(hl2cosThetaparticle,"l2_cos#theta_particle", "cos#theta_{l2}_particle", "cos#theta");
+    draw_hist(hl3cosThetaparticle,"l3_cos#theta_particle", "cos#theta_{l3}_particle", "cos#theta");
+    draw_hist(hl4cosThetaparticle,"l4_cos#theta_particle", "cos#theta_{l4}_particle", "cos#theta");
+    draw_hist(hfourlcosThetaparticle,"four_cos#theta_particle", "cos#theta_{fourl}_particle", "cos#theta");
+    draw_hist(hl1cosThetaBoostparticle,"l1_cos#theta_Boost_particle", "cos#theta_{l1}_Boost_particle", "cos#theta");
+    draw_hist(hl2cosThetaBoostparticle,"l2_cos#theta_Boost_particle", "cos#theta_{l2}_Boost_particle", "cos#theta");
+    draw_hist(hl3cosThetaBoostparticle,"l3_cos#theta_Boost_particle", "cos#theta_{l3}_Boost_particle", "cos#theta");
+    draw_hist(hl4cosThetaBoostparticle,"l4_cos#theta_Boost_particle", "cos#theta_{l4}_Boost_particle", "cos#theta");
+    draw_hist(hfourlcosThetaBoostparticle,"four_cos#theta_Boost_particle", "cos#theta_{fourl}_Boost_particle", "cos#theta");
+
+    draw_hist(hl1pTparton,"l1_pT_parton", "p^{T}_{l1}_parton", "pT (GeV)");
+    draw_hist(hl2pTparton,"l2_pT_parton", "p^{T}_{l2}_parton", "pT (GeV)");
+    draw_hist(hl3pTparton,"l3_pT_parton", "p^{T}_{l3}_parton", "pT (GeV)");
+    draw_hist(hl4pTparton,"l4_pT_parton", "p^{T}_{l4}_parton", "pT (GeV)");
+    draw_hist(hl1phiparton,"l1_#phi_parton", "#phi_{l1}_parton", "#phi");
+    draw_hist(hl2phiparton,"l2_#phi_parton", "#phi_{l2}_parton", "#phi");
+    draw_hist(hl3phiparton,"l3_#phi_parton", "#phi_{l3}_parton", "#phi");
+    draw_hist(hl4phiparton,"l4_#phi_parton", "#phi_{l4}_parton", "#phi");
+    draw_hist(hl1l2deltaPhiparton,"l1l2_#Delta#phi_parton", "#Delta#phi_{l1l2}_parton", "#Delta#phi");
+    draw_hist(hl3l4deltaPhiparton,"l3l4_#Delta#phi_parton", "#Delta#phi_{l3l4}_parton", "#Delta#phi");
+    draw_hist(hl1l2deltaPhiBoostparton,"l1l2_#Delta#phi_Boost_parton", "#Delta#phi_{l1l2}_Boost_parton", "#Delta#phi");
+    draw_hist(hl3l4deltaPhiBoostparton,"l3l4_#Delta#phi_Boost_parton", "#Delta#phi_{l3l4}_Boost_parton", "#Delta#phi");
+    draw_hist(hl1etaparton,"l1_#eta_parton", "#eta_{l1}_parton", "#eta");
+    draw_hist(hl2etaparton,"l2_#eta_parton", "#eta_{l2}_parton", "#eta");
+    draw_hist(hl3etaparton,"l3_#eta_parton", "#eta_{l3}_parton", "#eta");
+    draw_hist(hl4etaparton,"l4_#eta_parton", "#eta_{l4}_parton", "#eta");
+    draw_hist(hl1l2deltaEtaparton,"l1l2_#Delta#eta_parton", "#Delta#eta_{l1l2}_parton", "#Delta#eta");
+    draw_hist(hl3l4deltaEtaparton,"l3l4_#Delta#eta_parton", "#Delta#eta_{l3l4}_parton", "#Delta#eta");
+    draw_hist(hl1l2deltaEtaBoostparton,"l1l2_#Delta#eta_Boost_parton", "#Delta#eta_{l1l2}_Boost_parton", "#Delta#eta");
+    draw_hist(hl3l4deltaEtaBoostparton,"l3l4_#Delta#eta_Boost_parton", "#Delta#eta_{l3l4}_Boost_parton", "#Delta#eta");
+    draw_hist(hl1Rparton,"l1_R_parton", "R_{l1}_parton", "R");
+    draw_hist(hl2Rparton,"l2_R_parton", "R_{l2}_parton", "R");
+    draw_hist(hl3Rparton,"l3_R_parton", "R_{l3}_parton", "R");
+    draw_hist(hl4Rparton,"l4_R_parton", "R_{l4}_parton", "R");
+    draw_hist(hl1l2deltaRparton,"l1l2_#Delta R_parton", "#Delta_R_{l1l2}_parton", "#Delta_R");
+    draw_hist(hl3l4deltaRparton,"l3l4_#Delta R_parton", "#Delta_R_{l3l4}_parton", "#Delta_R");
+    draw_hist(hl1l2CScosThetaparton,"l1l2_cos#theta_{CS}_parton", "cos#theta_{CSl1l2}_parton", "cos#theta_{CS}");
+    draw_hist(hl3l4CScosThetaparton,"l3l4_cos#theta_{CS}_parton", "cos#theta_{CSl3l4}_parton", "cos#theta_{CS}");
+    draw_hist(hl1cosThetaparton,"l1_cos#theta_parton", "cos#theta_{l1}_parton", "cos#theta");
+    draw_hist(hl2cosThetaparton,"l2_cos#theta_parton", "cos#theta_{l2}_parton", "cos#theta");
+    draw_hist(hl3cosThetaparton,"l3_cos#theta_parton", "cos#theta_{l3}_parton", "cos#theta");
+    draw_hist(hl4cosThetaparton,"l4_cos#theta_parton", "cos#theta_{l4}_parton", "cos#theta");
+    draw_hist(hfourlcosThetaparton,"four_cos#theta_parton", "cos#theta_{fourl}_parton", "cos#theta");
+    draw_hist(hl1cosThetaBoostparton,"l1_cos#theta_Boost_parton", "cos#theta_{l1}_Boost_parton", "cos#theta");
+    draw_hist(hl2cosThetaBoostparton,"l2_cos#theta_Boost_parton", "cos#theta_{l2}_Boost_parton", "cos#theta");
+    draw_hist(hl3cosThetaBoostparton,"l3_cos#theta_Boost_parton", "cos#theta_{l3}_Boost_parton", "cos#theta");
+    draw_hist(hl4cosThetaBoostparton,"l4_cos#theta_Boost_parton", "cos#theta_{l4}_Boost_parton", "cos#theta");
+    draw_hist(hfourlcosThetaBoostparton,"four_cos#theta_Boost_parton", "cos#theta_{fourl}_Boost_parton", "cos#theta");
+
+
+// comp 
+
     draw_hist2(hHpTComp, "H_pT_comp", "p^{T}_{h}", "parton level pT (GeV)", "reco level pT (GeV)");
     draw_hist2(hHmComp, "H_m_comp", "m_{h}", "parton level mass (GeV)", "reco level mass (GeV)");
 
-    draw_hist(hjjv1pTreco,"jj_pT_reco_v1", "p^{T}_{jj}", "pT (GeV)");
-    draw_hist(hjjv1mreco,"jj_m_reco_v1", "m_{jj}", "mass (GeV)");
-    draw_hist(hjjv2pTreco,"jj_pT_reco_v2", "p^{T}_{jj}", "pT (GeV)");
-    draw_hist(hjjv2mreco,"jj_m_reco_v2", "m_{jj}", "mass (GeV)");
-    draw_hist(hj1pTreco,"j1_pT_reco", "p^{T}_{j1}", "pT (GeV)");
-    draw_hist(hj1mreco,"j1_m_reco", "m_{j1}", "mass (GeV)");
-    draw_hist(hj2pTreco,"j2_pT_reco", "p^{T}_{j2}", "pT (GeV)");
-    draw_hist(hj2mreco,"j2_m_reco", "m_{j2}", "mass (GeV)");
-    draw_hist(hj1etareco,"j1_eta_reco", "eta_{j1}", "eta");
-    draw_hist(hj2etareco,"j2_eta_reco", "eta_{j2}", "eta");
-    draw_hist(hjjdeltaPhireco,"jj#phi_reco", "#phi_{jj}", "#phi");
-    
-    draw_hist(hz1pTreco,"z1_pT_reco", "p^{T}_{z1}", "pT (GeV)");
-    draw_hist(hz2pTreco,"z2_pT_reco", "p^{T}_{z2}", "pT (GeV)");
-    draw_hist(hz1mreco,"z1_m_reco", "m_{z1}", "pT (GeV)");
-    draw_hist(hz2mreco,"z2_m_reco", "m_{z2}", "pT (GeV)");
+    draw_hist2(hjjpT23Comp, "jj_pT_comp", "p^{T}_{jj}", "particle level pT (GeV)", "reco level pT (GeV)");
+    draw_hist2(hjjdeltaPhi23Comp, "jj_#Delta#phi_comp", "#Delta#phi_{jj}", "particle level #Delta#phi", "reco level #Delta#phi");
 
-    draw_hist(hz1pTparticle,"z1_pT_particle", "p^{T}_{z1}", "pT (GeV)");
-    draw_hist(hz2pTparticle,"z2_pT_particle", "p^{T}_{z2}", "pT (GeV)");
-    draw_hist(hz1mparticle,"z1_m_particle", "m_{z1}", "mass (GeV)");
-    draw_hist(hz2mparticle,"z2_m_particle", "m_{z2}", "mass (GeV)");
+    draw_hist2(hl1l2deltaPhiHpTcompreco, "l1l2_delta#phi_H_pT_comp_reco", " ", "#Delta#phi_l1l2", "p^{T}_{h}_reco");
+    draw_hist2(hl3l4deltaPhiHpTcompreco, "l3l4_delta#phi_H_pT_comp_reco", " ", "#Delta#phi_l1l2", "p^{T}_{h}_reco");
+    draw_hist2(hz1pT13Comp, "z1_pT_comp_31", "p^{T}_{z1}", "parton level pT (GeV)", "reco level pT (GeV)");
+    draw_hist2(hz1m13Comp, "z1_m_comp_31", "m_{z1}", "parton level mass (GeV)", "reco  level mass (GeV)");
+    draw_hist2(hz2pT13Comp, "z2_pT_comp_31", "p^{T}_{z2}", "parton level pT (GeV)", "reco level pT (GeV)");
+    draw_hist2(hz2m13Comp, "z2_m_comp_31", "m_{z2}", "parton level mass (GeV)", "reco  level mass (GeV)");
+    draw_hist2(hz1pT23Comp, "z1_pT_comp_32", "p^{T}_{z1}", "particle level pT (GeV)", "reco level pT (GeV)");
+    draw_hist2(hz1m23Comp, "z1_m_comp_32", "m_{z1}", "particle level mass (GeV)", "reco level mass (GeV)");
+    draw_hist2(hz2pT23Comp, "z2_pT_comp_32", "p^{T}_{z2}", "particle level pT (GeV)", "reco level pT (GeV)");
+    draw_hist2(hz2m23Comp, "z2_m_comp_32", "m_{z2}", "particle level mass (GeV)", "reco level mass (GeV)");
+    draw_hist2(hz1pT12Comp, "z1_pT_comp_21", "p^{T}_{z1}", "parton level pT (GeV)", "particle level pT (GeV)");
+    draw_hist2(hz1m12Comp, "z1_m_comp_21", "m_{z1}", "parton level mass (GeV)", "particle level mass (GeV)");
+    draw_hist2(hz2pT12Comp, "z2_pT_comp_21", "p^{T}_{z2}", "parton level pT (GeV)", "particle level pT (GeV)");
+    draw_hist2(hz2m12Comp, "z2_m_comp_21", "m_{z2}", "parton level mass (GeV)", "particle level mass (GeV)");
 
-    draw_hist(hz1cosThetareco,"z1_cos#theta_reco", "cos#theta_{z1}", "cos#theta");
-    draw_hist(hz2cosThetareco,"z2_cos#theta_reco", "cos#theta_{z1}", "cos#theta");
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// delete ?
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    draw_hist(hzzdeltaPhireco,"zz_#phi_reco", "#phi_{zz}", "#phi");
+  hHpTreco -> Clear();
+  hHmreco -> Clear();
+  hb1pTreco -> Clear();
+  hb1mreco -> Clear();
+  hb2pTreco -> Clear();
+  hb2mreco -> Clear();
+  hHphireco -> Clear();
+  hb1phireco -> Clear();
+  hb2phireco -> Clear();
+  hbbdeltaPhireco -> Clear();
+  hHetareco -> Clear();
+  hb1etareco -> Clear();
+  hb2etareco -> Clear();
+  hbbdeltaEtareco -> Clear();
+  hHRreco -> Clear();
+  hb1Rreco -> Clear();
+  hb2Rreco -> Clear();
+  hbbdeltaRreco -> Clear();
 
-    draw_hist(hz1pTparton,"z1_pT_parton", "p^{T}_{z1}", "pT (GeV)");
-    draw_hist(hz2pTparton,"z2_pT_parton", "p^{T}_{z2}", "pT (GeV)");
-    draw_hist(hz1mparton,"z1_m_parton", "m_{z1}", "mass (GeV)");
-    draw_hist(hz2mparton,"z2_m_parton", "m_{z2}", "mass (GeV)");
-    draw_hist2(hz1pTComp, "z1_pT_comp", "p^{T}_{z1}", "parton level pT (GeV)", "reco level pT (GeV)");
-    draw_hist2(hz1mComp, "z1_m_comp", "m_{z1}", "parton level mass (GeV)", "reco level mass (GeV)");
-    draw_hist2(hz2pTComp, "z2_pT_comp", "p^{T}_{z2}", "parton level pT (GeV)", "reco level pT (GeV)");
-    draw_hist2(hz2mComp, "z2_m_comp", "m_{z2}", "parton level mass (GeV)", "reco level mass (GeV)");
+  hHpTparticle -> Clear();
+  hHmparticle -> Clear();
+  hb1pTparticle -> Clear();
+  hb1mparticle -> Clear();
+  hb2pTparticle -> Clear();
+  hb2mparticle -> Clear();
+  hHphiparticle -> Clear();
+  hb1phiparticle -> Clear();
+  hb2phiparticle -> Clear();
+  hbbdeltaPhiparticle -> Clear();
+  hHetaparticle -> Clear();
+  hb1etaparticle -> Clear();
+  hb2etaparticle -> Clear();
+  hbbdeltaEtaparticle -> Clear();
+  hHRparticle -> Clear();
+  hb1Rparticle -> Clear();
+  hb2Rparticle -> Clear();
+  hbbdeltaRparticle -> Clear();
 
-    draw_hist(hl1pTreco,"l1_pT_reco", "p^{T}_{l1}", "pT (GeV)");
-    draw_hist(hl2pTreco,"l2_pT_reco", "p^{T}_{l2}", "pT (GeV)");
-    draw_hist(hl3pTreco,"l3_pT_reco", "p^{T}_{l3}", "pT (GeV)");
-    draw_hist(hl4pTreco,"l4_pT_reco", "p^{T}_{l4}", "pT (GeV)");
-    draw_hist(hl1l2deltaPhireco,"l1l2_#phi_reco", "#phi_{l1l2}", "#phi");
-    draw_hist(hl3l4deltaPhireco,"l3l4_#phi_reco", "#phi_{l3l4}", "#phi");
-  
-    hists->Close();
+  hHpTparton -> Clear();
+  hHmparton -> Clear();
+  hb1pTparton -> Clear();
+  hb1mparton -> Clear();
+  hb2pTparton -> Clear();
+  hb2mparton -> Clear();
+  hHphiparton -> Clear();
+  hb1phiparton -> Clear();
+  hb2phiparton -> Clear();
+  hbbdeltaPhiparton -> Clear();
+  hHetaparton -> Clear();
+  hb1etaparton -> Clear();
+  hb2etaparton -> Clear();
+  hbbdeltaEtaparton -> Clear();
+  hHRparton -> Clear();
+  hb1Rparton -> Clear();
+  hb2Rparton -> Clear();
+  hbbdeltaRparton -> Clear();
+
+  hjjpTreco -> Clear();
+  hjjmreco -> Clear();
+  hj1pTreco -> Clear();
+  hj1mreco -> Clear();
+  hj2pTreco -> Clear();
+  hj2mreco -> Clear();
+  hj1phireco -> Clear();
+  hj2phireco -> Clear();
+  hjjdeltaPhireco -> Clear();
+  hj1etareco -> Clear();
+  hj2etareco -> Clear();
+  hjjdeltaEtareco -> Clear();
+  hj1Rreco -> Clear();
+  hj2Rreco -> Clear();
+  hjjdeltaRreco -> Clear();
+
+  hjjpTparticle -> Clear();
+  hjjmparticle -> Clear();
+  hj1pTparticle -> Clear();
+  hj1mparticle -> Clear();
+  hj2pTparticle -> Clear();
+  hj2mparticle -> Clear();
+  hj1phiparticle -> Clear();
+  hj2phiparticle -> Clear();
+  hjjdeltaPhiparticle -> Clear();
+  hj1etaparticle -> Clear();
+  hj2etaparticle -> Clear();
+  hjjdeltaEtaparticle -> Clear();
+  hj1Rparticle -> Clear();
+  hj2Rparticle -> Clear();
+  hjjdeltaRparticle -> Clear();
+
+  hz1pTreco -> Clear();
+  hz2pTreco -> Clear();
+  hz1mreco -> Clear();
+  hz2mreco -> Clear();
+  hz1cosThetareco -> Clear();
+  hz2cosThetareco -> Clear();
+  hz1phireco -> Clear();
+  hz2phireco -> Clear();
+  hzzdeltaPhireco -> Clear();
+  hz1etareco -> Clear();
+  hz2etareco -> Clear();
+  hzzdeltaEtareco -> Clear();
+  hz1Rreco -> Clear();
+  hz2Rreco -> Clear();
+  hzzdeltaRreco -> Clear();
+
+  hz1pTparticle -> Clear();
+  hz2pTparticle -> Clear();
+  hz1mparticle -> Clear();
+  hz2mparticle -> Clear();
+  hz1phiparticle -> Clear();
+  hz2phiparticle -> Clear();
+  hzzdeltaPhiparticle -> Clear();
+  hz1etaparticle -> Clear();
+  hz2etaparticle -> Clear();
+  hzzdeltaEtaparticle -> Clear();
+  hz1Rparticle -> Clear();
+  hz2Rparticle -> Clear();
+  hzzdeltaRparticle -> Clear();
+
+  hz1pTparton -> Clear();
+  hz2pTparton -> Clear();
+  hz1mparton -> Clear();
+  hz2mparton -> Clear();
+  hz1phiparton -> Clear();
+  hz2phiparton -> Clear();
+  hzzdeltaPhiparton -> Clear();
+  hz1etaparton -> Clear();
+  hz2etaparton -> Clear();
+  hzzdeltaEtaparton -> Clear();
+  hz1Rparton -> Clear();
+  hz2Rparton -> Clear();
+  hzzdeltaRparton -> Clear();
+
+  hl1pTreco -> Clear();
+  hl2pTreco -> Clear();
+  hl3pTreco -> Clear();
+  hl4pTreco -> Clear();
+  hl1phireco -> Clear();
+  hl2phireco -> Clear();
+  hl3phireco -> Clear();
+  hl4phireco -> Clear();
+  hl1l2deltaPhireco -> Clear();
+  hl3l4deltaPhireco -> Clear();
+  hl1l2deltaPhiBoostreco -> Clear();
+  hl3l4deltaPhiBoostreco -> Clear();
+  hl1etareco -> Clear();
+  hl2etareco -> Clear();
+  hl3etareco -> Clear();
+  hl4etareco -> Clear();
+  hl1l2deltaEtareco -> Clear();
+  hl3l4deltaEtareco -> Clear();
+  hl1l2deltaEtaBoostreco -> Clear();
+  hl3l4deltaEtaBoostreco -> Clear();
+  hl1Rreco -> Clear();
+  hl2Rreco -> Clear();
+  hl3Rreco -> Clear();
+  hl4Rreco -> Clear();
+  hl1l2deltaRreco -> Clear();
+  hl3l4deltaRreco -> Clear();
+  hl1cosThetareco -> Clear();
+  hl2cosThetareco -> Clear();
+  hl3cosThetareco -> Clear();
+  hl4cosThetareco -> Clear();
+  hfourlcosThetareco -> Clear();
+  hl1cosThetaBoostreco -> Clear();
+  hl2cosThetaBoostreco -> Clear();
+  hl3cosThetaBoostreco -> Clear();
+  hl4cosThetaBoostreco -> Clear();
+  hfourlcosThetaBoostreco -> Clear();
+  hl1l2CScosThetareco -> Clear();
+  hl3l4CScosThetareco -> Clear();
+
+  hl1pTparticle -> Clear();
+  hl2pTparticle -> Clear();
+  hl3pTparticle -> Clear();
+  hl4pTparticle -> Clear();
+  hl1phiparticle -> Clear();
+  hl2phiparticle -> Clear();
+  hl3phiparticle -> Clear();
+  hl4phiparticle -> Clear();
+  hl1l2deltaPhiparticle -> Clear();
+  hl3l4deltaPhiparticle -> Clear();
+  hl1l2deltaPhiBoostparticle -> Clear();
+  hl3l4deltaPhiBoostparticle -> Clear();
+  hl1etaparticle -> Clear();
+  hl2etaparticle -> Clear();
+  hl3etaparticle -> Clear();
+  hl4etaparticle -> Clear();
+  hl1l2deltaEtaparticle -> Clear();
+  hl3l4deltaEtaparticle -> Clear();
+  hl1l2deltaEtaBoostparticle -> Clear();
+  hl3l4deltaEtaBoostparticle -> Clear();
+  hl1Rparticle -> Clear();
+  hl2Rparticle -> Clear();
+  hl3Rparticle -> Clear();
+  hl4Rparticle -> Clear();
+  hl1l2deltaRparticle -> Clear();
+  hl3l4deltaRparticle -> Clear();
+  hl1cosThetaparticle -> Clear();
+  hl2cosThetaparticle -> Clear();
+  hl3cosThetaparticle -> Clear();
+  hl4cosThetaparticle -> Clear();
+  hfourlcosThetaparticle -> Clear();
+  hl1cosThetaBoostparticle -> Clear();
+  hl2cosThetaBoostparticle -> Clear();
+  hl3cosThetaBoostparticle -> Clear();
+  hl4cosThetaBoostparticle -> Clear();
+  hfourlcosThetaBoostparticle -> Clear();
+  hl1l2CScosThetaparticle -> Clear();
+  hl3l4CScosThetaparticle -> Clear();
+
+  hl1pTparton -> Clear();
+  hl2pTparton -> Clear();
+  hl3pTparton -> Clear();
+  hl4pTparton -> Clear();
+  hl1phiparton -> Clear();
+  hl2phiparton -> Clear();
+  hl3phiparton -> Clear();
+  hl4phiparton -> Clear();
+  hl1l2deltaPhiparton -> Clear();
+  hl3l4deltaPhiparton -> Clear();
+  hl1l2deltaPhiBoostparton -> Clear();
+  hl3l4deltaPhiBoostparton -> Clear();
+  hl1etaparton -> Clear();
+  hl2etaparton -> Clear();
+  hl3etaparton -> Clear();
+  hl4etaparton -> Clear();
+  hl1l2deltaEtaparton -> Clear();
+  hl3l4deltaEtaparton -> Clear();
+  hl1l2deltaEtaBoostparton -> Clear();
+  hl3l4deltaEtaBoostparton -> Clear();
+  hl1Rparton -> Clear();
+  hl2Rparton -> Clear();
+  hl3Rparton -> Clear();
+  hl4Rparton -> Clear();
+  hl1l2deltaRparton -> Clear();
+  hl3l4deltaRparton -> Clear();
+  hl1cosThetaparton -> Clear();
+  hl2cosThetaparton -> Clear();
+  hl3cosThetaparton -> Clear();
+  hl4cosThetaparton -> Clear();
+  hfourlcosThetaparton -> Clear();
+  hl1cosThetaBoostparton -> Clear();
+  hl2cosThetaBoostparton -> Clear();
+  hl3cosThetaBoostparton -> Clear();
+  hl4cosThetaBoostparton -> Clear();
+  hfourlcosThetaBoostparton -> Clear();
+  hl1l2CScosThetaparton -> Clear();
+  hl3l4CScosThetaparton -> Clear();
+
+  hHpTComp -> Clear();
+  hHmComp -> Clear();
+  hjjpT23Comp -> Clear();
+  hjjdeltaPhi23Comp -> Clear();
+  hz1pT13Comp -> Clear();
+  hz1m13Comp -> Clear();
+  hz2pT13Comp -> Clear();
+  hz2m13Comp -> Clear();
+  hz1pT23Comp -> Clear();
+  hz1m23Comp -> Clear();
+  hz2pT23Comp -> Clear();
+  hz2m23Comp -> Clear();
+  hz1pT12Comp -> Clear();
+  hz1m12Comp -> Clear();
+  hz2pT12Comp -> Clear();
+  hz2m12Comp -> Clear();
+
+  hl1l2deltaPhiHpTcompreco -> Clear();
+  hl3l4deltaPhiHpTcompreco -> Clear();
+
+
 }
