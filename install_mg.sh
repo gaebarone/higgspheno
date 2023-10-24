@@ -8,7 +8,7 @@ mkdir -p mg
 cd mg
 wget http://launchpad.net/madgraph5/3.0/3.5.x/+download/MG5_aMC_v3.5.1.tar.gz .
 tar -xvf MG5_aMC_v3.5.1.tar.gz
-cd $here/mg/MG5_aMC_v3_5_1
+cd MG5_aMC_v3_5_1
 lhapdfDIR=`lhapdf-config --prefix`
 echo "set lhapdf $lhapdfDIR/bin/lhapdf-config" > startup.script
 echo "install Delphes" >> startup.scrpit 
