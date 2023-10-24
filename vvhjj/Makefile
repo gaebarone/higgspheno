@@ -1,7 +1,8 @@
-ROOT_DIR = /cvmfs/sft.cern.ch/lcg/releases/ROOT/6.14.04-0d8dc/x86_64-slc6-gcc7-opt/
-
+#ROOT_DIR = /cvmfs/sft.cern.ch/lcg/releases/ROOT/6.14.04-0d8dc/x86_64-slc6-gcc7-opt/
+ROOT_DIR = `root-config --prefix`
 # Delphes directory                                                                                                                                                                                                                                                                                                                                                         
-DELPHES_DIR = ../..
+#DELPHES_DIR = ../..
+DELPHES_DIR=${DELPHES_HOME}
 
 CXXFLAGS += $(shell $(ROOT_DIR)/bin/root-config --cflags)
 CXXFLAGS += -I$(DELPHES_DIR) -I$(DELPHES_DIR)/external
@@ -12,7 +13,7 @@ LDFLAGS += -Wl,-rpath,$(DELPHES_DIR) -L$(DELPHES_DIR) -lDelphes
 all: zzhjjAnalyzer
 
 clean:
-        rm -f zzhjjAnalyzer
+	rm -f zzhjjAnalyzer
 
 %: %.cpp
-        $(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
