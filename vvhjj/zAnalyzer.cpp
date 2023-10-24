@@ -3035,6 +3035,6 @@ int main(int argc, char* argv[]) {
   const char *inputFileName = argv[1];
   const char *outputFileName = argv[2];
   //  const char *process_name = argv[3];                                                                                                                                                                                                                                                                                                                                   
-  zzhjjAnalyzer(inputFileName, outputFileName);
+  zAnalyzer(inputFileName, outputFileName);
   return 1;
 }
