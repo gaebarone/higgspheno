@@ -1,6 +1,6 @@
 #include "classes/DelphesClasses.h"
 #include "ExRootAnalysis/ExRootTreeReader.h"
-#include "ghost_tagging.h"
+#include "../common_includes/ghost_tagging.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -25,7 +25,7 @@
 #include "TParticle.h"
 #include <vector>
 #include "TClonesArray.h"
-#include "get_cross_section.h"
+#include "../common_includes/get_cross_section.h"
 
 Long64_t get_num_entries(const char *inputName) {
   TChain chain("Delphes");

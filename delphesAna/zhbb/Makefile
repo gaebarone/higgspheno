@@ -10,10 +10,9 @@ CXXFLAGS += -I$(DELPHES_DIR) -I$(DELPHES_DIR)/external
 LDFLAGS += $(shell $(ROOT_DIR)/bin/root-config --libs) -lEG
 LDFLAGS += -Wl,-rpath,$(DELPHES_DIR) -L$(DELPHES_DIR) -lDelphes
 
-all: zzhjjAnalyzer
-
+all: zhbb_analyze
 clean:
-	rm -f zzhjjAnalyzer
+	rm -f zhbb_analyze
 
 %: %.cpp
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
