@@ -2,8 +2,8 @@
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
 #include "ExRootAnalysis/ExRootTreeReader.h"
-#include "../common_includes/ghost_tagging.h"
-#include "../common_includes/get_cross_section.h"
+#include "ghost_tagging.h"
+// #include "get_cross_section.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -11,8 +11,6 @@
 #include "TH2F.h"
 #include "TClonesArray.h"
 #include "TTree.h"
-#include "TCanvas.h"
-#include "TProfile.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -29,7 +27,7 @@
 #include <TRandom3.h>
 #include "TParticle.h"
 #include <vector>
-#include "../common_includes/combinations.h" 
+#include "combinations.h" 
 
 using namespace std;
 
@@ -85,7 +83,7 @@ std::vector <std::vector <int>> getAllCombinations(vector<int> inputVector, int 
 // histogram settings
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
+/*
 void PrintCanvas(TCanvas *c=nullptr,string name="default"){
   std::vector <string> types={"jpg"}; 
   for(std::vector<string>::iterator it=types.begin(); it!=types.end(); it++) {
@@ -94,28 +92,24 @@ void PrintCanvas(TCanvas *c=nullptr,string name="default"){
 }
 
 void draw_hist(TH1 *histo, const char *name, const char *title, const char *axistitle) {
-  TCanvas *c = new TCanvas(name, title, 1500,1200);{
-    c->cd();
-    histo->GetXaxis()->SetTitle(axistitle);
-    histo->SetMinimum(0.0);
-    histo->Draw("hist e");
-  }
+  TCanvas *c = new TCanvas(name, title, 1500,1200);
+  c->cd();
+  histo->GetXaxis()->SetTitle(axistitle);
+  histo->SetMinimum(0.0);
+  histo->Draw("hist e");
   PrintCanvas(c, name);
-  delete c;
 }
 
 void draw_hist2(TH2 *histo, const char *name, const char *title, const char *xaxistitle, const char *yaxistitle) {
-  TCanvas *c = new TCanvas(name, title, 1500, 1200);{
+  TCanvas *c = new TCanvas(name, title, 1500, 1200);
   histo->GetXaxis()->SetTitle(xaxistitle);
   histo->GetYaxis()->SetTitle(yaxistitle);
-  //c->SetStatX(0.875);
-  //c->SetStatY(0.875);
+  gStyle->SetStatX(0.875);
+  gStyle->SetStatY(0.875);
   histo->Draw("COLZ");
-  }
   PrintCanvas(c, name);
-  delete c; 
 }
-
+*/
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // define find_status1_child
@@ -178,7 +172,7 @@ Long64_t get_total_num_entries(const char *process_name) {
 
 // void zAnalyzer(const char *inputFile,const char *outputFile, int kappaVal = 8) {
 void zAnalyzer(const char *inputFile,const char *outputFile) {
-  //gSystem->Load("libDelphes");
+  // gSystem->Load("libDelphes");
 
  // const double cross_section = get_cross_section(process_name);
   TChain chain("Delphes");
@@ -608,8 +602,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
         TH2 *hHzzpTcompparticle = new TH2F("h_zz_pT_comp_particle", "h_zz_pT_comp_particle", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax);
         TH2 *hHzzpTcompparton = new TH2F("h_zz_pT_comp_parton", "h_zz_pT_comp_parton", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax);
 
-   TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
-   kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
+	// TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
+	// kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
 
   double  nPassed=0;
   double Lumi=3e3;
@@ -689,7 +683,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
 
     treeReader->ReadEntry(entry);
-    // std::map<int,double> kappaLambdaWeights;
+    std::map<int,double> kappaLambdaWeights;
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
 
     Float_t weight = event->Weight/numberOfEntries*Lumi;
@@ -777,7 +771,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     for(int i=0; i<(int) bJetPairs.size(); i++){
       b1=(Jet*)branchJet->At(bJetPairs[i].first);
       b2=(Jet*)branchJet->At(bJetPairs[i].second);
-      if( b1->BTag>0 || b2->BTag>0) {
+    //  if( b1->BTag>0 || b2->BTag>0) {
+       if( b1->BTag>0 && b2->BTag>0) {
     higgsbbcandidate=bJetPairs[i];
     foundBjet=true;
 	  break;
@@ -822,17 +817,32 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 //    });
 
     if(nonHiggsJet.size() < 2) continue ; 
+
     vector<pair<int,int>> vbfJetIndex;
     vector<vector <int>> vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
+
     if( vbfJetIndexComb.size() < 1 ) continue; 
     for(int i=0; i<(int)vbfJetIndexComb.size(); i++)
       vbfJetIndex.push_back(make_pair(vbfJetIndexComb[i][0],vbfJetIndexComb[i][1]));
    //  if( branchMuon->GetEntries() + branchElectron->GetEntries() < 4) continue;
 
-//   if( vbfJetIndex.size() > 1) 
-//      sort(vbfJetIndex.begin(), vbfJetIndex.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
-//	  return ((Jet*)branchJet->At(lhs.first))->PT > ((Jet*)branchJet->At(rhs.first))->PT ;
-//	 });
+    if( vbfJetIndex.size() > 1) 
+      sort(vbfJetIndex.begin(), vbfJetIndex.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
+	  return fabs((((Jet*)branchJet->At(lhs.first))->Eta - ((Jet*)branchJet->At(lhs.second))->Eta) ) >
+	    fabs((((Jet*)branchJet->At(rhs.first))->Eta - ((Jet*)branchJet->At(rhs.second))->Eta) ) ; 
+	});
+
+int vbfJetsIndexCandidate = -1;
+
+// loop and take first w eta > 2.5
+for (int i=0; i<(int)vbfJetIndex.size(); i++) {
+  if( fabs((((Jet*)branchGenJet->At(vbfJetIndex[i].first))->Eta - ((Jet*)branchGenJet->At(vbfJetIndex[i].second))->Eta)) > 2.5 ) {
+  vbfJetsIndexCandidate = i;
+  break;
+  }
+}
+
+if(vbfJetsIndexCandidate < 0) continue ; 
 
     Jet *jet1 = (Jet*) branchJet->At(vbfJetIndex[0].first);
     Jet *jet2 = (Jet*) branchJet->At(vbfJetIndex[0].second);
@@ -1189,7 +1199,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 	    return ((Jet*)branchGenJet->At(lhs))->PT < ((Jet*)branchGenJet->At(rhs))->PT;
     });
 
-   if(btagIndexParticle.size() <1) continue ; // at least one b tag 
+   if(btagIndexParticle.size() < 1) continue ; // at least one b tag 
    if(goodJetIndexParticle.size() < 2) continue ; // at least two jets 
 
     Jet *b1Particle=nullptr;
@@ -1201,7 +1211,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
    if( bJetPairsCombParticle.size() < 1) continue; // need at least two good jets; 
     for(int i=0; i<(int)bJetPairsCombParticle.size(); i++)
-      bJetPairsParticle.push_back(make_pair(bJetPairsCombParticle[i][0],bJetPairsCombParticle[i][1]));
+      bJetPairsParticle.push_back(make_pair(bJetPairsCombParticle[i][0],bJetPairsCombParticle[i][1])); // pair of combinations
 
     if( bJetPairsParticle.size() > 1) 
       sort(bJetPairsParticle.begin(), bJetPairsParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
@@ -1214,12 +1224,15 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     for(int i=0; i<(int) bJetPairsParticle.size(); i++){
       b1Particle=(Jet*)branchGenJet->At(bJetPairsParticle[i].first);
       b2Particle=(Jet*)branchGenJet->At(bJetPairsParticle[i].second);
-      if( ghost_btag(branchGenParticle, b1Particle) || ghost_btag(branchGenParticle, b2Particle)) {
+    //  if( ghost_btag(branchGenParticle, b1Particle) || ghost_btag(branchGenParticle, b2Particle)) {
+      if( ghost_btag(branchGenParticle, b1Particle) && ghost_btag(branchGenParticle, b2Particle)) {
     higgsbbcandidateParticle=bJetPairsParticle[i];
     foundBjetParticle=true;
 	  break;
       }
     }
+
+// another loop no break
 
     b1_particle = b1Particle->P4();
     b2_particle = b2Particle->P4();
@@ -1268,13 +1281,26 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
       vbfJetIndexParticle.push_back(make_pair(vbfJetIndexCombParticle[i][0],vbfJetIndexCombParticle[i][1]));
     // if( branchMuon->GetEntries() + branchElectron->GetEntries() < 4) continue;
 
-//    if( vbfJetIndexParticle.size() > 1) 
-//     sort(vbfJetIndexParticle.begin(), vbfJetIndexParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
-//	  return ((Jet*)branchGenJet->At(lhs.first))->PT > ((Jet*)branchGenJet->At(rhs.first))->PT ;
-//	 });
+    if( vbfJetIndexParticle.size() > 1) 
+      sort(vbfJetIndexParticle.begin(), vbfJetIndexParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
+	  return fabs((((Jet*)branchGenJet->At(lhs.first))->Eta - ((Jet*)branchGenJet->At(lhs.second))->Eta) ) >
+	    fabs((((Jet*)branchGenJet->At(rhs.first))->Eta - ((Jet*)branchGenJet->At(rhs.second))->Eta) ) ; 
+	});
 
-    Jet *jet1Particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].first);
-    Jet *jet2Particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].second);
+int vbfJetsIndexCandidateParticle = -1;
+
+// loop and take first w eta > 2.5
+for (int i=0; i<(int)vbfJetIndexParticle.size(); i++) {
+  if( fabs((((Jet*)branchGenJet->At(vbfJetIndexParticle[i].first))->Eta - ((Jet*)branchGenJet->At(vbfJetIndexParticle[i].second))->Eta)) > 2.5 ) {
+  vbfJetsIndexCandidateParticle = i;
+  break;
+  }
+}
+
+if(vbfJetsIndexCandidateParticle < 0) continue ; 
+
+    Jet *jet1Particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[vbfJetsIndexCandidateParticle].first);
+    Jet *jet2Particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[vbfJetsIndexCandidateParticle].second);
 
     j1_particle=jet1Particle->P4();
     j2_particle=jet2Particle->P4();
@@ -1579,7 +1605,7 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
             b2_parton = daughter1 -> P4();
           }
         }
-      } else if (particle->PID == 1 || 2 || 3 || 4 || 6 && d1_pid != particle->PID && d2_pid != particle->PID){
+      } else if ((particle->PID == 1 || particle->PID == 2 || particle->PID == 3 || particle->PID == 4 || particle->PID == 6) && d1_pid != particle->PID && d2_pid != particle->PID){
           if (daughter1 -> PT > daughter2 -> PT) {
             j1_parton = daughter1 -> P4();
             j2_parton = daughter2 -> P4();
@@ -2399,7 +2425,7 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
     hHzzpTcompparticle -> Write();
     hHzzpTcompparton -> Write();
 
-    kappaLambda -> Write();
+    // kappaLambda -> Write();
 
     hists->Close();
     // gROOT->SetBatch(kTRUE);
@@ -2664,7 +2690,6 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
     draw_hist(hl4cosThetaBoostparton,"l4_cos#theta_Boost_parton", "cos#theta_{l4}_Boost_parton", "cos#theta");
     draw_hist(hfourlcosThetaBoostparton,"four_cos#theta_Boost_parton", "cos#theta_{fourl}_Boost_parton", "cos#theta");
 
-*/
 
 // comp 
 // 2D - parton(1) particle(2) reco(3)
@@ -2726,7 +2751,7 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
     draw_hist2(hHzzpTcompreco, "h_zz_pT_comp_reco", "h_zz_pT_comp_reco", "reco level h pT (GeV)", "reco level zz pT (GeV)");
     draw_hist2(hHzzpTcompparticle, "h_zz_pT_comp_particle", "h_zz_pT_comp_particle", "particle level h pT (GeV)", "particle level zz pT (GeV)");
     draw_hist2(hHzzpTcompparton , "h_zz_pT_comp_parton", "h_zz_pT_comp_parton", "parton level h pT (GeV)", "parton level zz pT (GeV)");
-
+*/
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // delete ?
@@ -3040,7 +3065,8 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
 int main(int argc, char* argv[]) {
   const char *inputFileName = argv[1];
   const char *outputFileName = argv[2];
-  //  const char *process_name = argv[3];                                                                                                                                                                                                                                                                                                                                   
+  // const char *process_name = argv[3];
+  // zAnalyzer(inputFileName, outputFileName, process_name);
   zAnalyzer(inputFileName, outputFileName);
   return 1;
 }
