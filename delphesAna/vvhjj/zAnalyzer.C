@@ -1,5 +1,5 @@
 #ifdef __CLING__
-R__LOAD_LIBRARY(libDelphes)
+R__LOAD_LIBRARY("libDelphes")
 #endif
 
 #include "classes/DelphesClasses.h"
