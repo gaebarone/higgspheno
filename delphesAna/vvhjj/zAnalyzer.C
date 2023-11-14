@@ -1,4 +1,7 @@
+#ifdef __CLING__
 R__LOAD_LIBRARY(libDelphes)
+#endif
+
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
 #include "ExRootAnalysis/ExRootTreeReader.h"
@@ -27,6 +30,8 @@ R__LOAD_LIBRARY(libDelphes)
 #include <TRandom.h>
 #include <TRandom3.h>
 #include "TParticle.h"
+#include "TCanvas.h"
+#include "TProfile.h"
 #include <vector>
 #include "../common_includes/combinations.h" 
 #include <iomanip>
@@ -109,8 +114,8 @@ void draw_hist2(TH2 *histo, const char *name, const char *title, const char *xax
   TCanvas *c = new TCanvas(name, title, 1500, 1200);
   histo->GetXaxis()->SetTitle(xaxistitle);
   histo->GetYaxis()->SetTitle(yaxistitle);
-  gStyle->SetStatX(0.875);
-  gStyle->SetStatY(0.875);
+  //histo->SetStatX(0.875);
+  //histo->SetStatY(0.875);
   histo->Draw("COLZ");
   PrintCanvas(c, name);
 }
@@ -176,8 +181,10 @@ Long64_t get_total_num_entries(const char *process_name) {
 
 // void zAnalyzer(const char *inputFile,const char *outputFile, int kappaVal = 8) {
 void zAnalyzer(const char *inputFile,const char *outputFile) {
-  gSystem->Load("libDelphes");
 
+#ifdef __CLING__
+  gSystem->Load("libDelphes");
+#endif
  // const double cross_section = get_cross_section(process_name);
   TChain chain("Delphes");
   chain.Add(inputFile);

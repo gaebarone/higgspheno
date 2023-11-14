@@ -11,13 +11,13 @@ CXXFLAGS += -I$(DELPHES_DIR) -I$(DELPHES_DIR)/external
 #LDFLAGS  = -ld_classic  -L$(shell $(ROOT_DIR)/bin/root-config --libs) -lRooFit -lRooStats  -lRooFitCore
 ROOTLIBS = `root-config --libs` -lRooFit -lRooStats  -lRooFitCore
 
-LDFLAGS = -ld_classic -L$(DELPHES_DIR) -lDelphes -rpath $(DELPHES_DIR)
+LDFLAGS = -L$(DELPHES_DIR) -lDelphes -rpath $(DELPHES_DIR)
 LDFLAGS  += $(ROOTLIBS)
 
-all: zhbb_analyze
+all: zAnalyzer
 
 clean:
-	rm -f zhbb_analyze
+	rm -f zAnalyzer
 
 %: %.cpp
 	$(CXX) $(CXXFLAGS)  -o $@ $^ $(LDFLAGS)
