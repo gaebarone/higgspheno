@@ -43,6 +43,27 @@ using namespace std;
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 vector <string> types={"4mu","4e", "2mu2e", "2e2mu"};
+std::vector <string> cutList_reco={"initial reco", "1 btag reco", "2 good j reco", "2 b-like jet pairs reco", "found bb reco", "2 vbfj reco", "vbfj pairs","OSFL"};
+std::vector <string> cutList_particle={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","OSFL"};
+
+void PrintCutFlow(std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList, string label){
+
+std::cout<<std::left<<std::setw(25)<<label<<" Cut"<<std::setw(10)<<label<<" Passed"<<std::setw(15)<<" Rel Eff "<< std::setw(15)<<label <<" Efficiency"<< std::endl;
+    for(int i=0; i<(int) cutList.size(); i++) {
+        const std::string cutName = cutList[i];
+        double passed_reco =  cutFlowMap[cutName].first;
+        double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
+
+	double relEff= 100;;
+	if(i>0)
+	  relEff = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList.at(i-1)].second; 
+	std::cout<<std::left<<std::setw(25)<<cutName<<std::setw(10)<<passed_reco<< std::setw(15)<<relEff <<std::setw(15)<<efficiency_reco<< std::endl;
+    }
+
+    std::cout<<std::left<<std::setw(25)<<label<<" Cut"<<std::setw(10)<<label<<" Passed"<<std::setw(15)<< "Rel Eff "<<std::setw(15)<<label<<" Efficiency"<< std::endl;
+    cout<<endl;
+}
+
 
 void increaseCount(std::map<string, std::pair<int,double>> & cutFlowMap, string cutName, double weight){
   cutFlowMap[cutName]=make_pair(cutFlowMap[cutName].first+1,cutFlowMap[cutName].second+weight);
@@ -705,7 +726,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
   double bbdeltaPhireco = 9999;
   double bbdeltaEtareco = 9999;
-  
+  double bbdeltaRreco = -9999;
   
 /*
   DelphesLHEFReader *reader = new DelphesLHEFReader;
@@ -725,7 +746,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
 int cutVal_reco = 0;
 double cutValW_reco = 0;
- std::vector <string> cutList_reco={"initial reco", "1 btag reco", "2 good j reco", "2 b-like jet pairs reco", "found bb reco", "2 vbfj reco", "vbfj pairs","OSFL"};
+ 
 //std::vector <string> cutList_reco={"initial reco"};
 std::map<string, std::pair<int,double>> cutFlowMap_reco;
 for(int i=0; i<(int) cutList_reco.size(); i++) { 
@@ -734,7 +755,7 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
 
 int cutVal_particle = 0;
 double cutValW_particle = 0;
- std::vector <string> cutList_particle={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","OSFL"};
+
 //std::vector <string> cutList_particle={"initial particle"};
 std::map<string, std::pair<int,double>> cutFlowMap_particle;
 for(int i=0; i<(int) cutList_particle.size(); i++) { 
@@ -796,7 +817,7 @@ for(int i=0; i<(int) cutList_parton.size(); i++) {
 
 int switchVal_reco = 0;
 
- cout<<"Start reco analysis "<<endl;
+// cout<<"Start reco analysis "<<endl;
 
     vector <int> btagIndex;
     vector <int> noBtag;
@@ -845,7 +866,10 @@ int switchVal_reco = 0;
    Jet *b2=nullptr;
    
    vector<pair<int,int>> bJetPairs;
-   vector<vector <int>> bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
+   vector<vector <int>> bJetPairsComb;
+
+   if(switchVal_reco == 0 )
+     bJetPairsComb= combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
    //  vector<vector <int>> bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
    
    // This is a cut !!
@@ -875,43 +899,44 @@ int switchVal_reco = 0;
        break;
      }
    }
+
+   if(switchVal_reco == 0 && foundBjet) { // b pair
+     increaseCount(cutFlowMap_reco,"found bb reco",weight);
+   } else  switchVal_reco = 1;
    
-    b1_reco = b1->P4();
-    b2_reco = b2->P4();
-    h_reco = b1_reco + b2_reco;
+   if(switchVal_reco == 0 && b1 !=nullptr && b2 !=nullptr && foundBjet){
+     b1_reco = b1->P4();
+     b2_reco = b2->P4();
+     h_reco = b1_reco + b2_reco;
+
+     if (b1_reco.Eta() > b2_reco.Eta()) {
+       bbdeltaPhireco = remainder( b1_reco.Phi() - b2_reco.Phi(), 2*M_PI );
+       bbdeltaEtareco = b1_reco.Eta() - b2_reco.Eta();
+     }
+     else{
+       bbdeltaPhireco = remainder( b2_reco.Phi() - b1_reco.Phi(), 2*M_PI );
+       bbdeltaEtareco = b2_reco.Eta() - b1_reco.Eta();
+     }
+     
+     // double bbdeltaPhireco=(b1_reco.Phi() > b2_reco.Phi() ? -1:+1)*TMath::Abs(b2_reco.Phi() - b1_reco.Phi());
+     // double bbdeltaEtareco=(b1_reco.Eta() > b2_reco.Eta() ? -1:+1)*TMath::Abs(b2_reco.Eta() - b1_reco.Eta());
+     // double bbdeltaPhireco= (b1_reco.Phi() - b2_reco.Phi());
+     // double bbdeltaEtareco= (b1_reco.Eta() - b2_reco.Eta());
+     bbdeltaRreco=sqrt((bbdeltaPhireco*bbdeltaPhireco)+(bbdeltaEtareco*bbdeltaEtareco));
+   }
+   
+   
+   
     
-    
-    
-    if (b1_reco.Eta() > b2_reco.Eta()) {
-      bbdeltaPhireco = remainder( b1_reco.Phi() - b2_reco.Phi(), 2*M_PI );
-      bbdeltaEtareco = b1_reco.Eta() - b2_reco.Eta();
+
+// VBF jets
+    vector <int> nonHiggsJet;
+
+    for(int i=0; i<(int)goodJetIndex.size(); i++){
+      if( goodJetIndex[i] == higgsbbcandidate.first  || goodJetIndex[i] == higgsbbcandidate.second) continue;
+      nonHiggsJet.push_back(i);
     }
-    else{
-      bbdeltaPhireco = remainder( b2_reco.Phi() - b1_reco.Phi(), 2*M_PI );
-      bbdeltaEtareco = b2_reco.Eta() - b1_reco.Eta();
-    }
     
-    // double bbdeltaPhireco=(b1_reco.Phi() > b2_reco.Phi() ? -1:+1)*TMath::Abs(b2_reco.Phi() - b1_reco.Phi());
-    // double bbdeltaEtareco=(b1_reco.Eta() > b2_reco.Eta() ? -1:+1)*TMath::Abs(b2_reco.Eta() - b1_reco.Eta());
-    // double bbdeltaPhireco= (b1_reco.Phi() - b2_reco.Phi());
-    // double bbdeltaEtareco= (b1_reco.Eta() - b2_reco.Eta());
-    double bbdeltaRreco=sqrt((bbdeltaPhireco*bbdeltaPhireco)+(bbdeltaEtareco*bbdeltaEtareco));
-
-    if(switchVal_reco == 0 && foundBjet) { // b pair
-      increaseCount(cutFlowMap_reco,"found bb reco",weight);
-    } else  switchVal_reco = 1;
-    
-    
-
-// jets
-
-  vector <int> nonHiggsJet;
-
-  for(int i=0; i<(int)goodJetIndex.size(); i++){
-    if( goodJetIndex[i] == higgsbbcandidate.first  || goodJetIndex[i] == higgsbbcandidate.second) continue;
-    nonHiggsJet.push_back(i);
-  }
-  
   //        sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchJet](const int& lhs, const int& rhs) {
   //	    return ((Jet*)branchJet->At(lhs))->PT < ((Jet*)branchJet->At(rhs))->PT;
   //    });
@@ -924,16 +949,11 @@ int switchVal_reco = 0;
   
   vector<pair<int,int>> vbfJetIndex;
   vector<vector <int>> vbfJetIndexComb;
-  if(switchVal_reco==0) vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
-
-  //GB  isn't this a cut ??
-  //if( vbfJetIndexComb.size() < 1 ) continue;
-  if(switchVal_reco==0 &&  vbfJetIndexComb.size() > 0  ){
+  if(switchVal_reco==0 && nonHiggsJet.size() > 1 ) {
     increaseCount(cutFlowMap_reco,"vbfj pairs",weight);
-    //cutFlowMap_reco["2vbfj reco"] = {cutVal_reco,cutValW_reco};
+    vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
   }
-  else  switchVal_reco=1;
-  
+  else switchVal_reco=1;
 
   if(switchVal_reco==0)    
     for(int i=0; i<(int)vbfJetIndexComb.size(); i++)
@@ -1278,7 +1298,7 @@ int switchVal_reco = 0;
     zzdeltaRreco=sqrt((zzdeltaPhireco*zzdeltaPhireco)+(zzdeltaEtareco*zzdeltaEtareco));
   }
   
-  cout<<"Done reco analysis  Event passed up to cut "<<switchVal_reco<<endl;
+  //cout<<"Done reco analysis  Event passed up to cut "<<switchVal_reco<<endl;
   
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1972,10 +1992,20 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
     double zzdeltaEtaparton=(z1_parton.Eta() > z2_parton.Eta() ? -1:+1)*TMath::Abs(z2_parton.Eta() - z1_parton.Eta());
     double zzdeltaRparton=sqrt((zzdeltaPhiparton*zzdeltaPhiparton)+(zzdeltaEtaparton*zzdeltaEtaparton));
 
+    // Print cutflow intermideiate
+
+    if( entry % 1000 == 0 ){
+      cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
+      cout<<" Reco CutF Flow "<<endl;
+      PrintCutFlow(cutFlowMap_reco,cutList_reco,"Reco");
+      cout<<" Particle  CutF Flow "<<endl;
+      PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
+    }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // fill histos
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    
 
 // higgs + b
     // reco
@@ -3025,6 +3055,7 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // higgs
+    /*
   hHpTreco -> Clear();
   hHmreco -> Clear();
   hb1pTreco -> Clear();
@@ -3352,6 +3383,7 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hHzzpTcompparton -> Clear();
 
   kappaLambda -> Clear();
+    */
 
 
 
@@ -3362,6 +3394,12 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   });
 */
 
+   cout<<" Reco CutF Flow "<<endl;
+   PrintCutFlow(cutFlowMap_reco,cutList_reco,  "Reco");
+   cout<<" Particle  CutF Flow "<<endl;
+   PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
+   
+	/*
   std::cout<<std::left<<std::setw(25)<<"Reco Cut"<<std::setw(10)<<"Reco Passed"<<std::setw(15)<<" Rel Eff "<< std::setw(15)<<"Reco Efficiency"<< std::endl;
     for(int i=0; i<(int) cutList_reco.size(); i++) {
         const std::string cutName_reco = cutList_reco[i];
@@ -3388,6 +3426,7 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
 	
         std::cout<<std::left<<std::setw(25)<<cutName_particle<<std::setw(10)<<passed_particle<<std::setw(15)<<relEff<<std::setw(15)<<efficiency_particle<< std::endl;
   }
+	*/
 
   std::cout<<"Total number of entries "<<numberOfEntries<<" Passed "<<nPassed<<" raw "<<nPassedRaw<<std::endl;
 
