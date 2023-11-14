@@ -1,4 +1,4 @@
-// R__LOAD_LIBRARY(libDelphes)
+R__LOAD_LIBRARY(libDelphes)
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
 #include "ExRootAnalysis/ExRootTreeReader.h"
@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <map>
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TClonesArray.h"
@@ -28,6 +29,7 @@
 #include "TParticle.h"
 #include <vector>
 #include "combinations.h" 
+#include <iomanip>
 
 using namespace std;
 
@@ -83,7 +85,6 @@ std::vector <std::vector <int>> getAllCombinations(vector<int> inputVector, int 
 // histogram settings
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-/*
 void PrintCanvas(TCanvas *c=nullptr,string name="default"){
   std::vector <string> types={"jpg"}; 
   for(std::vector<string>::iterator it=types.begin(); it!=types.end(); it++) {
@@ -109,7 +110,6 @@ void draw_hist2(TH2 *histo, const char *name, const char *title, const char *xax
   histo->Draw("COLZ");
   PrintCanvas(c, name);
 }
-*/
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // define find_status1_child
@@ -602,8 +602,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
         TH2 *hHzzpTcompparticle = new TH2F("h_zz_pT_comp_particle", "h_zz_pT_comp_particle", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax);
         TH2 *hHzzpTcompparton = new TH2F("h_zz_pT_comp_parton", "h_zz_pT_comp_parton", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax);
 
-  // TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
-  // kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
+  TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
+  kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
 
   double  nPassed=0;
   double Lumi=3e3;
@@ -676,14 +676,39 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     mapKappaLambda[11]=+100;
 */
 
+int cutVal_reco = 0;
+double cutValW_reco = 0;
+std::vector <string> cutList_reco={"initial reco", "1 btag reco", "2 good j reco", "found bb reco", "2 vbfj reco"};
+//std::vector <string> cutList_reco={"initial reco"};
+std::map<string, std::pair<int,double>> cutFlowMap_reco;
+for(int i=0; i<(int) cutList_reco.size(); i++) { 
+  cutFlowMap_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
+}
+
+int cutVal_particle = 0;
+double cutValW_particle = 0;
+std::vector <string> cutList_particle={"initial particle", "1 btag particle", "2 good j particle", "found bb particle", "2 vbfj particle"};
+//std::vector <string> cutList_particle={"initial particle"};
+std::map<string, std::pair<int,double>> cutFlowMap_particle;
+for(int i=0; i<(int) cutList_particle.size(); i++) { 
+  cutFlowMap_particle[cutList_particle.at(i)] = make_pair(0,0.0); 
+}
+
+int cutVal_parton = 0;
+double cutValW_parton = 0;
+std::vector <string> cutList_parton={};
+std::map<string, std::pair<int,double>> cutFlowMap_parton;
+for(int i=0; i<(int) cutList_parton.size(); i++) { 
+  cutFlowMap_parton[cutList_parton.at(i)] = make_pair(0,0.0); 
+}
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // loop
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
 
     treeReader->ReadEntry(entry);
-    // std::map<int,double> kappaLambdaWeights;
+    std::map<int,double> kappaLambdaWeights;
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
 
     Float_t weight = event->Weight/numberOfEntries*Lumi;
@@ -722,6 +747,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
 // higgs
 
+int switchVal_reco = 0;
+cutVal_reco++; cutValW_reco+=weight;
+
     vector <int> btagIndex;
     vector <int> noBtag;
     vector <int> goodJetIndex;
@@ -735,7 +763,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
            goodJetIndex.push_back(i);
     }
 
-    sort(btagIndex.begin(), btagIndex.end(), [branchJet](const int& lhs, const int& rhs) {
+   cutFlowMap_reco["initial reco"] = {cutVal_reco,cutValW_reco};
+
+      sort(btagIndex.begin(), btagIndex.end(), [branchJet](const int& lhs, const int& rhs) {
 	    return ((Jet*)branchJet->At(lhs))->PT < ((Jet*)branchJet->At(rhs))->PT;
     });
     sort(noBtag.begin(), noBtag.end(), [branchJet](const int& lhs, const int& rhs) {
@@ -745,8 +775,17 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 	    return ((Jet*)branchJet->At(lhs))->PT < ((Jet*)branchJet->At(rhs))->PT;
     });
 
-   if(btagIndex.size() <1) continue ; // at least one b tag 
-   if(goodJetIndex.size() < 2) continue ; // at least two jets 
+    if(switchVal_reco == 0 && btagIndex.size() > 1) { // at least one b tag 
+      cutFlowMap_reco["1 btag reco"] = {cutVal_reco,cutValW_reco}; 
+    } else {
+      switchVal_reco = 1;
+    };
+
+    if(switchVal_reco == 0 && goodJetIndex.size() > 2) { // at least two jets 
+      cutFlowMap_reco["2 good j reco"] = {cutVal_reco,cutValW_reco};
+      } else {
+      switchVal_reco = 1;
+    };
 
     Jet *b1=nullptr;
     Jet *b2=nullptr;
@@ -755,7 +794,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     vector<vector <int>> bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
 //  vector<vector <int>> bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
 
-   if( bJetPairsComb.size() < 1) continue; // need at least two good jets; 
+   if( bJetPairsComb.size() < 1) continue; // need at least two good jets;  
     for(int i=0; i<(int)bJetPairsComb.size(); i++)
       bJetPairs.push_back(make_pair(bJetPairsComb[i][0],bJetPairsComb[i][1]));
 
@@ -765,22 +804,22 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 	    fabs( ((((Jet*)branchJet->At(rhs.first))->P4() + ((Jet*)branchJet->At(rhs.second))->P4()).M()) - 125 ) ; 
 	});
 
-
     pair <int,int> higgsbbcandidate;
     bool foundBjet=false; 
     for(int i=0; i<(int) bJetPairs.size(); i++){
       b1=(Jet*)branchJet->At(bJetPairs[i].first);
       b2=(Jet*)branchJet->At(bJetPairs[i].second);
-      if( b1->BTag>0 || b2->BTag>0) {
+       if( b1->BTag>0 && b2->BTag>0) {
     higgsbbcandidate=bJetPairs[i];
     foundBjet=true;
-	  break;
+      break;
       }
     }
 
     b1_reco = b1->P4();
     b2_reco = b2->P4();
     h_reco = b1_reco + b2_reco;
+
 
     double bbdeltaPhireco = 9999;
     double bbdeltaEtareco = 9999;
@@ -800,11 +839,15 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     // double bbdeltaEtareco= (b1_reco.Eta() - b2_reco.Eta());
     double bbdeltaRreco=sqrt((bbdeltaPhireco*bbdeltaPhireco)+(bbdeltaEtareco*bbdeltaEtareco));
 
-    if(!foundBjet) continue; 
-    
+    if(switchVal_reco == 0 && foundBjet) { // b pair
+      cutFlowMap_reco["found bb reco"] = {cutVal_reco,cutValW_reco};
+    } else {
+      switchVal_reco = 1;
+    };
+
 // jets
 
-    vector <int> nonHiggsJet;
+  vector <int> nonHiggsJet;
 
     for(int i=0; i<(int)goodJetIndex.size(); i++){
       if( goodJetIndex[i] == higgsbbcandidate.first  || goodJetIndex[i] == higgsbbcandidate.second) continue;
@@ -815,18 +858,43 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 //	    return ((Jet*)branchJet->At(lhs))->PT < ((Jet*)branchJet->At(rhs))->PT;
 //    });
 
-    if(nonHiggsJet.size() < 2) continue ; 
-    vector<pair<int,int>> vbfJetIndex;
-    vector<vector <int>> vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
+    if(switchVal_reco == 0 && nonHiggsJet.size() > 2) { // at least 2 vbf jets
+      cutFlowMap_reco["2 vbfj reco"] = {cutVal_reco,cutValW_reco};
+    } else {
+      switchVal_reco = 1;
+    };
+
+
+  vector<pair<int,int>> vbfJetIndex;
+  vector<vector <int>> vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
+
     if( vbfJetIndexComb.size() < 1 ) continue; 
     for(int i=0; i<(int)vbfJetIndexComb.size(); i++)
       vbfJetIndex.push_back(make_pair(vbfJetIndexComb[i][0],vbfJetIndexComb[i][1]));
    //  if( branchMuon->GetEntries() + branchElectron->GetEntries() < 4) continue;
 
-//   if( vbfJetIndex.size() > 1) 
-//      sort(vbfJetIndex.begin(), vbfJetIndex.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
-//	  return ((Jet*)branchJet->At(lhs.first))->PT > ((Jet*)branchJet->At(rhs.first))->PT ;
-//	 });
+    if( vbfJetIndex.size() > 1) 
+      sort(vbfJetIndex.begin(), vbfJetIndex.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
+	  return fabs((((Jet*)branchJet->At(lhs.first))->Eta - ((Jet*)branchJet->At(lhs.second))->Eta) ) >
+	    fabs((((Jet*)branchJet->At(rhs.first))->Eta - ((Jet*)branchJet->At(rhs.second))->Eta) ) ; 
+	});
+
+/*
+int vbfJetsIndexCandidate = -1;
+
+// loop and take first w eta > 2.5
+for (int i=0; i<(int)vbfJetIndex.size(); i++) {
+  if( fabs((((Jet*)branchGenJet->At(vbfJetIndex[i].first))->Eta - ((Jet*)branchGenJet->At(vbfJetIndex[i].second))->Eta)) > 2.5 ) {
+  vbfJetsIndexCandidate = i;
+  break;
+  }
+}
+
+ cutFlowMap_reco["2.5 deltaEta vbf reco"] = {cutVal_reco,cutValW_reco}; //last reco cut
+
+    Jet *jet1 = (Jet*) branchJet->At(vbfJetIndex[vbfJetsIndexCandidate].first);
+    Jet *jet2 = (Jet*) branchJet->At(vbfJetIndex[vbfJetsIndexCandidate].second);
+*/
 
     Jet *jet1 = (Jet*) branchJet->At(vbfJetIndex[0].first);
     Jet *jet2 = (Jet*) branchJet->At(vbfJetIndex[0].second);
@@ -1108,6 +1176,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     double zzdeltaEtareco=(z1_reco.Eta() > z2_reco.Eta() ? -1:+1)*TMath::Abs(z2_reco.Eta() - z1_reco.Eta());
     double zzdeltaRreco=sqrt((zzdeltaPhireco*zzdeltaPhireco)+(zzdeltaEtareco*zzdeltaEtareco));
 
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // particle
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1160,6 +1229,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
 // higgs
 
+int switchVal_particle = 0;
+cutVal_particle++; cutValW_particle+=weight;
+
     vector <int> btagIndexParticle;
     vector <int> noBtagParticle;
     vector <int> goodJetIndexParticle;
@@ -1168,12 +1240,26 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
       Jet *jet=(Jet*) branchGenJet->At(i);
     //if( jet->PT < 20) continue;
     //if (fabs(jet->Eta) > 4.4) continue; 
-      if( ghost_btag(branchGenParticle, jet)) btagIndexParticle.push_back(i);
+      if( jet->BTag>0) btagIndexParticle.push_back(i);
       else noBtagParticle.push_back(i);
            goodJetIndexParticle.push_back(i);
     }
 
-    sort(btagIndexParticle.begin(), btagIndexParticle.end(), [branchGenJet](const int& lhs, const int& rhs) {
+   cutFlowMap_particle["initial particle"] = {cutVal_particle,cutValW_particle};
+
+    if(switchVal_particle == 0 && btagIndex.size() < 1) { // at least one b tag 
+      cutFlowMap_particle["1 btag particle"] = {cutVal_particle,cutValW_particle}; 
+    } else {
+      switchVal_particle = 1;
+    };
+
+    if(switchVal_particle == 0 && goodJetIndexParticle.size() < 2) { // at least two jets
+      cutFlowMap_particle["2 good j particle"] = {cutVal_particle,cutValW_particle};
+    } else {
+      switchVal_particle = 1;
+    };
+
+      sort(btagIndexParticle.begin(), btagIndexParticle.end(), [branchGenJet](const int& lhs, const int& rhs) {
 	    return ((Jet*)branchGenJet->At(lhs))->PT < ((Jet*)branchGenJet->At(rhs))->PT;
     });
     sort(noBtagParticle.begin(), noBtagParticle.end(), [branchGenJet](const int& lhs, const int& rhs) {
@@ -1183,17 +1269,14 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 	    return ((Jet*)branchGenJet->At(lhs))->PT < ((Jet*)branchGenJet->At(rhs))->PT;
     });
 
-   if(btagIndexParticle.size() <1) continue ; // at least one b tag 
-   if(goodJetIndexParticle.size() < 2) continue ; // at least two jets 
-
     Jet *b1Particle=nullptr;
     Jet *b2Particle=nullptr;
 
     vector<pair<int,int>> bJetPairsParticle;
     vector<vector <int>> bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndexParticle);
-  //vector<vector <int>> bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndexParticle);
+//  vector<vector <int>> bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndexParticle);
 
-   if( bJetPairsCombParticle.size() < 1) continue; // need at least two good jets; 
+   if( bJetPairsCombParticle.size() < 1) continue; // need at least two good jets;  
     for(int i=0; i<(int)bJetPairsCombParticle.size(); i++)
       bJetPairsParticle.push_back(make_pair(bJetPairsCombParticle[i][0],bJetPairsCombParticle[i][1]));
 
@@ -1208,16 +1291,19 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     for(int i=0; i<(int) bJetPairsParticle.size(); i++){
       b1Particle=(Jet*)branchGenJet->At(bJetPairsParticle[i].first);
       b2Particle=(Jet*)branchGenJet->At(bJetPairsParticle[i].second);
-      if( ghost_btag(branchGenParticle, b1Particle) || ghost_btag(branchGenParticle, b2Particle)) {
+       if( ghost_btag(branchGenParticle, b1Particle) || ghost_btag(branchGenParticle, b2Particle)) {
     higgsbbcandidateParticle=bJetPairsParticle[i];
     foundBjetParticle=true;
-	  break;
+    break;
       }
     }
+
 
     b1_particle = b1Particle->P4();
     b2_particle = b2Particle->P4();
     h_particle = b1_particle + b2_particle;
+
+
 
     double bbdeltaPhiparticle = 9999;
     double bbdeltaEtaparticle = 9999;
@@ -1237,41 +1323,70 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     // double bbdeltaEtaparticle= (b1_particle.Eta() - b2_particle.Eta());
     double bbdeltaRparticle=sqrt((bbdeltaPhiparticle*bbdeltaPhiparticle)+(bbdeltaEtaparticle*bbdeltaEtaparticle));
 
-    if(!foundBjetParticle) continue; 
-    
+    if(switchVal_particle == 0 && !foundBjetParticle) { // b pair 
+      cutFlowMap_particle["found bb particle"] = {cutVal_particle,cutValW_particle};
+    } else {
+      switchVal_particle = 1;
+    };
+
 // jets
 
-    vector <int> nonHiggsJetParticle;
+  vector <int> nonHiggsJetParticle;
 
     for(int i=0; i<(int)goodJetIndexParticle.size(); i++){
       if( goodJetIndexParticle[i] == higgsbbcandidateParticle.first  || goodJetIndexParticle[i] == higgsbbcandidateParticle.second) continue;
       nonHiggsJetParticle.push_back(i);
     }
 
-//   sort(nonHiggsJetParticle.begin(), nonHiggsJetParticle.end(), [branchGenJet](const int& lhs, const int& rhs) {
+//        sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchGenJet](const int& lhs, const int& rhs) {
 //	    return ((Jet*)branchGenJet->At(lhs))->PT < ((Jet*)branchGenJet->At(rhs))->PT;
-//  });
+//    });
 
-    if(nonHiggsJetParticle.size() < 2) continue ; 
 
-    vector<pair<int,int>> vbfJetIndexParticle;
-    vector<vector <int>> vbfJetIndexCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJetParticle);
+    if(switchVal_particle == 0 && nonHiggsJetParticle.size() < 2) { // at least 2 vbf jets 
+      cutFlowMap_particle["2 vbfj particle"] = {cutVal_particle,cutValW_particle};
+    } else {
+      switchVal_particle = 1;
+    };
+
+
+  vector<pair<int,int>> vbfJetIndexParticle;
+  vector<vector <int>> vbfJetIndexCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJetParticle);
 
     if( vbfJetIndexCombParticle.size() < 1 ) continue; 
     for(int i=0; i<(int)vbfJetIndexCombParticle.size(); i++)
       vbfJetIndexParticle.push_back(make_pair(vbfJetIndexCombParticle[i][0],vbfJetIndexCombParticle[i][1]));
-    // if( branchMuon->GetEntries() + branchElectron->GetEntries() < 4) continue;
+   //  if( branchMuon->GetEntries() + branchElectron->GetEntries() < 4) continue;
 
-//    if( vbfJetIndexParticle.size() > 1) 
-//     sort(vbfJetIndexParticle.begin(), vbfJetIndexParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
-//	  return ((Jet*)branchGenJet->At(lhs.first))->PT > ((Jet*)branchGenJet->At(rhs.first))->PT ;
-//	 });
+    if( vbfJetIndexParticle.size() > 1) 
+      sort(vbfJetIndexParticle.begin(), vbfJetIndexParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
+	  return fabs((((Jet*)branchGenJet->At(lhs.first))->Eta - ((Jet*)branchGenJet->At(lhs.second))->Eta) ) >
+	    fabs((((Jet*)branchGenJet->At(rhs.first))->Eta - ((Jet*)branchGenJet->At(rhs.second))->Eta) ) ; 
+	});
 
-    Jet *jet1Particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].first);
-    Jet *jet2Particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].second);
+/*
+int vbfJetsIndexCandidate = -1;
 
-    j1_particle=jet1Particle->P4();
-    j2_particle=jet2Particle->P4();
+// loop and take first w eta > 2.5
+for (int i=0; i<(int)vbfJetIndex.size(); i++) {
+  if( fabs((((Jet*)branchGenJet->At(vbfJetIndex[i].first))->Eta - ((Jet*)branchGenJet->At(vbfJetIndex[i].second))->Eta)) > 2.5 ) {
+  vbfJetsIndexCandidate = i;
+  break;
+  }
+}
+
+
+ cutFlowMap_particle["2.5 deltaEta vbf particle"] = {cutVal_particle,cutValW_particle}; //last particle cut
+
+    Jet *jet1 = (Jet*) branchGenJet->At(vbfJetIndex[vbfJetsIndexCandidate].first);
+    Jet *jet2 = (Jet*) branchGenJet->At(vbfJetIndex[vbfJetsIndexCandidate].second);
+*/
+
+    Jet *jet1_particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].first);
+    Jet *jet2_particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].second);
+
+    j1_particle=jet1_particle->P4();
+    j2_particle=jet2_particle->P4();
 
     double jjdeltaPhiparticle =  9999;
 
@@ -1542,11 +1657,15 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
 // neutrinos 
 // jets we use the GenJet container
 
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // parton
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // higgs
+
+//cutVal_parton++; cutValW_parton+=weight;
+//cutFlowMap_parton["initial parton"] = {cutVal_parton,cutValW_parton};
 
     for(int i=0; i<(int)branchGenParticle->GetEntries(); i++) {
       GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
@@ -1573,7 +1692,7 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
             b2_parton = daughter1 -> P4();
           }
         }
-      } else if (particle->PID == 1 || 2 || 3 || 4 || 6 && d1_pid != particle->PID && d2_pid != particle->PID){
+      } else if ((particle->PID == 1 || particle->PID == 2 || particle->PID == 3 || particle->PID == 4 || particle->PID == 6) && d1_pid != particle->PID && d2_pid != particle->PID){
           if (daughter1 -> PT > daughter2 -> PT) {
             j1_parton = daughter1 -> P4();
             j2_parton = daughter2 -> P4();
@@ -2658,7 +2777,6 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
     draw_hist(hl4cosThetaBoostparton,"l4_cos#theta_Boost_parton", "cos#theta_{l4}_Boost_parton", "cos#theta");
     draw_hist(hfourlcosThetaBoostparton,"four_cos#theta_Boost_parton", "cos#theta_{fourl}_Boost_parton", "cos#theta");
 
-*/
 
 // comp 
 // 2D - parton(1) particle(2) reco(3)
@@ -2722,10 +2840,13 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
     draw_hist2(hHzzpTcompparton , "h_zz_pT_comp_parton", "h_zz_pT_comp_parton", "parton level h pT (GeV)", "parton level zz pT (GeV)");
 
 
+  draw_hist(kappaLambda," ", "crossX", "kappa_lambda");
+*/
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // delete ?
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+// higgs
   hHpTreco -> Clear();
   hHmreco -> Clear();
   hb1pTreco -> Clear();
@@ -2783,6 +2904,7 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hb2Rparton -> Clear();
   hbbdeltaRparton -> Clear();
 
+// jets
   hjjpTreco -> Clear();
   hj1pTreco -> Clear();
   hj2pTreco -> Clear();
@@ -2809,32 +2931,40 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hj2Rparticle -> Clear();
   hjjdeltaRparticle -> Clear();
 
+// z 
   hz1pTreco -> Clear();
   hz2pTreco -> Clear();
   hz1mreco -> Clear();
   hz2mreco -> Clear();
-  hz1cosThetareco -> Clear();
-  hz2cosThetareco -> Clear();
+
   hz1phireco -> Clear();
   hz2phireco -> Clear();
   hzzdeltaPhireco -> Clear();
+
   hz1etareco -> Clear();
   hz2etareco -> Clear();
   hzzdeltaEtareco -> Clear();
+
   hz1Rreco -> Clear();
   hz2Rreco -> Clear();
   hzzdeltaRreco -> Clear();
+
+  hz1cosThetareco -> Clear();
+  hz2cosThetareco -> Clear();
 
   hz1pTparticle -> Clear();
   hz2pTparticle -> Clear();
   hz1mparticle -> Clear();
   hz2mparticle -> Clear();
+
   hz1phiparticle -> Clear();
   hz2phiparticle -> Clear();
   hzzdeltaPhiparticle -> Clear();
+
   hz1etaparticle -> Clear();
   hz2etaparticle -> Clear();
   hzzdeltaEtaparticle -> Clear();
+
   hz1Rparticle -> Clear();
   hz2Rparticle -> Clear();
   hzzdeltaRparticle -> Clear();
@@ -2843,16 +2973,20 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hz2pTparton -> Clear();
   hz1mparton -> Clear();
   hz2mparton -> Clear();
+
   hz1phiparton -> Clear();
   hz2phiparton -> Clear();
   hzzdeltaPhiparton -> Clear();
+
   hz1etaparton -> Clear();
   hz2etaparton -> Clear();
   hzzdeltaEtaparton -> Clear();
+
   hz1Rparton -> Clear();
   hz2Rparton -> Clear();
   hzzdeltaRparton -> Clear();
 
+// leptons
   hl1pTreco -> Clear();
   hl2pTreco -> Clear();
   hl3pTreco -> Clear();
@@ -2865,6 +2999,7 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hl3l4deltaPhireco -> Clear();
   hl1l2deltaPhiBoostreco -> Clear();
   hl3l4deltaPhiBoostreco -> Clear();
+
   hl1etareco -> Clear();
   hl2etareco -> Clear();
   hl3etareco -> Clear();
@@ -2873,12 +3008,14 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hl3l4deltaEtareco -> Clear();
   hl1l2deltaEtaBoostreco -> Clear();
   hl3l4deltaEtaBoostreco -> Clear();
+
   hl1Rreco -> Clear();
   hl2Rreco -> Clear();
   hl3Rreco -> Clear();
   hl4Rreco -> Clear();
   hl1l2deltaRreco -> Clear();
   hl3l4deltaRreco -> Clear();
+
   hl1cosThetareco -> Clear();
   hl2cosThetareco -> Clear();
   hl3cosThetareco -> Clear();
@@ -2892,10 +3029,12 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hl1l2CScosThetareco -> Clear();
   hl3l4CScosThetareco -> Clear();
 
+  // particle
   hl1pTparticle -> Clear();
   hl2pTparticle -> Clear();
   hl3pTparticle -> Clear();
   hl4pTparticle -> Clear();
+
   hl1phiparticle -> Clear();
   hl2phiparticle -> Clear();
   hl3phiparticle -> Clear();
@@ -2904,6 +3043,7 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hl3l4deltaPhiparticle -> Clear();
   hl1l2deltaPhiBoostparticle -> Clear();
   hl3l4deltaPhiBoostparticle -> Clear();
+
   hl1etaparticle -> Clear();
   hl2etaparticle -> Clear();
   hl3etaparticle -> Clear();
@@ -2912,12 +3052,14 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hl3l4deltaEtaparticle -> Clear();
   hl1l2deltaEtaBoostparticle -> Clear();
   hl3l4deltaEtaBoostparticle -> Clear();
+
   hl1Rparticle -> Clear();
   hl2Rparticle -> Clear();
   hl3Rparticle -> Clear();
   hl4Rparticle -> Clear();
   hl1l2deltaRparticle -> Clear();
   hl3l4deltaRparticle -> Clear();
+
   hl1cosThetaparticle -> Clear();
   hl2cosThetaparticle -> Clear();
   hl3cosThetaparticle -> Clear();
@@ -2931,10 +3073,12 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hl1l2CScosThetaparticle -> Clear();
   hl3l4CScosThetaparticle -> Clear();
 
+// parton
   hl1pTparton -> Clear();
   hl2pTparton -> Clear();
   hl3pTparton -> Clear();
   hl4pTparton -> Clear();
+
   hl1phiparton -> Clear();
   hl2phiparton -> Clear();
   hl3phiparton -> Clear();
@@ -2943,6 +3087,7 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hl3l4deltaPhiparton -> Clear();
   hl1l2deltaPhiBoostparton -> Clear();
   hl3l4deltaPhiBoostparton -> Clear();
+
   hl1etaparton -> Clear();
   hl2etaparton -> Clear();
   hl3etaparton -> Clear();
@@ -2951,12 +3096,14 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hl3l4deltaEtaparton -> Clear();
   hl1l2deltaEtaBoostparton -> Clear();
   hl3l4deltaEtaBoostparton -> Clear();
+
   hl1Rparton -> Clear();
   hl2Rparton -> Clear();
   hl3Rparton -> Clear();
   hl4Rparton -> Clear();
   hl1l2deltaRparton -> Clear();
   hl3l4deltaRparton -> Clear();
+
   hl1cosThetaparton -> Clear();
   hl2cosThetaparton -> Clear();
   hl3cosThetaparton -> Clear();
@@ -2986,24 +3133,24 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hjjpT12Comp -> Clear();
   hjjpT23Comp -> Clear();
   hjjpT13Comp -> Clear();
+  hj1Phi23Comp -> Clear();
+  hj2Phi23Comp -> Clear();
   hjjdeltaPhi12Comp -> Clear();
   hjjdeltaPhi23Comp -> Clear();
   hjjdeltaPhi13Comp -> Clear();
-  hj1Phi23Comp -> Clear();
-  hj2Phi23Comp -> Clear();
 
-  hz1pT13Comp -> Clear();
-  hz1m13Comp -> Clear();
-  hz2pT13Comp -> Clear();
-  hz2m13Comp -> Clear();
-  hz1pT23Comp -> Clear();
-  hz1m23Comp -> Clear();
-  hz2pT23Comp -> Clear();
-  hz2m23Comp -> Clear();
   hz1pT12Comp -> Clear();
   hz1m12Comp -> Clear();
   hz2pT12Comp -> Clear();
   hz2m12Comp -> Clear();
+  hz1pT23Comp -> Clear();
+  hz1m23Comp -> Clear();
+  hz2pT23Comp -> Clear();
+  hz2m23Comp -> Clear();
+  hz1pT13Comp -> Clear();
+  hz1m13Comp -> Clear();
+  hz2pT13Comp -> Clear();
+  hz2m13Comp -> Clear();
 
   hl1l2deltaPhiHpTcompreco -> Clear();
   hl3l4deltaPhiHpTcompreco -> Clear();
@@ -3026,15 +3173,43 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
   hHzzpTcompparticle -> Clear();
   hHzzpTcompparton -> Clear();
 
+  kappaLambda -> Clear();
+
+
+
+/*
+  std::vector<std::pair<std::string, std::pair<int, double>>> sortedCutFlow(cutFlowMap.begin(), cutFlowMap.end());
+  std::sort(sortedCutFlow.begin(), sortedCutFlow.end(), [](const auto& a, const auto& b) {
+    return a.second.first > b.second.first;
+  });
+*/
+
+  std::cout<<std::left<<std::setw(25)<<"Reco Cut"<<std::setw(10)<<"Reco Passed"<<std::setw(15)<<"Reco Efficiency"<< std::endl;
+    for(int i=0; i<(int) cutList_reco.size(); i++) {
+        const std::string cutName_reco = cutList_reco[i];
+        double passed_reco = 100.00 * cutFlowMap_reco[cutName_reco].first / cutFlowMap_reco["initial reco"].first;
+        double efficiency_reco = 100.00 * cutFlowMap_reco[cutName_reco].second / cutFlowMap_reco["initial reco"].second;
+
+        std::cout<<std::left<<std::setw(25)<<cutName_reco<<std::setw(10)<<passed_reco<<std::setw(15)<<efficiency_reco<< std::endl;
+  }
+
+    std::cout<<std::left<<std::setw(25)<<"Particle Cut"<<std::setw(10)<<"Particle Passed"<<std::setw(15)<<"Particle Efficiency"<< std::endl;
+    for(int i=0; i<(int) cutList_particle.size(); i++) {
+        const std::string cutName_particle = cutList_particle[i];
+        double passed_particle = 100.00 * cutFlowMap_particle[cutName_particle].first / cutFlowMap_particle["initial particle"].first;
+        double efficiency_particle = 100.00 * cutFlowMap_particle[cutName_particle].second / cutFlowMap_particle["initial particle"].second;
+
+        std::cout<<std::left<<std::setw(25)<<cutName_particle<<std::setw(10)<<passed_particle<<std::setw(15)<<efficiency_particle<< std::endl;
+  }
 
   std::cout<<"Total number of entries "<<numberOfEntries<<" Passed "<<nPassed<<" raw "<<nPassedRaw<<std::endl;
 
-  }
+}
 
 int main(int argc, char* argv[]) {
   const char *inputFileName = argv[1];
   const char *outputFileName = argv[2];
   //  const char *process_name = argv[3];                                                                                                                                                                                                                                                                                                                                   
-  zzhjjAnalyzer(inputFileName, outputFileName);
+  zAnalyzer(inputFileName, outputFileName);
   return 1;
 }
