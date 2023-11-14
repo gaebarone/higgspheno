@@ -131,7 +131,7 @@ void draw_hist(TH1 *histo, const char *name, const char *title, const char *axis
   PrintCanvas(c, name);
 }
 
-void draw_hist2(TH2 *histo, const char *name, const char *title, const char *xaxistitle, const char *yaxistitle) {
+void draw_hist2(TH2F*histo, const char *name, const char *title, const char *xaxistitle, const char *yaxistitle) {
   TCanvas *c = new TCanvas(name, title, 1500, 1200);
   histo->GetXaxis()->SetTitle(xaxistitle);
   histo->GetYaxis()->SetTitle(yaxistitle);
@@ -583,66 +583,66 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
     // higgs
       // pT + m
-        TH2 *hHpT12Comp = new TH2F("H_pT_comp_12", "p_{T}^{hbb}", pTBins, hpTmin, hpTmax, pTBins, hpTmin, hpTmax);
-        TH2 *hHm12Comp = new TH2F("H_m_comp_12", "m_{hbb}", mBins, hmmin, hmmax, mBins, hmmin, hmmax);
-        TH2 *hHpT23Comp = new TH2F("H_pT_comp_23", "p_{T}^{hbb}", pTBins, hpTmin, hpTmax, pTBins, hpTmin, hpTmax);
-        TH2 *hHm23Comp = new TH2F("H_m_comp_23", "m_{hbb}", mBins, hmmin, hmmax, mBins, hmmin, hmmax);
-        TH2 *hHpT13Comp = new TH2F("H_pT_comp_13", "p_{T}^{hbb}", pTBins, hpTmin, hpTmax, pTBins, hpTmin, hpTmax);
-        TH2 *hHm13Comp = new TH2F("H_m_comp_13", "m_{hbb}", mBins, hmmin, hmmax, mBins, hmmin, hmmax);
-        TH2 *hbbdeltaPhi12Comp = new TH2F("bb_#Delta#phi_comp_12", "#Delta#phi_{bb}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi());
-        TH2 *hbbdeltaPhi23Comp = new TH2F("bb_#Delta#phi_comp_23", "#Delta#phi_{bb}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi());
-        TH2 *hbbdeltaPhi13Comp = new TH2F("bb_#Delta#phi_comp_13", "#Delta#phi_{bb}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi());
-        TH2 *hbbdeltaEta12Comp = new TH2F("bb_#Delta#eta_comp_12", "#Delta#eta_{bb}", etaBins, hetamin, hetamax, etaBins, hetamin, hetamax);
-        TH2 *hbbdeltaEta23Comp = new TH2F("bb_#Delta#eta_comp_23", "#Delta#eta_{bb}", etaBins, hetamin, hetamax, etaBins, hetamin, hetamax);
-        TH2 *hbbdeltaEta13Comp = new TH2F("bb_#Delta#eta_comp_13", "#Delta#eta_{bb}", etaBins, hetamin, hetamax, etaBins, hetamin, hetamax);
+        TH2F *hHpT12Comp = new TH2F("H_pT_comp_12", "p_{T}^{hbb}", pTBins, hpTmin, hpTmax, pTBins, hpTmin, hpTmax); listOfTH2.push_back(hHpT12Comp);
+        TH2F *hHm12Comp = new TH2F("H_m_comp_12", "m_{hbb}", mBins, hmmin, hmmax, mBins, hmmin, hmmax); listOfTH2.push_back(hHm12Comp);
+        TH2F *hHpT23Comp = new TH2F("H_pT_comp_23", "p_{T}^{hbb}", pTBins, hpTmin, hpTmax, pTBins, hpTmin, hpTmax);  listOfTH2.push_back(hHpT23Comp);
+        TH2F *hHm23Comp = new TH2F("H_m_comp_23", "m_{hbb}", mBins, hmmin, hmmax, mBins, hmmin, hmmax); listOfTH2.push_back(hHm23Comp);
+        TH2F *hHpT13Comp = new TH2F("H_pT_comp_13", "p_{T}^{hbb}", pTBins, hpTmin, hpTmax, pTBins, hpTmin, hpTmax); listOfTH2.push_back(hHpT13Comp);
+        TH2F *hHm13Comp = new TH2F("H_m_comp_13", "m_{hbb}", mBins, hmmin, hmmax, mBins, hmmin, hmmax); listOfTH2.push_back(hHm13Comp);
+        TH2F*hbbdeltaPhi12Comp = new TH2F("bb_#Delta#phi_comp_12", "#Delta#phi_{bb}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi()); listOfTH2.push_back(hbbdeltaPhi12Comp);
+        TH2F*hbbdeltaPhi23Comp = new TH2F("bb_#Delta#phi_comp_23", "#Delta#phi_{bb}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi()); listOfTH2.push_back(hbbdeltaPhi23Comp);
+        TH2F*hbbdeltaPhi13Comp = new TH2F("bb_#Delta#phi_comp_13", "#Delta#phi_{bb}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi()); listOfTH2.push_back(hbbdeltaPhi13Comp);
+        TH2F*hbbdeltaEta12Comp = new TH2F("bb_#Delta#eta_comp_12", "#Delta#eta_{bb}", etaBins, hetamin, hetamax, etaBins, hetamin, hetamax); listOfTH2.push_back(hbbdeltaEta12Comp);
+        TH2F*hbbdeltaEta23Comp = new TH2F("bb_#Delta#eta_comp_23", "#Delta#eta_{bb}", etaBins, hetamin, hetamax, etaBins, hetamin, hetamax); listOfTH2.push_back(hbbdeltaEta23Comp);
+        TH2F*hbbdeltaEta13Comp = new TH2F("bb_#Delta#eta_comp_13", "#Delta#eta_{bb}", etaBins, hetamin, hetamax, etaBins, hetamin, hetamax); listOfTH2.push_back(hbbdeltaEta13Comp);
     // jets
-        TH2 *hjjpT12Comp = new TH2F("jj_pT_comp_12", "p_{T}^{jj}", pTBins, jpTmin, jpTmax, pTBins, jpTmin, jpTmax);
-        TH2 *hjjpT23Comp = new TH2F("jj_pT_comp_23", "p_{T}^{jj}", pTBins, jpTmin, jpTmax, pTBins, jpTmin, jpTmax);
-        TH2 *hjjpT13Comp = new TH2F("jj_pT_comp_13", "p_{T}^{jj}", pTBins, jpTmin, jpTmax, pTBins, jpTmin, jpTmax);
-        TH2 *hj1Phi23Comp = new TH2F("j1_#phi_comp_23", "#phi_{j1}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi());
-        TH2 *hj2Phi23Comp = new TH2F("j2_#phi_comp_23", "#phi_{j2}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi());
-        TH2 *hjjdeltaPhi12Comp = new TH2F("jj_#Delta#phi_comp_12", "#Delta#phi_{jj}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi());
-        TH2 *hjjdeltaPhi23Comp = new TH2F("jj_#Delta#phi_comp_23", "#Delta#phi_{jj}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi());        
-        TH2 *hjjdeltaPhi13Comp = new TH2F("jj_#Delta#phi_comp_13", "#Delta#phi_{jj}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi());
+        TH2F*hjjpT12Comp = new TH2F("jj_pT_comp_12", "p_{T}^{jj}", pTBins, jpTmin, jpTmax, pTBins, jpTmin, jpTmax); listOfTH2.push_back(hjjpT12Comp);
+        TH2F*hjjpT23Comp = new TH2F("jj_pT_comp_23", "p_{T}^{jj}", pTBins, jpTmin, jpTmax, pTBins, jpTmin, jpTmax); listOfTH2.push_back(hjjpT23Comp);
+        TH2F*hjjpT13Comp = new TH2F("jj_pT_comp_13", "p_{T}^{jj}", pTBins, jpTmin, jpTmax, pTBins, jpTmin, jpTmax); listOfTH2.push_back(hjjpT13Comp);
+        TH2F*hj1Phi23Comp = new TH2F("j1_#phi_comp_23", "#phi_{j1}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi()); listOfTH2.push_back(hj1Phi23Comp);
+        TH2F*hj2Phi23Comp = new TH2F("j2_#phi_comp_23", "#phi_{j2}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi()); listOfTH2.push_back(hj2Phi23Comp);
+        TH2F*hjjdeltaPhi12Comp = new TH2F("jj_#Delta#phi_comp_12", "#Delta#phi_{jj}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi()); listOfTH2.push_back(hjjdeltaPhi12Comp);
+        TH2F*hjjdeltaPhi23Comp = new TH2F("jj_#Delta#phi_comp_23", "#Delta#phi_{jj}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi()); listOfTH2.push_back(hjjdeltaPhi23Comp);
+        TH2F*hjjdeltaPhi13Comp = new TH2F("jj_#Delta#phi_comp_13", "#Delta#phi_{jj}", phiBins, -TMath::Pi(),+TMath::Pi(), phiBins, -TMath::Pi(),+TMath::Pi()); listOfTH2.push_back(hjjdeltaPhi13Comp);
     //z
       // pT + m
-        TH2 *hz1pT12Comp = new TH2F("z1_pT_comp_12", "p^{T}_{z1}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hz1m12Comp = new TH2F("z1_m_comp_12", "m_{z1}", mBins, zmmin, zmmax, mBins, zmmin, zmmax);
-        TH2 *hz2pT12Comp = new TH2F("z2_pT_comp_12", "p^{T}_{z2}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hz2m12Comp = new TH2F("z2_m_comp_12", "m_{z2}", mBins, zmmin, zmmax, mBins, zmmin, zmmax);
-        TH2 *hz1pT23Comp = new TH2F("z1_pT_comp_23", "p^{T}_{z1}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hz1m23Comp = new TH2F("z1_m_comp_23", "m_{z1}", mBins, zmmin, zmmax, mBins, zmmin, zmmax);
-        TH2 *hz2pT23Comp = new TH2F("z2_pT_comp_23", "p^{T}_{z2}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hz2m23Comp = new TH2F("z2_m_comp_23", "m_{z2}", mBins, zmmin, zmmax, mBins, zmmin, zmmax);
-        TH2 *hz1pT13Comp = new TH2F("z1_pT_comp_13", "p^{T}_{z1}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hz1m13Comp = new TH2F("z1_m_comp_13", "m_{z1}", mBins, zmmin, zmmax, mBins, zmmin, zmmax);
-        TH2 *hz2pT13Comp = new TH2F("z2_pT_comp_13", "p^{T}_{z2}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hz2m13Comp = new TH2F("z2_m_comp_13", "m_{z2}", mBins, zmmin, zmmax, mBins, zmmin, zmmax);
+        TH2F*hz1pT12Comp = new TH2F("z1_pT_comp_12", "p^{T}_{z1}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hz1pT12Comp);
+        TH2F*hz1m12Comp = new TH2F("z1_m_comp_12", "m_{z1}", mBins, zmmin, zmmax, mBins, zmmin, zmmax); listOfTH2.push_back(hz1m12Comp);
+        TH2F*hz2pT12Comp = new TH2F("z2_pT_comp_12", "p^{T}_{z2}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hz2pT12Comp);
+        TH2F*hz2m12Comp = new TH2F("z2_m_comp_12", "m_{z2}", mBins, zmmin, zmmax, mBins, zmmin, zmmax); listOfTH2.push_back(hz2m12Comp);
+        TH2F*hz1pT23Comp = new TH2F("z1_pT_comp_23", "p^{T}_{z1}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hz1pT23Comp);
+        TH2F*hz1m23Comp = new TH2F("z1_m_comp_23", "m_{z1}", mBins, zmmin, zmmax, mBins, zmmin, zmmax); listOfTH2.push_back(hz1m23Comp);
+        TH2F*hz2pT23Comp = new TH2F("z2_pT_comp_23", "p^{T}_{z2}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hz2pT23Comp);
+        TH2F*hz2m23Comp = new TH2F("z2_m_comp_23", "m_{z2}", mBins, zmmin, zmmax, mBins, zmmin, zmmax); listOfTH2.push_back(hz2m23Comp);
+        TH2F*hz1pT13Comp = new TH2F("z1_pT_comp_13", "p^{T}_{z1}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hz1pT13Comp);
+        TH2F*hz1m13Comp = new TH2F("z1_m_comp_13", "m_{z1}", mBins, zmmin, zmmax, mBins, zmmin, zmmax); listOfTH2.push_back(hz1m13Comp);
+        TH2F*hz2pT13Comp = new TH2F("z2_pT_comp_13", "p^{T}_{z2}", pTBins, zpTmin, zpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hz2pT13Comp);
+        TH2F*hz2m13Comp = new TH2F("z2_m_comp_13", "m_{z2}", mBins, zmmin, zmmax, mBins, zmmin, zmmax); listOfTH2.push_back(hz2m13Comp);
 
-        TH2 *hl1l2deltaPhiHpTcompreco = new TH2F("l1l2_delta#phi_H_pT_comp_reco", "l1l2_delta#phi_H_pT_comp_reco", phiBins, -TMath::Pi(),+TMath::Pi(), pTBins, hpTmin, hpTmax);
-        TH2 *hl3l4deltaPhiHpTcompreco = new TH2F("l3l4_delta#phi_H_pT_comp_reco", "l1l2_delta#phi_H_pT_comp_reco", phiBins, -TMath::Pi(),+TMath::Pi(), pTBins, hpTmin, hpTmax);
+        TH2F*hl1l2deltaPhiHpTcompreco = new TH2F("l1l2_delta#phi_H_pT_comp_reco", "l1l2_delta#phi_H_pT_comp_reco", phiBins, -TMath::Pi(),+TMath::Pi(), pTBins, hpTmin, hpTmax); listOfTH2.push_back(hl1l2deltaPhiHpTcompreco);
+         TH2F*hl3l4deltaPhiHpTcompreco = new TH2F("l3l4_delta#phi_H_pT_comp_reco", "l1l2_delta#phi_H_pT_comp_reco", phiBins, -TMath::Pi(),+TMath::Pi(), pTBins, hpTmin, hpTmax); listOfTH2.push_back(hl3l4deltaPhiHpTcompreco);
 
-        TH2 *hHz1pTcompreco = new TH2F("h_z1_pT_comp_reco", "h_z1_pT_comp_reco", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hHz2pTcompreco = new TH2F("h_z2_pT_comp_reco", "h_z2_pT_comp_reco", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hHz1pTcompparticle = new TH2F("h_z1_pT_comp_particle", "h_z1_pT_comp_particle", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hHz2pTcompparticle = new TH2F("h_z2_pT_comp_particle", "h_z2_pT_comp_particle", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hHz1pTcompparton = new TH2F("h_z1_pT_comp_parton", "h_z1_pT_comp_parton", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax);
-        TH2 *hHz2pTcompparton = new TH2F("h_z2_pT_comp_parton", "h_z2_pT_comp_parton", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax);
+        TH2F*hHz1pTcompreco = new TH2F("h_z1_pT_comp_reco", "h_z1_pT_comp_reco", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hHz1pTcompreco);
+        TH2F*hHz2pTcompreco = new TH2F("h_z2_pT_comp_reco", "h_z2_pT_comp_reco", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hHz2pTcompreco);
+        TH2F*hHz1pTcompparticle = new TH2F("h_z1_pT_comp_particle", "h_z1_pT_comp_particle", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hHz1pTcompparticle);
+        TH2F*hHz2pTcompparticle = new TH2F("h_z2_pT_comp_particle", "h_z2_pT_comp_particle", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hHz2pTcompparticle);
+        TH2F*hHz1pTcompparton = new TH2F("h_z1_pT_comp_parton", "h_z1_pT_comp_parton", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hHz1pTcompparton);
+        TH2F*hHz2pTcompparton = new TH2F("h_z2_pT_comp_parton", "h_z2_pT_comp_parton", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hHz2pTcompparton);
 
-        TH2 *hHpTz1etacompreco = new TH2F("h_pT_z1_eta_comp_reco", "h_pT_z1_eta_comp_reco", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax);
-        TH2 *hHpTz2etacompreco = new TH2F("h_pT_z2_eta_comp_reco", "h_pT_z2_eta_comp_reco", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax);
-        TH2 *hHpTz1etacompparticle = new TH2F("h_pT_z1_eta_comp_particle", "h_pT_z1_eta_comp_particle", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax);
-        TH2 *hHpTz2etacompparticle = new TH2F("h_pT_z2_eta_comp_particle", "h_pT_z2_eta_comp_particle", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax);
-        TH2 *hHpTz1etacompparton = new TH2F("h_pT_z1_eta_comp_parton", "h_pT_z1_eta_comp_parton", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax);
-        TH2 *hHpTz2etacompparton= new TH2F("h_pT_z2_eta_comp_parton", "h_pT_z2_eta_comp_parton", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax);
+        TH2F*hHpTz1etacompreco = new TH2F("h_pT_z1_eta_comp_reco", "h_pT_z1_eta_comp_reco", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTz1etacompreco);
+        TH2F*hHpTz2etacompreco = new TH2F("h_pT_z2_eta_comp_reco", "h_pT_z2_eta_comp_reco", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTz2etacompreco);
+        TH2F*hHpTz1etacompparticle = new TH2F("h_pT_z1_eta_comp_particle", "h_pT_z1_eta_comp_particle", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTz1etacompparticle);
+        TH2F*hHpTz2etacompparticle = new TH2F("h_pT_z2_eta_comp_particle", "h_pT_z2_eta_comp_particle", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTz2etacompparticle);
+        TH2F*hHpTz1etacompparton = new TH2F("h_pT_z1_eta_comp_parton", "h_pT_z1_eta_comp_parton", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTz1etacompparton);
+        TH2F*hHpTz2etacompparton= new TH2F("h_pT_z2_eta_comp_parton", "h_pT_z2_eta_comp_parton", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTz2etacompparton);
 
-        TH2 *hHzzpTcompreco = new TH2F("h_zz_pT_comp_reco", "h_zz_pT_comp_reco", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax);
-        TH2 *hHzzpTcompparticle = new TH2F("h_zz_pT_comp_particle", "h_zz_pT_comp_particle", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax);
-        TH2 *hHzzpTcompparton = new TH2F("h_zz_pT_comp_parton", "h_zz_pT_comp_parton", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax);
+        TH2F*hHzzpTcompreco = new TH2F("h_zz_pT_comp_reco", "h_zz_pT_comp_reco", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax); listOfTH2.push_back(hHzzpTcompreco);
+        TH2F*hHzzpTcompparticle = new TH2F("h_zz_pT_comp_particle", "h_zz_pT_comp_particle", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax); listOfTH2.push_back(hHzzpTcompparticle);
+        TH2F*hHzzpTcompparton = new TH2F("h_zz_pT_comp_parton", "h_zz_pT_comp_parton", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax); listOfTH2.push_back(hHzzpTcompparton);
 
-  TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
-  kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
-
+	TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
+	kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
+	
   double  nPassed=0;
   double Lumi=3e3;
   double totWeightedEntries=0;
@@ -942,12 +942,13 @@ int switchVal_reco = 0;
       if( goodJetIndex[i] == higgsbbcandidate.first  || goodJetIndex[i] == higgsbbcandidate.second) continue;
       nonHiggsJet.push_back(i);
     }
-    
-  //        sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchJet](const int& lhs, const int& rhs) {
-  //	    return ((Jet*)branchJet->At(lhs))->PT < ((Jet*)branchJet->At(rhs))->PT;
-  //    });
 
-  if(switchVal_reco == 0 && nonHiggsJet.size() > 1) { // at least 2 vbf jets
+    if(nonHiggsJet.size() > 1) {
+      sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchJet](const int& lhs, const int& rhs) {
+	  return ((Jet*)branchJet->At(lhs))->PT < ((Jet*)branchJet->At(rhs))->PT;
+	});}
+    
+    if(switchVal_reco == 0 && nonHiggsJet.size() > 1) { // at least 2 vbf jets
     increaseCount(cutFlowMap_reco,"2 vbfj reco",weight);
     //cutFlowMap_reco["2 vbfj reco"] = {cutVal_reco,cutValW_reco};
   
@@ -1442,18 +1443,17 @@ int switchVal_reco = 0;
     //if( bJetPairsCombParticle.size() < 1) continue; // need at least two good jets;  
     if(switchVal_particle==0 && bJetPairsCombParticle.size() >0 ) 
       increaseCount(cutFlowMap_particle,"2 b-like jet pairs part",weight);
-    else
-      switchVal_particle=1; 
+    else switchVal_particle=1; 
 
     for(int i=0; i<(int)bJetPairsCombParticle.size(); i++)
       bJetPairsParticle.push_back(make_pair(bJetPairsCombParticle[i][0],bJetPairsCombParticle[i][1]));
-
+    
     if( bJetPairsParticle.size() > 1) 
       sort(bJetPairsParticle.begin(), bJetPairsParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
 	  return fabs(((((Jet*)branchGenJet->At(lhs.first))->P4() + ((Jet*)branchGenJet->At(lhs.second))->P4())).M() - 125 ) <
 	    fabs( ((((Jet*)branchGenJet->At(rhs.first))->P4() + ((Jet*)branchGenJet->At(rhs.second))->P4()).M()) - 125 ) ; 
 	});
-
+    
     pair <int,int> higgsbbcandidateParticle;
     bool foundBjetParticle=false; 
     for(int i=0; i<(int) bJetPairsParticle.size(); i++){
@@ -1463,18 +1463,21 @@ int switchVal_reco = 0;
     higgsbbcandidateParticle=bJetPairsParticle[i];
     foundBjetParticle=true;
     break;
-      }
+       }
     }
 
-
+    
+    if(switchVal_particle == 0 && foundBjetParticle) { // b pair
+      increaseCount(cutFlowMap_parton,"found bb particle",weight);
+   } else  switchVal_particle = 1;
+    
+   if(switchVal_particle == 0 && b1Particle !=nullptr && b2Particle !=nullptr && foundBjetParticle){
+    
     b1_particle = b1Particle->P4();
     b2_particle = b2Particle->P4();
     h_particle = b1_particle + b2_particle;
     
     
-  
-	  
-
     if (b1_particle.Eta() > b2_particle.Eta()) {
       bbdeltaPhiparticle = remainder( b1_particle.Phi() - b2_particle.Phi(), 2*M_PI );
       bbdeltaEtaparticle= b1_particle.Eta() - b2_particle.Eta();
@@ -1489,45 +1492,41 @@ int switchVal_reco = 0;
     // double bbdeltaPhiparticle= (b1_particle.Phi() - b2_particle.Phi());
     // double bbdeltaEtaparticle= (b1_particle.Eta() - b2_particle.Eta());
     bbdeltaRparticle= sqrt((bbdeltaPhiparticle*bbdeltaPhiparticle)+(bbdeltaEtaparticle*bbdeltaEtaparticle));
-
-    // b pair 
-    if(switchVal_particle == 0 && !foundBjetParticle)  
-      increaseCount(cutFlowMap_particle,"found bb particle",weight);
-    else switchVal_particle = 1;
-    
+   }
+   
     // jets
-
-    vector <int> nonHiggsJetParticle;
-
+   vector <int> nonHiggsJetParticle;
+    
     for(int i=0; i<(int)goodJetIndexParticle.size(); i++){
       if( goodJetIndexParticle[i] == higgsbbcandidateParticle.first  || goodJetIndexParticle[i] == higgsbbcandidateParticle.second) continue;
       nonHiggsJetParticle.push_back(i);
     }
 
-    //        sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchGenJet](const int& lhs, const int& rhs) {
-    //	    return ((Jet*)branchGenJet->At(lhs))->PT < ((Jet*)branchGenJet->At(rhs))->PT;
-    //    });
-
+    if(nonHiggsJetParticle.size() > 1) {
+      sort(nonHiggsJetParticle.begin(), nonHiggsJetParticle.end(), [branchGenJet](const int& lhs, const int& rhs) {
+	return ((Jet*)branchGenJet->At(lhs))->PT < ((Jet*)branchGenJet->At(rhs))->PT;
+	});}
+    
     // at least 2 vbf jets 
-    if(switchVal_particle == 0 && nonHiggsJetParticle.size() < 2) 
+    if(switchVal_particle == 0 && nonHiggsJetParticle.size() > 1) 
       increaseCount(cutFlowMap_particle,"2 vbfj particle",weight);
     else switchVal_particle = 1;
     
 
     vector<pair<int,int>> vbfJetIndexParticle;
     vector<vector <int>> vbfJetIndexCombParticle;
-    if(switchVal_particle==0)
-      combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJetParticle);
-    
-    if( vbfJetIndexCombParticle.size() < 1 ) switchVal_particle=1; 
-    else increaseCount(cutFlowMap_particle,"comb vbf part",weight);
+    if(switchVal_particle==0 && nonHiggsJet.size()>1){
+      vbfJetIndexCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJetParticle);
+      increaseCount(cutFlowMap_particle,"comb vbf part",weight);
+    }
+    else switchVal_particle=1; 
      
- 
-    for(int i=0; i<(int)vbfJetIndexCombParticle.size(); i++)
-      vbfJetIndexParticle.push_back(make_pair(vbfJetIndexCombParticle[i][0],vbfJetIndexCombParticle[i][1]));
+    if(switchVal_particle==0)
+      for(int i=0; i<(int)vbfJetIndexCombParticle.size(); i++)
+	vbfJetIndexParticle.push_back(make_pair(vbfJetIndexCombParticle[i][0],vbfJetIndexCombParticle[i][1]));
     //  if( branchMuon->GetEntries() + branchElectron->GetEntries() < 4) continue;
 
-    if( vbfJetIndexParticle.size() > 1) 
+    if( switchVal_particle==0 && vbfJetIndexParticle.size() > 1) 
       sort(vbfJetIndexParticle.begin(), vbfJetIndexParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
 	  return fabs((((Jet*)branchGenJet->At(lhs.first))->Eta - ((Jet*)branchGenJet->At(lhs.second))->Eta) ) >
 	    fabs((((Jet*)branchGenJet->At(rhs.first))->Eta - ((Jet*)branchGenJet->At(rhs.second))->Eta) ) ; 
@@ -2414,986 +2413,19 @@ int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
      ( *h)->Write();
      delete (*h); 
    }
-   /*
-// higgs
+   for(std::vector<TH2F*>::iterator h=listOfTH2.begin(); h!=listOfTH2.end(); h++){
+     ( *h)->Write();
+     delete (*h); 
+   }
+   
 
-    hHpTreco -> Write();
-    hHmreco -> Write();
-    hb1pTreco -> Write();
-    hb1mreco -> Write();
-    hb2pTreco -> Write();
-    hb2mreco -> Write();
-    hHphireco -> Write();
-    hb1phireco -> Write();
-    hb2phireco -> Write();
-    hbbdeltaPhireco -> Write();
-    hHetareco -> Write();
-    hb1etareco -> Write();
-    hb2etareco -> Write();
-    hbbdeltaEtareco -> Write();
-    hHRreco -> Write();
-    hb1Rreco -> Write();
-    hb2Rreco -> Write();
-    hbbdeltaRreco -> Write();
-
-    hHpTparticle -> Write();
-    hHmparticle -> Write();
-    hb1pTparticle -> Write();
-    hb1mparticle -> Write();
-    hb2pTparticle -> Write();
-    hb2mparticle -> Write();
-    hHphiparticle -> Write();
-    hb1phiparticle -> Write();
-    hb2phiparticle -> Write();
-    hbbdeltaPhiparticle -> Write();
-    hHetaparticle -> Write();
-    hb1etaparticle -> Write();
-    hb2etaparticle -> Write();
-    hbbdeltaEtaparticle -> Write();
-    hHRparticle -> Write();
-    hb1Rparticle -> Write();
-    hb2Rparticle -> Write();
-    hbbdeltaRparticle -> Write();
-
-    hHpTparton -> Write();
-    hHmparton -> Write();
-    hb1pTparton -> Write();
-    hb1mparton -> Write();
-    hb2pTparton -> Write();
-    hb2mparton -> Write();
-    hHphiparton -> Write();
-    hb1phiparton -> Write();
-    hb2phiparton -> Write();
-    hbbdeltaPhiparton -> Write();
-    hHetaparton -> Write();
-    hb1etaparton -> Write();
-    hb2etaparton -> Write();
-    hbbdeltaEtaparton -> Write();
-    hHRparton -> Write();
-    hb1Rparton -> Write();
-    hb2Rparton -> Write();
-    hbbdeltaRparton -> Write();
-
-// jets
-
-    hjjpTreco -> Write();
-    hj1pTreco -> Write();
-    hj2pTreco -> Write();
-    hj1phireco -> Write();
-    hj2phireco -> Write();
-    hjjdeltaPhireco -> Write();
-    hj1etareco -> Write();
-    hj2etareco -> Write();
-    hjjdeltaEtareco -> Write();
-    hj1Rreco -> Write();
-    hj2Rreco -> Write();
-    hjjdeltaRreco -> Write();
-
-    hjjpTparticle -> Write();
-    hj1pTparticle -> Write();
-    hj2pTparticle -> Write();
-    hj1phiparticle -> Write();
-    hj2phiparticle -> Write();
-    hjjdeltaPhiparticle -> Write();
-    hj1etaparticle -> Write();
-    hj2etaparticle -> Write();
-    hjjdeltaEtaparticle -> Write();
-    hj1Rparticle -> Write();
-    hj2Rparticle -> Write();
-    hjjdeltaRparticle -> Write();
-
-
-// z 
-
-    hz1pTreco -> Write();
-    hz2pTreco -> Write();
-    hz1mreco -> Write();
-    hz2mreco -> Write();
-    hz1cosThetareco -> Write();
-    hz2cosThetareco -> Write();
-    hz1phireco -> Write();
-    hz2phireco -> Write();
-    hzzdeltaPhireco -> Write();
-    hz1etareco -> Write();
-    hz2etareco -> Write();
-    hzzdeltaEtareco -> Write();
-    hz1Rreco -> Write();
-    hz2Rreco -> Write();
-    hzzdeltaRreco -> Write();
-
-    hz1pTparticle -> Write();
-    hz2pTparticle -> Write();
-    hz1mparticle -> Write();
-    hz2mparticle -> Write();
-    hz1phiparticle -> Write();
-    hz2phiparticle -> Write();
-    hzzdeltaPhiparticle -> Write();
-    hz1etaparticle -> Write();
-    hz2etaparticle -> Write();
-    hzzdeltaEtaparticle -> Write();
-    hz1Rparticle -> Write();
-    hz2Rparticle -> Write();
-    hzzdeltaRparticle -> Write();
-
-    hz1pTparton -> Write();
-    hz2pTparton -> Write();
-    hz1mparton -> Write();
-    hz2mparton -> Write();
-    hz1phiparton -> Write();
-    hz2phiparton -> Write();
-    hzzdeltaPhiparton -> Write();
-    hz1etaparton -> Write();
-    hz2etaparton -> Write();
-    hzzdeltaEtaparton -> Write();
-    hz1Rparton -> Write();
-    hz2Rparton -> Write();
-    hzzdeltaRparton -> Write();
-
-// leptons 
-
-    hl1pTreco -> Write();
-    hl2pTreco -> Write();
-    hl3pTreco -> Write();
-    hl4pTreco -> Write();
-    hl1phireco -> Write();
-    hl2phireco -> Write();
-    hl3phireco -> Write();
-    hl4phireco -> Write();
-    hl1l2deltaPhireco -> Write();
-    hl3l4deltaPhireco -> Write();
-    hl1l2deltaPhiBoostreco -> Write();
-    hl3l4deltaPhiBoostreco -> Write();
-    hl1etareco -> Write();
-    hl2etareco -> Write();
-    hl3etareco -> Write();
-    hl4etareco -> Write();
-    hl1l2deltaEtareco -> Write();
-    hl3l4deltaEtareco -> Write();
-    hl1l2deltaEtaBoostreco -> Write();
-    hl3l4deltaEtaBoostreco -> Write();
-    hl1Rreco -> Write();
-    hl2Rreco -> Write();
-    hl3Rreco -> Write();
-    hl4Rreco -> Write();
-    hl1l2deltaRreco -> Write();
-    hl3l4deltaRreco -> Write();
-    hl1cosThetareco -> Write();
-    hl2cosThetareco -> Write();
-    hl3cosThetareco -> Write();
-    hl4cosThetareco -> Write();
-    hfourlcosThetareco -> Write();
-    hl1cosThetaBoostreco -> Write();
-    hl2cosThetaBoostreco -> Write();
-    hl3cosThetaBoostreco -> Write();
-    hl4cosThetaBoostreco -> Write();
-    hfourlcosThetaBoostreco -> Write();
-    hl1l2CScosThetareco -> Write();
-    hl3l4CScosThetareco -> Write();
-
-    hl1pTparticle -> Write();
-    hl2pTparticle -> Write();
-    hl3pTparticle -> Write();
-    hl4pTparticle -> Write();
-    hl1phiparticle -> Write();
-    hl2phiparticle -> Write();
-    hl3phiparticle -> Write();
-    hl4phiparticle -> Write();
-    hl1l2deltaPhiparticle -> Write();
-    hl3l4deltaPhiparticle -> Write();
-    hl1l2deltaPhiBoostparticle -> Write();
-    hl3l4deltaPhiBoostparticle -> Write();
-    hl1etaparticle -> Write();
-    hl2etaparticle -> Write();
-    hl3etaparticle -> Write();
-    hl4etaparticle -> Write();
-    hl1l2deltaEtaparticle -> Write();
-    hl3l4deltaEtaparticle -> Write();
-    hl1l2deltaEtaBoostparticle -> Write();
-    hl3l4deltaEtaBoostparticle -> Write();
-    hl1Rparticle -> Write();
-    hl2Rparticle -> Write();
-    hl3Rparticle -> Write();
-    hl4Rparticle -> Write();
-    hl1l2deltaRparticle -> Write();
-    hl3l4deltaRparticle -> Write();
-    hl1cosThetaparticle -> Write();
-    hl2cosThetaparticle -> Write();
-    hl3cosThetaparticle -> Write();
-    hl4cosThetaparticle -> Write();
-    hfourlcosThetaparticle -> Write();
-    hl1cosThetaBoostparticle -> Write();
-    hl2cosThetaBoostparticle -> Write();
-    hl3cosThetaBoostparticle -> Write();
-    hl4cosThetaBoostparticle -> Write();
-    hfourlcosThetaBoostparticle -> Write();
-    hl1l2CScosThetaparticle -> Write();
-    hl3l4CScosThetaparticle -> Write();
-
-    hl1pTparton -> Write();
-    hl2pTparton -> Write();
-    hl3pTparton -> Write();
-    hl4pTparton -> Write();
-    hl1phiparton -> Write();
-    hl2phiparton -> Write();
-    hl3phiparton -> Write();
-    hl4phiparton -> Write();
-    hl1l2deltaPhiparton -> Write();
-    hl3l4deltaPhiparton -> Write();
-    hl1l2deltaPhiBoostparton -> Write();
-    hl3l4deltaPhiBoostparton -> Write();
-    hl1etaparton -> Write();
-    hl2etaparton -> Write();
-    hl3etaparton -> Write();
-    hl4etaparton -> Write();
-    hl1l2deltaEtaparton -> Write();
-    hl3l4deltaEtaparton -> Write();
-    hl1l2deltaEtaBoostparton -> Write();
-    hl3l4deltaEtaBoostparton -> Write();
-    hl1Rparton -> Write();
-    hl2Rparton -> Write();
-    hl3Rparton -> Write();
-    hl4Rparton -> Write();
-    hl1l2deltaRparton -> Write();
-    hl3l4deltaRparton -> Write();
-    hl1cosThetaparton -> Write();
-    hl2cosThetaparton -> Write();
-    hl3cosThetaparton -> Write();
-    hl4cosThetaparton -> Write();
-    hfourlcosThetaparton -> Write();
-    hl1cosThetaBoostparton -> Write();
-    hl2cosThetaBoostparton -> Write();
-    hl3cosThetaBoostparton -> Write();
-    hl4cosThetaBoostparton -> Write();
-    hfourlcosThetaBoostparton -> Write();
-    hl1l2CScosThetaparton -> Write();
-    hl3l4CScosThetaparton -> Write();
-   */
-
-// comp
-
-    hHpT12Comp -> Write();
-    hHm12Comp  -> Write();
-    hHpT23Comp -> Write();
-    hHm23Comp -> Write();
-    hHpT13Comp -> Write();
-    hHm13Comp -> Write();
-    hbbdeltaPhi12Comp -> Write();
-    hbbdeltaPhi23Comp -> Write();
-    hbbdeltaPhi13Comp -> Write();
-    hbbdeltaEta12Comp -> Write();
-    hbbdeltaEta23Comp -> Write();
-    hbbdeltaEta13Comp -> Write();
-
-    hjjpT12Comp -> Write();
-    hjjpT23Comp -> Write();
-    hjjpT13Comp -> Write();
-
-    hjjdeltaPhi12Comp -> Write();
-    hjjdeltaPhi23Comp -> Write();
-    hjjdeltaPhi13Comp -> Write();
-
-    hj1Phi23Comp -> Write();
-    hj2Phi23Comp -> Write();
-    
-
-    hz1pT13Comp -> Write();
-    hz1m13Comp -> Write();
-    hz2pT13Comp -> Write();
-    hz2m13Comp -> Write();
-    hz1pT23Comp -> Write();
-    hz1m23Comp -> Write();
-    hz2pT23Comp -> Write();
-    hz2m23Comp -> Write();
-    hz1pT12Comp -> Write();
-    hz1m12Comp -> Write();
-    hz2pT12Comp -> Write();
-    hz2m12Comp -> Write();
-
-    hl1l2deltaPhiHpTcompreco -> Write();
-    hl3l4deltaPhiHpTcompreco -> Write();
-
-    hHz1pTcompreco -> Write();
-    hHz2pTcompreco -> Write();
-    hHz1pTcompparticle -> Write();
-    hHz2pTcompparticle -> Write();
-    hHz1pTcompparton -> Write();
-    hHz2pTcompparton -> Write();
-
-    hHpTz1etacompreco -> Write();
-    hHpTz2etacompreco -> Write();
-    hHpTz1etacompparticle -> Write();
-    hHpTz2etacompparticle -> Write();
-    hHpTz1etacompparton -> Write();
-    hHpTz2etacompparton -> Write();
-
-    hHzzpTcompreco -> Write();
-    hHzzpTcompparticle -> Write();
-    hHzzpTcompparton -> Write();
 
     kappaLambda -> Write();
 
     hists->Close();
     // gROOT->SetBatch(kTRUE);
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-// draw histos
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// higgs
-/*
-    draw_hist(hHpTreco,"hbb_pT_reco", "p^{T}_{hbb}_reco", "pT (GeV)");
-    draw_hist(hHmreco,"hbb_m_reco", "m_{hbb}_reco", "mass (GeV)");
-    draw_hist(hb1pTreco,"b1_pT_reco", "p^{T}_{b1}_reco", "pT (GeV)");
-    draw_hist(hb1mreco,"b1_m_reco", "m_{b1}_reco", "mass (GeV)");
-    draw_hist(hb2pTreco,"b2_pT_reco", "p^{T}_{b2}_reco", "pT (GeV)");
-    draw_hist(hb2mreco,"b2_m_reco", "m_{b2}_reco", "mass (GeV)");
-    draw_hist(hHphireco,"hbb_phi_reco", "#phi_{hbb}_reco", "#phi");
-    draw_hist(hb1phireco,"b1_phi_reco", "#phi_{b1}_reco", "#phi");
-    draw_hist(hb2phireco,"b2_phi_reco", "#phi_{b2}_reco", "#phi");
-    draw_hist(hbbdeltaPhireco,"bb_Deltaphi_reco", "#Delta#phi_{bb}_reco", "#Delta#phi");
-    draw_hist(hHetareco,"hbb_eta_reco", "#eta_{hbb}_reco", "#eta");
-    draw_hist(hb1etareco,"b1_eta_reco", "#eta_{b1}_reco", "#eta");
-    draw_hist(hb2etareco,"b2_eta_reco", "#eta_{b2}_reco", "#eta");
-    draw_hist(hbbdeltaEtareco,"bb_Deltaeta_reco", "#Delta#eta_{bb}_reco", "#Delta#eta");
-    draw_hist(hHRreco,"hbb_R_reco", "R_{hbb}_reco", "R");
-    draw_hist(hb1Rreco,"b1_R_reco", "R_{b1}_reco", "R");
-    draw_hist(hb2Rreco,"b2_R_reco", "R_{b2}_reco", "R");
-    draw_hist(hbbdeltaRreco,"bb_DeltaR_reco", "#DeltaR_{bb}_reco", "#DeltaR");
-
-    draw_hist(hHpTparticle,"hbb_pT_particle", "p^{T}_{hbb}_particle", "pT (GeV)");
-    draw_hist(hHmparticle,"hbb_m_particle", "m_{hbb}_particle", "mass (GeV)");
-    draw_hist(hb1pTparticle,"b1_pT_particle", "p^{T}_{b1}_particle", "pT (GeV)");
-    draw_hist(hb1mparticle,"b1_m_particle", "m_{b1}_particle", "mass (GeV)");
-    draw_hist(hb2pTparticle,"b2_pT_particle", "p^{T}_{b2}_particle", "pT (GeV)");
-    draw_hist(hb2mparticle,"b2_m_particle", "m_{b2}_particle", "mass (GeV)");
-    draw_hist(hHphiparticle,"hbb_#phi_particle", "#phi_{hbb}_particle", "#phi");
-    draw_hist(hb1phiparticle,"b1_#phi_particle", "#phi_{b1}_particle", "#phi");
-    draw_hist(hb2phiparticle,"b2_#phi_particle", "#phi_{b2}_particle", "#phi");
-    draw_hist(hbbdeltaPhiparticle,"bb_#Delta#phi_particle", "#Delta#phi_{bb}_particle", "#Delta#phi");
-    draw_hist(hHetaparticle,"hbb_#eta_particle", "#eta_{hbb}_particle", "#eta");
-    draw_hist(hb1etaparticle,"b1_#eta_particle", "#eta_{b1}_particle", "#eta");
-    draw_hist(hb2etaparticle,"b2_#eta_particle", "#eta_{b2}_particle", "#eta");
-    draw_hist(hbbdeltaEtaparticle,"bb_#Delta#eta_particle", "#Delta#eta_{bb}_particle", "#Delta#eta");
-    draw_hist(hHRparticle,"hbb_R_particle", "R_{hbb}_particle", "R");
-    draw_hist(hb1Rparticle,"b1_R_particle", "R_{b1}_particle", "R");
-    draw_hist(hb2Rparticle,"b2_R_particle", "R_{b2}_particle", "R");
-    draw_hist(hbbdeltaRparticle,"bb_#DeltaR_particle", "#DeltaR_{bb}_particle", "#DeltaR");
-
-    draw_hist(hHpTparton,"hbb_pT_parton", "p^{T}_{hbb}_parton", "pT (GeV)");
-    draw_hist(hHmparton,"hbb_m_parton", "m_{hbb}_parton", "mass (GeV)");
-    draw_hist(hb1pTparton,"b1_pT_parton", "p^{T}_{b1}_parton", "pT (GeV)");
-    draw_hist(hb1mparton,"b1_m_parton", "m_{b1}_parton", "mass (GeV)");
-    draw_hist(hb2pTparton,"b2_pT_parton", "p^{T}_{b2}_parton", "pT (GeV)");
-    draw_hist(hb2mparton,"b2_m_parton", "m_{b2}_parton", "mass (GeV)");
-    draw_hist(hHphiparton,"hbb_#phi_parton", "#phi_{hbb}_parton", "#phi");
-    draw_hist(hb1phiparton,"b1_#phi_parton", "#phi_{b1}_parton", "#phi");
-    draw_hist(hb2phiparton,"b2_#phi_parton", "#phi_{b2}_parton", "#phi");
-    draw_hist(hbbdeltaPhiparton,"bb_#Delta#phi_parton", "#Delta#phi_{bb}_parton", "#Delta#phi");
-    draw_hist(hHetaparton,"hbb_#eta_parton", "#eta_{hbb}_parton", "#eta");
-    draw_hist(hb1etaparton,"b1_#eta_parton", "#eta_{b1}_parton", "#eta");
-    draw_hist(hb2etaparton,"b2_#eta_parton", "#eta_{b2}_parton", "#eta");
-    draw_hist(hbbdeltaEtaparton,"bb_#Delta#eta_parton", "#Delta#eta_{bb}_parton", "#Delta#eta");
-    draw_hist(hHRparton,"hbb_R_parton", "R_{hbb}_parton", "R");
-    draw_hist(hb1Rparton,"b1_R_parton", "R_{b1}_parton", "R");
-    draw_hist(hb2Rparton,"b2_R_parton", "R_{b2}_parton", "R");
-    draw_hist(hbbdeltaRparton,"bb_#DeltaR_parton", "#DeltaR_{bb}_parton", "#DeltaR");
-
-// jets
-
-    draw_hist(hjjpTreco,"jj_pT_reco", "p^{T}_{jj}_reco", "pT (GeV)");
-    draw_hist(hj1pTreco,"j1_pT_reco", "p^{T}_{j1}_reco", "pT (GeV)");
-    draw_hist(hj2pTreco,"j2_pT_reco", "p^{T}_{j2}_reco", "pT (GeV)");
-
-    draw_hist(hj1phireco,"j1_#phi_reco", "#phi_{j1}_reco", "#phi");
-    draw_hist(hj2phireco,"j2_#phi_reco", "#phi_{j2}_reco", "#phi");
-
-    draw_hist(hjjdeltaPhireco,"jj_#Delta#phi_reco", "#Delta#phi_{jj}_reco", "#Delta#phi");
-    draw_hist(hj1etareco,"j1_#eta_reco", "#eta_{j1}_reco", "#eta");
-    draw_hist(hj2etareco,"j2_#eta_reco", "#eta_{j2}_reco", "#eta");
-    draw_hist(hjjdeltaEtareco,"jj_#Delta#eta_reco", "#Delta#eta_{jj}_reco", "#Delta#eta");
-    draw_hist(hj1Rreco,"j1_R_reco", "R_{j1}_reco", "R");
-    draw_hist(hj2Rreco,"j2_R_reco", "R_{j2}_reco", "R");
-    draw_hist(hjjdeltaRreco,"jj_#DeltaR_reco", "#DeltaR_{jj}_reco", "#DeltaR");
-
-    draw_hist(hjjpTparticle,"jj_pT_particle", "p^{T}_{jj}_particle", "pT (GeV)");
-    draw_hist(hj1pTparticle,"j1_pT_particle", "p^{T}_{j1}_particle", "pT (GeV)");
-    draw_hist(hj2pTparticle,"j2_pT_particle", "p^{T}_{j2}_particle", "pT (GeV)");
-
-    draw_hist(hj1phiparticle,"j1_#phi_particle", "#phi_{j1}_particle", "#phi");
-    draw_hist(hj2phiparticle,"j2_#phi_particle", "#phi_{j2}_particle", "#phi");
-
-    draw_hist(hjjdeltaPhiparticle,"jj_#Delta#phi_particle", "#Delta#phi_{jj}_particle", "#Delta#phi");
-    draw_hist(hj1etaparticle,"j1_#eta_particle", "#eta_{j1}_particle", "#eta");
-    draw_hist(hj2etaparticle,"j2_#eta_particle", "#eta_{j2}_particle", "#eta");
-    draw_hist(hjjdeltaEtaparticle,"jj_#Delta#eta_particle", "#Delta#eta_{jj}_particle", "#Delta#eta");
-    draw_hist(hj1Rparticle,"j1_R_particle", "R_{j1}_particle", "R");
-    draw_hist(hj2Rparticle,"j2_R_particle", "R_{j2}_particle", "R");
-    draw_hist(hjjdeltaRparticle,"jj_#DeltaR_particle", "#DeltaR_{jj}_particle", "#DeltaR");
-
-// z 
-
-    draw_hist(hz1pTreco,"z1_pT_reco", "p^{T}_{z1}_reco", "pT (GeV)");
-    draw_hist(hz2pTreco,"z2_pT_reco", "p^{T}_{z2}_reco", "pT (GeV)");
-    draw_hist(hz1mreco,"z1_m_reco", "m_{z1}_reco", "pT (GeV)");
-    draw_hist(hz2mreco,"z2_m_reco", "m_{z2}_reco", "pT (GeV)");
-    draw_hist(hz1phireco,"z1_#phi_reco", "#phi_{z1}_reco", "#phi");
-    draw_hist(hz2phireco,"z2_#phi_reco", "#phi_{z2}_reco", "#phi");
-    draw_hist(hzzdeltaPhireco,"zz_#Delta#phi_reco", "#Delta#phi_{zz}_reco", "#Delta#phi");
-    draw_hist(hz1etareco,"z1_#eta_reco", "#eta_{z1}_reco", "#eta");
-    draw_hist(hz2etareco,"z2_#eta_reco", "#eta_{z2}_reco", "#eta");
-    draw_hist(hzzdeltaEtareco,"zz_#Delta#eta_reco", "#Delta#eta_{zz}_reco", "#Delta#eta");
-    draw_hist(hz1Rreco,"z1_R_reco", "R_{z1}_reco", "R");
-    draw_hist(hz2Rreco,"z2_R_reco", "R_{z2}_reco", "R");
-    draw_hist(hzzdeltaRreco,"zz_#DeltaR_reco", "#DeltaR_{zz}_reco", "#DeltaR");
-    draw_hist(hz1cosThetareco,"z1_cos#theta_reco", "cos#theta_{z1}_reco", "cos#theta");
-    draw_hist(hz2cosThetareco,"z2_cos#theta_reco", "cos#theta_{z1}_reco", "cos#theta");
-
-    draw_hist(hz1pTparticle,"z1_pT_particle", "p^{T}_{z1}_particle", "pT (GeV)");
-    draw_hist(hz2pTparticle,"z2_pT_particle", "p^{T}_{z2}_particle", "pT (GeV)");
-    draw_hist(hz1mparticle,"z1_m_particle", "m_{z1}_particle", "mass (GeV)");
-    draw_hist(hz2mparticle,"z2_m_particle", "m_{z2}_particle", "mass (GeV)");
-    draw_hist(hz1phiparticle,"z1_#phi_particle", "#phi_{z1}_particle", "#phi");
-    draw_hist(hz2phiparticle,"z2_#phi_particle", "#phi_{z2}_particle", "#phi");
-    draw_hist(hzzdeltaPhiparticle,"zz_#Delta#phi_particle", "#Delta#phi_{zz}_particle", "#Delta#phi");
-    draw_hist(hz1etaparticle,"z1_#eta_particle", "#eta_{z1}_particle", "#eta");
-    draw_hist(hz2etaparticle,"z2_#eta_particle", "#eta_{z2}_particle", "#eta");
-    draw_hist(hzzdeltaEtaparticle,"zz_#Delta#eta_particle", "#Delta#eta_{zz}_particle", "#Delta#eta");
-    draw_hist(hz1Rparticle,"z1_R_particle", "R_{z1}_particle", "R");
-    draw_hist(hz2Rparticle,"z2_R_particle", "R_{z2}_particle", "R");
-    draw_hist(hzzdeltaRparticle,"zz_#DeltaR_particle", "#DeltaR_{zz}_particle", "#DeltaR");
-
-    draw_hist(hz1pTparton,"z1_pT_parton", "p^{T}_{z1}_parton", "pT (GeV)");
-    draw_hist(hz2pTparton,"z2_pT_parton", "p^{T}_{z2}_parton", "pT (GeV)");
-    draw_hist(hz1mparton,"z1_m_parton", "m_{z1}_parton", "mass (GeV)");
-    draw_hist(hz2mparton,"z2_m_parton", "m_{z2}_parton", "mass (GeV)");
-    draw_hist(hz1phiparton,"z1_#phi_parton", "#phi_{z1}_parton", "#phi");
-    draw_hist(hz2phiparton,"z2_#phi_parton", "#phi_{z2}_parton", "#phi");
-    draw_hist(hzzdeltaPhiparton,"zz_#Delta#phi_parton", "#Delta#phi_{zz}_parton", "#Delta#phi");
-    draw_hist(hz1etaparton,"z1_#eta_parton", "#eta_{z1}_parton", "#eta");
-    draw_hist(hz2etaparton,"z2_#eta_parton", "#eta_{z2}_parton", "#eta");
-    draw_hist(hzzdeltaEtaparton,"zz_#Delta#eta_parton", "#Delta#eta_{zz}_parton", "#Delta#eta");
-    draw_hist(hz1Rparton,"z1_R_parton", "R_{z1}_parton", "R");
-    draw_hist(hz2Rparton,"z2_R_parton", "R_{z2}_parton", "R");
-    draw_hist(hzzdeltaRparton,"zz_#DeltaR_parton", "#DeltaR_{zz}_parton", "#DeltaR");
-
-// leptons
-
-    draw_hist(hl1pTreco,"l1_pT_reco", "p^{T}_{l1}_reco", "pT (GeV)");
-    draw_hist(hl2pTreco,"l2_pT_reco", "p^{T}_{l2}_reco", "pT (GeV)");
-    draw_hist(hl3pTreco,"l3_pT_reco", "p^{T}_{l3}_reco", "pT (GeV)");
-    draw_hist(hl4pTreco,"l4_pT_reco", "p^{T}_{l4}_reco", "pT (GeV)");
-    draw_hist(hl1phireco,"l1_#phi_reco", "#phi_{l1}_reco", "#phi");
-    draw_hist(hl2phireco,"l2_#phi_reco", "#phi_{l2}_reco", "#phi");
-    draw_hist(hl3phireco,"l3_#phi_reco", "#phi_{l3}_reco", "#phi");
-    draw_hist(hl4phireco,"l4_#phi_reco", "#phi_{l4}_reco", "#phi");
-    draw_hist(hl1l2deltaPhireco,"l1l2_#Delta#phi_reco", "#Delta#phi_{l1l2}_reco", "#Delta#phi");
-    draw_hist(hl3l4deltaPhireco,"l3l4_#Delta#phi_reco", "#Delta#phi_{l3l4}_reco", "#Delta#phi");
-    draw_hist(hl1l2deltaPhiBoostreco,"l1l2_#Delta#phi_Boost_reco", "#Delta#phi_{l1l2}_Boost_reco", "#Delta#phi");
-    draw_hist(hl3l4deltaPhiBoostreco,"l3l4_#Delta#phi_Boost_reco", "#Delta#phi_{l3l4}_Boost_reco", "#Delta#phi");
-    draw_hist(hl1etareco,"l1_#eta_reco", "#eta_{l1}_reco", "#eta");
-    draw_hist(hl2etareco,"l2_#eta_reco", "#eta_{l2}_reco", "#eta");
-    draw_hist(hl3etareco,"l3_#eta_reco", "#eta_{l3}_reco", "#eta");
-    draw_hist(hl4etareco,"l4_#eta_reco", "#eta_{l4}_reco", "#eta");
-    draw_hist(hl1l2deltaEtareco,"l1l2_#Delta#eta_reco", "#Delta#eta_{l1l2}_reco", "#Delta#eta");
-    draw_hist(hl3l4deltaEtareco,"l3l4_#Delta#eta_reco", "#Delta#eta_{l3l4}_reco", "#Delta#eta");
-    draw_hist(hl1l2deltaEtaBoostreco,"l1l2_#Delta#eta_Boost_reco", "#Delta#eta_{l1l2}_Boost_reco", "#Delta#eta");
-    draw_hist(hl3l4deltaEtaBoostreco,"l3l4_#Delta#eta_Boost_reco", "#Delta#eta_{l3l4}_Boost_reco", "#Delta#eta");
-    draw_hist(hl1Rreco,"l1_R_reco", "R_{l1}_reco", "R");
-    draw_hist(hl2Rreco,"l2_R_reco", "R_{l2}_reco", "R");
-    draw_hist(hl3Rreco,"l3_R_reco", "R_{l3}_reco", "R");
-    draw_hist(hl4Rreco,"l4_R_reco", "R_{l4}_reco", "R");
-    draw_hist(hl1l2deltaRreco,"l1l2_#Delta R_reco", "#DeltaR_{l1l2}_reco", "#DeltaR");
-    draw_hist(hl3l4deltaRreco,"l3l4_#Delta R_reco", "#DeltaR_{l3l4}_reco", "#DeltaR");
-    draw_hist(hl1l2CScosThetareco,"l1l2_cos#theta_{CS}_reco", "cos#theta_{CS l1l2}_reco", "cos#theta_{CS}");
-    draw_hist(hl3l4CScosThetareco,"l3l4_cos#theta_{CS}_reco", "cos#theta_{CS l3l4}_reco", "cos#theta_{CS}");
-    draw_hist(hl1cosThetareco,"l1_cos#theta_reco", "cos#theta_{l1}_reco", "cos#theta");
-    draw_hist(hl2cosThetareco,"l2_cos#theta_reco", "cos#theta_{l2}_reco", "cos#theta");
-    draw_hist(hl3cosThetareco,"l3_cos#theta_reco", "cos#theta_{l3}_reco", "cos#theta");
-    draw_hist(hl4cosThetareco,"l4_cos#theta_reco", "cos#theta_{l4}_reco", "cos#theta");
-    draw_hist(hfourlcosThetareco,"four_cos#theta_reco", "cos#theta_{fourl}_reco", "cos#theta");
-    draw_hist(hl1cosThetaBoostreco,"l1_cos#theta_Boost_reco", "cos#theta_{l1}_Boost_reco", "cos#theta");
-    draw_hist(hl2cosThetaBoostreco,"l2_cos#theta_Boost_reco", "cos#theta_{l2}_Boost_reco", "cos#theta");
-    draw_hist(hl3cosThetaBoostreco,"l3_cos#theta_Boost_reco", "cos#theta_{l3}_Boost_reco", "cos#theta");
-    draw_hist(hl4cosThetaBoostreco,"l4_cos#theta_Boost_reco", "cos#theta_{l4}_Boost_reco", "cos#theta");
-    draw_hist(hfourlcosThetaBoostreco,"four_cos#theta_Boost_reco", "cos#theta_{fourl}_Boost_reco", "cos#theta");
-
-    draw_hist(hl1pTparticle,"l1_pT_particle", "p^{T}_{l1}_particle", "pT (GeV)");
-    draw_hist(hl2pTparticle,"l2_pT_particle", "p^{T}_{l2}_particle", "pT (GeV)");
-    draw_hist(hl3pTparticle,"l3_pT_particle", "p^{T}_{l3}_particle", "pT (GeV)");
-    draw_hist(hl4pTparticle,"l4_pT_particle", "p^{T}_{l4}_particle", "pT (GeV)");
-    draw_hist(hl1phiparticle,"l1_#phi_particle", "#phi_{l1}_particle", "#phi");
-    draw_hist(hl2phiparticle,"l2_#phi_particle", "#phi_{l2}_particle", "#phi");
-    draw_hist(hl3phiparticle,"l3_#phi_particle", "#phi_{l3}_particle", "#phi");
-    draw_hist(hl4phiparticle,"l4_#phi_particle", "#phi_{l4}_particle", "#phi");
-    draw_hist(hl1l2deltaPhiparticle,"l1l2_#Delta#phi_particle", "#Delta#phi_{l1l2}_particle", "#Delta#phi");
-    draw_hist(hl3l4deltaPhiparticle,"l3l4_#Delta#phi_particle", "#Delta#phi_{l3l4}_particle", "#Delta#phi");
-    draw_hist(hl1l2deltaPhiBoostparticle,"l1l2_#Delta#phi_Boost_particle", "#Delta#phi_{l1l2}_Boost_particle", "#Delta#phi");
-    draw_hist(hl3l4deltaPhiBoostparticle,"l3l4_#Delta#phi_Boost_particle", "#Delta#phi_{l3l4}_Boost_particle", "#Delta#phi");
-    draw_hist(hl1etaparticle,"l1_#eta_particle", "#eta_{l1}_particle", "#eta");
-    draw_hist(hl2etaparticle,"l2_#eta_particle", "#eta_{l2}_particle", "#eta");
-    draw_hist(hl3etaparticle,"l3_#eta_particle", "#eta_{l3}_particle", "#eta");
-    draw_hist(hl4etaparticle,"l4_#eta_particle", "#eta_{l4}_particle", "#eta");
-    draw_hist(hl1l2deltaEtaparticle,"l1l2_#Delta#eta_particle", "#Delta#eta_{l1l2}_particle", "#Delta#eta");
-    draw_hist(hl3l4deltaEtaparticle,"l3l4_#Delta#eta_particle", "#Delta#eta_{l3l4}_particle", "#Delta#eta");
-    draw_hist(hl1l2deltaEtaBoostparticle,"l1l2_#Delta#eta_Boost_particle", "#Delta#eta_{l1l2}_Boost_particle", "#Delta#eta");
-    draw_hist(hl3l4deltaEtaBoostparticle,"l3l4_#Delta#eta_Boost_particle", "#Delta#eta_{l3l4}_Boost_particle", "#Delta#eta");
-    draw_hist(hl1Rparticle,"l1_R_particle", "R_{l1}_particle", "R");
-    draw_hist(hl2Rparticle,"l2_R_particle", "R_{l2}_particle", "R");
-    draw_hist(hl3Rparticle,"l3_R_particle", "R_{l3}_particle", "R");
-    draw_hist(hl4Rparticle,"l4_R_particle", "R_{l4}_particle", "R");
-    draw_hist(hl1l2deltaRparticle,"l1l2_#DeltaR_particle", "#DeltaR_{l1l2}_particle", "#Delta_R");
-    draw_hist(hl3l4deltaRparticle,"l3l4_#DeltaR_particle", "#DeltaR_{l3l4}_particle", "#Delta_R");
-    draw_hist(hl1l2CScosThetaparticle,"l1l2_cos#theta_{CS}_particle", "cos#theta_{CSl1l2}_particle", "cos#theta_{CS}");
-    draw_hist(hl3l4CScosThetaparticle,"l3l4_cos#theta_{CS}_particle", "cos#theta_{CSl3l4}_particle", "cos#theta_{CS}");
-    draw_hist(hl1cosThetaparticle,"l1_cos#theta_particle", "cos#theta_{l1}_particle", "cos#theta");
-    draw_hist(hl2cosThetaparticle,"l2_cos#theta_particle", "cos#theta_{l2}_particle", "cos#theta");
-    draw_hist(hl3cosThetaparticle,"l3_cos#theta_particle", "cos#theta_{l3}_particle", "cos#theta");
-    draw_hist(hl4cosThetaparticle,"l4_cos#theta_particle", "cos#theta_{l4}_particle", "cos#theta");
-    draw_hist(hfourlcosThetaparticle,"four_cos#theta_particle", "cos#theta_{fourl}_particle", "cos#theta");
-    draw_hist(hl1cosThetaBoostparticle,"l1_cos#theta_Boost_particle", "cos#theta_{l1}_Boost_particle", "cos#theta");
-    draw_hist(hl2cosThetaBoostparticle,"l2_cos#theta_Boost_particle", "cos#theta_{l2}_Boost_particle", "cos#theta");
-    draw_hist(hl3cosThetaBoostparticle,"l3_cos#theta_Boost_particle", "cos#theta_{l3}_Boost_particle", "cos#theta");
-    draw_hist(hl4cosThetaBoostparticle,"l4_cos#theta_Boost_particle", "cos#theta_{l4}_Boost_particle", "cos#theta");
-    draw_hist(hfourlcosThetaBoostparticle,"four_cos#theta_Boost_particle", "cos#theta_{fourl}_Boost_particle", "cos#theta");
-
-    draw_hist(hl1pTparton,"l1_pT_parton", "p^{T}_{l1}_parton", "pT (GeV)");
-    draw_hist(hl2pTparton,"l2_pT_parton", "p^{T}_{l2}_parton", "pT (GeV)");
-    draw_hist(hl3pTparton,"l3_pT_parton", "p^{T}_{l3}_parton", "pT (GeV)");
-    draw_hist(hl4pTparton,"l4_pT_parton", "p^{T}_{l4}_parton", "pT (GeV)");
-    draw_hist(hl1phiparton,"l1_#phi_parton", "#phi_{l1}_parton", "#phi");
-    draw_hist(hl2phiparton,"l2_#phi_parton", "#phi_{l2}_parton", "#phi");
-    draw_hist(hl3phiparton,"l3_#phi_parton", "#phi_{l3}_parton", "#phi");
-    draw_hist(hl4phiparton,"l4_#phi_parton", "#phi_{l4}_parton", "#phi");
-    draw_hist(hl1l2deltaPhiparton,"l1l2_#Delta#phi_parton", "#Delta#phi_{l1l2}_parton", "#Delta#phi");
-    draw_hist(hl3l4deltaPhiparton,"l3l4_#Delta#phi_parton", "#Delta#phi_{l3l4}_parton", "#Delta#phi");
-    draw_hist(hl1l2deltaPhiBoostparton,"l1l2_#Delta#phi_Boost_parton", "#Delta#phi_{l1l2}_Boost_parton", "#Delta#phi");
-    draw_hist(hl3l4deltaPhiBoostparton,"l3l4_#Delta#phi_Boost_parton", "#Delta#phi_{l3l4}_Boost_parton", "#Delta#phi");
-    draw_hist(hl1etaparton,"l1_#eta_parton", "#eta_{l1}_parton", "#eta");
-    draw_hist(hl2etaparton,"l2_#eta_parton", "#eta_{l2}_parton", "#eta");
-    draw_hist(hl3etaparton,"l3_#eta_parton", "#eta_{l3}_parton", "#eta");
-    draw_hist(hl4etaparton,"l4_#eta_parton", "#eta_{l4}_parton", "#eta");
-    draw_hist(hl1l2deltaEtaparton,"l1l2_#Delta#eta_parton", "#Delta#eta_{l1l2}_parton", "#Delta#eta");
-    draw_hist(hl3l4deltaEtaparton,"l3l4_#Delta#eta_parton", "#Delta#eta_{l3l4}_parton", "#Delta#eta");
-    draw_hist(hl1l2deltaEtaBoostparton,"l1l2_#Delta#eta_Boost_parton", "#Delta#eta_{l1l2}_Boost_parton", "#Delta#eta");
-    draw_hist(hl3l4deltaEtaBoostparton,"l3l4_#Delta#eta_Boost_parton", "#Delta#eta_{l3l4}_Boost_parton", "#Delta#eta");
-    draw_hist(hl1Rparton,"l1_R_parton", "R_{l1}_parton", "R");
-    draw_hist(hl2Rparton,"l2_R_parton", "R_{l2}_parton", "R");
-    draw_hist(hl3Rparton,"l3_R_parton", "R_{l3}_parton", "R");
-    draw_hist(hl4Rparton,"l4_R_parton", "R_{l4}_parton", "R");
-    draw_hist(hl1l2deltaRparton,"l1l2_#Delta R_parton", "#Delta_R_{l1l2}_parton", "#Delta_R");
-    draw_hist(hl3l4deltaRparton,"l3l4_#Delta R_parton", "#Delta_R_{l3l4}_parton", "#Delta_R");
-    draw_hist(hl1l2CScosThetaparton,"l1l2_cos#theta_{CS}_parton", "cos#theta_{CSl1l2}_parton", "cos#theta_{CS}");
-    draw_hist(hl3l4CScosThetaparton,"l3l4_cos#theta_{CS}_parton", "cos#theta_{CSl3l4}_parton", "cos#theta_{CS}");
-    draw_hist(hl1cosThetaparton,"l1_cos#theta_parton", "cos#theta_{l1}_parton", "cos#theta");
-    draw_hist(hl2cosThetaparton,"l2_cos#theta_parton", "cos#theta_{l2}_parton", "cos#theta");
-    draw_hist(hl3cosThetaparton,"l3_cos#theta_parton", "cos#theta_{l3}_parton", "cos#theta");
-    draw_hist(hl4cosThetaparton,"l4_cos#theta_parton", "cos#theta_{l4}_parton", "cos#theta");
-    draw_hist(hfourlcosThetaparton,"four_cos#theta_parton", "cos#theta_{fourl}_parton", "cos#theta");
-    draw_hist(hl1cosThetaBoostparton,"l1_cos#theta_Boost_parton", "cos#theta_{l1}_Boost_parton", "cos#theta");
-    draw_hist(hl2cosThetaBoostparton,"l2_cos#theta_Boost_parton", "cos#theta_{l2}_Boost_parton", "cos#theta");
-    draw_hist(hl3cosThetaBoostparton,"l3_cos#theta_Boost_parton", "cos#theta_{l3}_Boost_parton", "cos#theta");
-    draw_hist(hl4cosThetaBoostparton,"l4_cos#theta_Boost_parton", "cos#theta_{l4}_Boost_parton", "cos#theta");
-    draw_hist(hfourlcosThetaBoostparton,"four_cos#theta_Boost_parton", "cos#theta_{fourl}_Boost_parton", "cos#theta");
-
-
-// comp 
-// 2D - parton(1) particle(2) reco(3)
-
-    draw_hist2(hHpT12Comp, "H_pT_comp_12", "p^{T}_{h}", "parton level pT (GeV)", "particle level pT (GeV)");
-    draw_hist2(hHm12Comp, "H_m_comp_12", "m_{h}", "parton level mass (GeV)", "particle level mass (GeV)");
-    draw_hist2(hHpT23Comp, "H_pT_comp_23", "p^{T}_{h}", "particle level pT (GeV)", "reco level pT (GeV)");
-    draw_hist2(hHm23Comp, "H_m_comp_23", "m_{h}", "particle level mass (GeV)", "reco level mass (GeV)");
-    draw_hist2(hHpT13Comp, "H_pT_comp_13", "p^{T}_{h}", "parton level pT (GeV)", "reco level pT (GeV)");
-    draw_hist2(hHm13Comp, "H_m_comp_13", "m_{h}", "parton level mass (GeV)", "reco level mass (GeV)");
-
-    draw_hist2(hbbdeltaPhi12Comp, "bb_delta#phi_comp_12", "#Delta#phi_{bb}", "parton level #Delta#phi", "particle level #Delta#phi");
-    draw_hist2(hbbdeltaPhi23Comp, "bb_delta#phi_comp_23", "#Delta#phi_{bb}", "particle level #Delta#phi", "reco level #Delta#phi");
-    draw_hist2(hbbdeltaPhi13Comp, "bb_delta#phi_comp_13", "#Delta#phi_{bb}", "parton level #Delta#phi", "reco level #Delta#phi");
-    draw_hist2(hbbdeltaEta12Comp, "bb_delta#eta_comp_12", "#Delta#eta_{bb}", "parton level #Delta#eta", "particle level #Delta#eta");
-    draw_hist2(hbbdeltaEta23Comp, "bb_delta#eta_comp_23", "#Delta#eta_{bb}", "particle level #Delta#eta", "reco level #Delta#eta");
-    draw_hist2(hbbdeltaEta13Comp, "bb_delta#eta_comp_13", "#Delta#eta_{bb}", "parton level #Delta#eta", "reco level #Delta#eta");
-
-    draw_hist2(hjjpT12Comp, "jj_pT_comp_12", "p^{T}_{jj}", "parton level pT (GeV)", "particle level pT (GeV)");
-    draw_hist2(hjjpT23Comp, "jj_pT_comp_23", "p^{T}_{jj}", "particle level pT (GeV)", "reco level pT (GeV)");
-    draw_hist2(hjjpT13Comp, "jj_pT_comp_13", "p^{T}_{jj}", "partonlevel pT (GeV)", "reco level pT (GeV)");
-  
-    draw_hist2(hjjdeltaPhi12Comp, "jj_#Delta#phi_comp_12", "#Delta#phi_{jj}", "parton level #Delta#phi", "particle level #Delta#phi");
-    draw_hist2(hjjdeltaPhi23Comp, "jj_#Delta#phi_comp_23", "#Delta#phi_{jj}", "particle level #Delta#phi", "reco level #Delta#phi");
-    draw_hist2(hjjdeltaPhi13Comp, "jj_#Delta#phi_comp_13", "#Delta#phi_{jj}", "parton level #Delta#phi", "reco level #Delta#phi");
-    
-    draw_hist2(hj1Phi23Comp, "j1_#phi_comp_23", "#phi_{j1}", "particle level #phi", "reco level #phi");
-    draw_hist2(hj2Phi23Comp, "j2_#phi_comp_23", "#phi_{j2}", "particle level #phi", "reco level #phi");
-
-    draw_hist2(hl1l2deltaPhiHpTcompreco, "l1l2_delta#phi_H_pT_comp_reco", " ", "#Delta#phi_l1l2", "p^{T}_{h}_reco");
-    draw_hist2(hl3l4deltaPhiHpTcompreco, "l3l4_delta#phi_H_pT_comp_reco", " ", "#Delta#phi_l1l2", "p^{T}_{h}_reco");
-    draw_hist2(hz1pT12Comp, "z1_pT_comp_12", "p^{T}_{z1}", "parton level pT (GeV)", "particle level pT (GeV)");
-    draw_hist2(hz1m12Comp, "z1_m_comp_12", "m_{z1}", "parton level mass (GeV)", "particle level mass (GeV)");
-    draw_hist2(hz2pT12Comp, "z2_pT_comp_12", "p^{T}_{z2}", "parton level pT (GeV)", "particle level pT (GeV)");
-    draw_hist2(hz2m12Comp, "z2_m_comp_12", "m_{z2}", "parton level mass (GeV)", "particle level mass (GeV)");
-    draw_hist2(hz1pT23Comp, "z1_pT_comp_23", "p^{T}_{z1}", "particle level pT (GeV)", "reco level pT (GeV)");
-    draw_hist2(hz1m23Comp, "z1_m_comp_23", "m_{z1}", "particle level mass (GeV)", "reco level mass (GeV)");
-    draw_hist2(hz2pT23Comp, "z2_pT_comp_23", "p^{T}_{z2}", "particle level pT (GeV)", "reco level pT (GeV)");
-    draw_hist2(hz2m23Comp, "z2_m_comp_23", "m_{z2}", "particle level mass (GeV)", "reco level mass (GeV)");
-    draw_hist2(hz1pT13Comp, "z1_pT_comp_13", "p^{T}_{z1}", "parton level pT (GeV)", "reco level pT (GeV)");
-    draw_hist2(hz1m13Comp, "z1_m_comp_13", "m_{z1}", "parton level mass (GeV)", "reco  level mass (GeV)");
-    draw_hist2(hz2pT13Comp, "z2_pT_comp_13", "p^{T}_{z2}", "parton level pT (GeV)", "reco level pT (GeV)");
-    draw_hist2(hz2m13Comp, "z2_m_comp_13", "m_{z2}", "parton level mass (GeV)", "reco  level mass (GeV)");
-
-    draw_hist2(hHz1pTcompreco, "h_z1_pT_comp_reco", "h_z1_pT_comp_reco", "reco level h pT (GeV)", "reco level z1 pT (GeV)");
-    draw_hist2(hHz2pTcompreco, "h_z2_pT_comp_reco", "h_z2_pT_comp_reco", "reco level h pT (GeV)", "reco level z2 pT (GeV)");
-    draw_hist2(hHz1pTcompparticle, "h_z1_pT_comp_particle", "h_z1_pT_comp_particle", "particle level h pT (GeV)", "particle level z1 pT (GeV)");
-    draw_hist2(hHz2pTcompparticle, "h_z2_pT_comp_particle", "h_z2_pT_comp_particle", "particle level h pT (GeV)", "particle level z2 pT (GeV)");
-    draw_hist2(hHz1pTcompparton, "h_z1_pT_comp_parton", "h_z1_pT_comp_parton", "parton level h pT (GeV)", "parton level z1 pT (GeV)");
-    draw_hist2(hHz2pTcompparton, "h_z2_pT_comp_parton", "h_z2_pT_comp_parton", "parton level h pT (GeV)", "parton level z2 pT (GeV)");
-
-    draw_hist2(hHpTz1etacompreco, "h_pT_z1_#eta_comp_reco", "h_pT_z1_#eta_comp_reco", "reco level h pT (GeV)", "reco level z1 #eta");
-    draw_hist2(hHpTz2etacompreco, "h_pT_z2_#eta_comp_reco", "h_pT_z2_#eta_comp_reco", "reco level h pT (GeV)", "reco level z2 #eta");
-    draw_hist2(hHpTz1etacompparticle, "h_pT_z1_#eta_comp_particle", "h_pT_z1_#eta_comp_particle", "particle level h pT (GeV)", "particle level z1 #eta");
-    draw_hist2(hHpTz2etacompparticle, "h_pT_z2_#eta_comp_particle", "h_pT_z2_#eta_comp_particle", "particle level h pT (GeV)", "particle level z2 #eta");
-    draw_hist2(hHpTz1etacompparton, "h_pT_z1_#eta_comp_parton", "h_pT_z1_#eta_comp_parton", "parton level h pT (GeV)", "parton level z1 #eta");
-    draw_hist2(hHpTz2etacompparton, "h_pT_z2_#eta_comp_parton", "h_pT_z2_#eta_comp_parton", "parton level h pT (GeV)", "parton level z2 #eta");
-
-    draw_hist2(hHzzpTcompreco, "h_zz_pT_comp_reco", "h_zz_pT_comp_reco", "reco level h pT (GeV)", "reco level zz pT (GeV)");
-    draw_hist2(hHzzpTcompparticle, "h_zz_pT_comp_particle", "h_zz_pT_comp_particle", "particle level h pT (GeV)", "particle level zz pT (GeV)");
-    draw_hist2(hHzzpTcompparton , "h_zz_pT_comp_parton", "h_zz_pT_comp_parton", "parton level h pT (GeV)", "parton level zz pT (GeV)");
-
-
-  draw_hist(kappaLambda," ", "crossX", "kappa_lambda");
-*/
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-// delete ?
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-// higgs
-    /*
-  hHpTreco -> Clear();
-  hHmreco -> Clear();
-  hb1pTreco -> Clear();
-  hb1mreco -> Clear();
-  hb2pTreco -> Clear();
-  hb2mreco -> Clear();
-  hHphireco -> Clear();
-  hb1phireco -> Clear();
-  hb2phireco -> Clear();
-  hbbdeltaPhireco -> Clear();
-  hHetareco -> Clear();
-  hb1etareco -> Clear();
-  hb2etareco -> Clear();
-  hbbdeltaEtareco -> Clear();
-  hHRreco -> Clear();
-  hb1Rreco -> Clear();
-  hb2Rreco -> Clear();
-  hbbdeltaRreco -> Clear();
-
-  hHpTparticle -> Clear();
-  hHmparticle -> Clear();
-  hb1pTparticle -> Clear();
-  hb1mparticle -> Clear();
-  hb2pTparticle -> Clear();
-  hb2mparticle -> Clear();
-  hHphiparticle -> Clear();
-  hb1phiparticle -> Clear();
-  hb2phiparticle -> Clear();
-  hbbdeltaPhiparticle -> Clear();
-  hHetaparticle -> Clear();
-  hb1etaparticle -> Clear();
-  hb2etaparticle -> Clear();
-  hbbdeltaEtaparticle -> Clear();
-  hHRparticle -> Clear();
-  hb1Rparticle -> Clear();
-  hb2Rparticle -> Clear();
-  hbbdeltaRparticle -> Clear();
-
-  hHpTparton -> Clear();
-  hHmparton -> Clear();
-  hb1pTparton -> Clear();
-  hb1mparton -> Clear();
-  hb2pTparton -> Clear();
-  hb2mparton -> Clear();
-  hHphiparton -> Clear();
-  hb1phiparton -> Clear();
-  hb2phiparton -> Clear();
-  hbbdeltaPhiparton -> Clear();
-  hHetaparton -> Clear();
-  hb1etaparton -> Clear();
-  hb2etaparton -> Clear();
-  hbbdeltaEtaparton -> Clear();
-  hHRparton -> Clear();
-  hb1Rparton -> Clear();
-  hb2Rparton -> Clear();
-  hbbdeltaRparton -> Clear();
-
-// jets
-  hjjpTreco -> Clear();
-  hj1pTreco -> Clear();
-  hj2pTreco -> Clear();
-  hj1phireco -> Clear();
-  hj2phireco -> Clear();
-  hjjdeltaPhireco -> Clear();
-  hj1etareco -> Clear();
-  hj2etareco -> Clear();
-  hjjdeltaEtareco -> Clear();
-  hj1Rreco -> Clear();
-  hj2Rreco -> Clear();
-  hjjdeltaRreco -> Clear();
-
-  hjjpTparticle -> Clear();
-  hj1pTparticle -> Clear();
-  hj2pTparticle -> Clear();
-  hj1phiparticle -> Clear();
-  hj2phiparticle -> Clear();
-  hjjdeltaPhiparticle -> Clear();
-  hj1etaparticle -> Clear();
-  hj2etaparticle -> Clear();
-  hjjdeltaEtaparticle -> Clear();
-  hj1Rparticle -> Clear();
-  hj2Rparticle -> Clear();
-  hjjdeltaRparticle -> Clear();
-
-// z 
-  hz1pTreco -> Clear();
-  hz2pTreco -> Clear();
-  hz1mreco -> Clear();
-  hz2mreco -> Clear();
-
-  hz1phireco -> Clear();
-  hz2phireco -> Clear();
-  hzzdeltaPhireco -> Clear();
-
-  hz1etareco -> Clear();
-  hz2etareco -> Clear();
-  hzzdeltaEtareco -> Clear();
-
-  hz1Rreco -> Clear();
-  hz2Rreco -> Clear();
-  hzzdeltaRreco -> Clear();
-
-  hz1cosThetareco -> Clear();
-  hz2cosThetareco -> Clear();
-
-  hz1pTparticle -> Clear();
-  hz2pTparticle -> Clear();
-  hz1mparticle -> Clear();
-  hz2mparticle -> Clear();
-
-  hz1phiparticle -> Clear();
-  hz2phiparticle -> Clear();
-  hzzdeltaPhiparticle -> Clear();
-
-  hz1etaparticle -> Clear();
-  hz2etaparticle -> Clear();
-  hzzdeltaEtaparticle -> Clear();
-
-  hz1Rparticle -> Clear();
-  hz2Rparticle -> Clear();
-  hzzdeltaRparticle -> Clear();
-
-  hz1pTparton -> Clear();
-  hz2pTparton -> Clear();
-  hz1mparton -> Clear();
-  hz2mparton -> Clear();
-
-  hz1phiparton -> Clear();
-  hz2phiparton -> Clear();
-  hzzdeltaPhiparton -> Clear();
-
-  hz1etaparton -> Clear();
-  hz2etaparton -> Clear();
-  hzzdeltaEtaparton -> Clear();
-
-  hz1Rparton -> Clear();
-  hz2Rparton -> Clear();
-  hzzdeltaRparton -> Clear();
-
-// leptons
-  hl1pTreco -> Clear();
-  hl2pTreco -> Clear();
-  hl3pTreco -> Clear();
-  hl4pTreco -> Clear();
-  hl1phireco -> Clear();
-  hl2phireco -> Clear();
-  hl3phireco -> Clear();
-  hl4phireco -> Clear();
-  hl1l2deltaPhireco -> Clear();
-  hl3l4deltaPhireco -> Clear();
-  hl1l2deltaPhiBoostreco -> Clear();
-  hl3l4deltaPhiBoostreco -> Clear();
-
-  hl1etareco -> Clear();
-  hl2etareco -> Clear();
-  hl3etareco -> Clear();
-  hl4etareco -> Clear();
-  hl1l2deltaEtareco -> Clear();
-  hl3l4deltaEtareco -> Clear();
-  hl1l2deltaEtaBoostreco -> Clear();
-  hl3l4deltaEtaBoostreco -> Clear();
-
-  hl1Rreco -> Clear();
-  hl2Rreco -> Clear();
-  hl3Rreco -> Clear();
-  hl4Rreco -> Clear();
-  hl1l2deltaRreco -> Clear();
-  hl3l4deltaRreco -> Clear();
-
-  hl1cosThetareco -> Clear();
-  hl2cosThetareco -> Clear();
-  hl3cosThetareco -> Clear();
-  hl4cosThetareco -> Clear();
-  hfourlcosThetareco -> Clear();
-  hl1cosThetaBoostreco -> Clear();
-  hl2cosThetaBoostreco -> Clear();
-  hl3cosThetaBoostreco -> Clear();
-  hl4cosThetaBoostreco -> Clear();
-  hfourlcosThetaBoostreco -> Clear();
-  hl1l2CScosThetareco -> Clear();
-  hl3l4CScosThetareco -> Clear();
-
-  // particle
-  hl1pTparticle -> Clear();
-  hl2pTparticle -> Clear();
-  hl3pTparticle -> Clear();
-  hl4pTparticle -> Clear();
-
-  hl1phiparticle -> Clear();
-  hl2phiparticle -> Clear();
-  hl3phiparticle -> Clear();
-  hl4phiparticle -> Clear();
-  hl1l2deltaPhiparticle -> Clear();
-  hl3l4deltaPhiparticle -> Clear();
-  hl1l2deltaPhiBoostparticle -> Clear();
-  hl3l4deltaPhiBoostparticle -> Clear();
-
-  hl1etaparticle -> Clear();
-  hl2etaparticle -> Clear();
-  hl3etaparticle -> Clear();
-  hl4etaparticle -> Clear();
-  hl1l2deltaEtaparticle -> Clear();
-  hl3l4deltaEtaparticle -> Clear();
-  hl1l2deltaEtaBoostparticle -> Clear();
-  hl3l4deltaEtaBoostparticle -> Clear();
-
-  hl1Rparticle -> Clear();
-  hl2Rparticle -> Clear();
-  hl3Rparticle -> Clear();
-  hl4Rparticle -> Clear();
-  hl1l2deltaRparticle -> Clear();
-  hl3l4deltaRparticle -> Clear();
-
-  hl1cosThetaparticle -> Clear();
-  hl2cosThetaparticle -> Clear();
-  hl3cosThetaparticle -> Clear();
-  hl4cosThetaparticle -> Clear();
-  hfourlcosThetaparticle -> Clear();
-  hl1cosThetaBoostparticle -> Clear();
-  hl2cosThetaBoostparticle -> Clear();
-  hl3cosThetaBoostparticle -> Clear();
-  hl4cosThetaBoostparticle -> Clear();
-  hfourlcosThetaBoostparticle -> Clear();
-  hl1l2CScosThetaparticle -> Clear();
-  hl3l4CScosThetaparticle -> Clear();
-
-// parton
-  hl1pTparton -> Clear();
-  hl2pTparton -> Clear();
-  hl3pTparton -> Clear();
-  hl4pTparton -> Clear();
-
-  hl1phiparton -> Clear();
-  hl2phiparton -> Clear();
-  hl3phiparton -> Clear();
-  hl4phiparton -> Clear();
-  hl1l2deltaPhiparton -> Clear();
-  hl3l4deltaPhiparton -> Clear();
-  hl1l2deltaPhiBoostparton -> Clear();
-  hl3l4deltaPhiBoostparton -> Clear();
-
-  hl1etaparton -> Clear();
-  hl2etaparton -> Clear();
-  hl3etaparton -> Clear();
-  hl4etaparton -> Clear();
-  hl1l2deltaEtaparton -> Clear();
-  hl3l4deltaEtaparton -> Clear();
-  hl1l2deltaEtaBoostparton -> Clear();
-  hl3l4deltaEtaBoostparton -> Clear();
-
-  hl1Rparton -> Clear();
-  hl2Rparton -> Clear();
-  hl3Rparton -> Clear();
-  hl4Rparton -> Clear();
-  hl1l2deltaRparton -> Clear();
-  hl3l4deltaRparton -> Clear();
-
-  hl1cosThetaparton -> Clear();
-  hl2cosThetaparton -> Clear();
-  hl3cosThetaparton -> Clear();
-  hl4cosThetaparton -> Clear();
-  hfourlcosThetaparton -> Clear();
-  hl1cosThetaBoostparton -> Clear();
-  hl2cosThetaBoostparton -> Clear();
-  hl3cosThetaBoostparton -> Clear();
-  hl4cosThetaBoostparton -> Clear();
-  hfourlcosThetaBoostparton -> Clear();
-  hl1l2CScosThetaparton -> Clear();
-  hl3l4CScosThetaparton -> Clear();
-
-  hHpT12Comp -> Clear();
-  hHm12Comp -> Clear();
-  hHpT23Comp -> Clear();
-  hHm23Comp -> Clear();
-  hHpT13Comp -> Clear();
-  hHm13Comp -> Clear();
-  hbbdeltaPhi12Comp -> Clear();
-  hbbdeltaPhi23Comp -> Clear();
-  hbbdeltaPhi13Comp -> Clear();
-  hbbdeltaEta12Comp -> Clear();
-  hbbdeltaEta23Comp -> Clear();
-  hbbdeltaEta13Comp -> Clear();
-
-  hjjpT12Comp -> Clear();
-  hjjpT23Comp -> Clear();
-  hjjpT13Comp -> Clear();
-  hj1Phi23Comp -> Clear();
-  hj2Phi23Comp -> Clear();
-  hjjdeltaPhi12Comp -> Clear();
-  hjjdeltaPhi23Comp -> Clear();
-  hjjdeltaPhi13Comp -> Clear();
-
-  hz1pT12Comp -> Clear();
-  hz1m12Comp -> Clear();
-  hz2pT12Comp -> Clear();
-  hz2m12Comp -> Clear();
-  hz1pT23Comp -> Clear();
-  hz1m23Comp -> Clear();
-  hz2pT23Comp -> Clear();
-  hz2m23Comp -> Clear();
-  hz1pT13Comp -> Clear();
-  hz1m13Comp -> Clear();
-  hz2pT13Comp -> Clear();
-  hz2m13Comp -> Clear();
-
-  hl1l2deltaPhiHpTcompreco -> Clear();
-  hl3l4deltaPhiHpTcompreco -> Clear();
-
-  hHz1pTcompreco -> Clear();
-  hHz2pTcompreco -> Clear();
-  hHz1pTcompparticle -> Clear();
-  hHz2pTcompparticle -> Clear();
-  hHz1pTcompparton -> Clear();
-  hHz2pTcompparton -> Clear();
-
-  hHpTz1etacompreco -> Clear();
-  hHpTz2etacompreco -> Clear();
-  hHpTz1etacompparticle -> Clear();
-  hHpTz2etacompparticle -> Clear();
-  hHpTz1etacompparton -> Clear();
-  hHpTz2etacompparton -> Clear();
-
-  hHzzpTcompreco -> Clear();
-  hHzzpTcompparticle -> Clear();
-  hHzzpTcompparton -> Clear();
-
-  kappaLambda -> Clear();
-    */
 
 
 
