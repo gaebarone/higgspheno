@@ -1468,7 +1468,7 @@ int switchVal_reco = 0;
 
     
     if(switchVal_particle == 0 && foundBjetParticle) { // b pair
-      increaseCount(cutFlowMap_parton,"found bb particle",weight);
+      increaseCount(cutFlowMap_particle,"found bb particle",weight);
    } else  switchVal_particle = 1;
     
    if(switchVal_particle == 0 && b1Particle !=nullptr && b2Particle !=nullptr && foundBjetParticle){
