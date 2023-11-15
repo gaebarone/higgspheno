@@ -4,8 +4,14 @@
 #include "classes/DelphesClasses.h"
 //#endif
 #include "inEllipse.h"
+#include "TRandom.h"
+#include "TRandom3.h"
+#include <iostream> 
 // see https://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
 int get_bottom_number(int pid) {
+  pid = abs(pid) ;
+  if( pid % 10 == 5 ) return pid; 
+
   if (pid == 5) {
     return 1;
   } else if (pid / 100 == 55) {
@@ -21,15 +27,19 @@ int get_bottom_number(int pid) {
   }
 }
 
-bool ghost_btag(TClonesArray *branchGenParticle, Jet *jet) {
-  double jet_radius = 0.4;
+bool ghost_btag(TClonesArray *branchGenParticle, Jet *jet,double jet_radius = 0.4) {
+
   // loop through particles and check if in jet
   int nEntries =((TClonesArray*)branchGenParticle)->GetEntries();
   for(int i=0; i<nEntries; i++){
     GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
+    //std::cout<<"Checking particle "<<i<<" delta R "<<jet->P4().DeltaR(particle->P4())<< " PID "<<particle->PID<<" function "<<get_bottom_number(particle->PID)<<std::endl;
     if (jet->P4().DeltaR(particle->P4()) > jet_radius) continue;
     // check for b hadrons
-    if (get_bottom_number(particle->PID) > 0) return true;
+    // rivet equivalent 
+    
+    if (get_bottom_number(particle->PID) > 0) { /*std::cout<< "return b"<<std::endl;*/ return true;}
+    //if(   isBottomMeson )
   }
   // no b, return false
   return false;
@@ -65,4 +75,23 @@ bool ghost_bbtag(TClonesArray *branchGenParticle, Jet *jet1, Jet *jet2) {
   }
   // < 2 bs, return false
   return false;
+}
+
+
+bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle,int seed=0,double jet_radius = 0.4, double effWrk=0.5,double fake_eff=0.1){
+  // tracker acceptance
+  
+  bool isB=ghost_btag(branchGenParticle,jet,jet_radius);
+  TRandom3 randEff,randIneff; 
+  randEff.SetSeed(seed); 
+  randIneff.SetSeed(seed);
+
+  //bool passEff=randEff.Uniform(0,1) < effWrk; 
+  //bool passFake=randIneff.Uniform(0,1) < fake_eff;
+
+  bool passEff=randEff.Binomial(1,effWrk) > effWrk; 
+  bool passFake=randIneff.Uniform(1,fake_eff) > fake_eff; 
+  
+  if( isB) return passEff;
+  else return passFake; 
 }
