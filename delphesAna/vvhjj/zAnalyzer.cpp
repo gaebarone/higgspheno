@@ -76,7 +76,7 @@ void PrintCutFlow(std::map<string, std::pair<int,double>> cutFlowMap, std::vecto
 std::cout<<std::left<<std::setw(25)<<label<<" Cut"<<std::setw(10)<<label<<" Passed"<<std::setw(15)<<" Rel Eff "<< std::setw(15)<<label <<" Efficiency"<< std::endl;
     for(int i=0; i<(int) cutList.size(); i++) {
         const std::string cutName = cutList[i];
-        double passed_reco =  cutFlowMap[cutName].first;
+        double passed_reco =  cutFlowMap[cutName].first; // switch to second if one wants to use weighted events!
         double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
 
 	double relEff= 100;;
