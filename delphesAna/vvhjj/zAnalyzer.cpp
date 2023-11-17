@@ -36,6 +36,8 @@ R__LOAD_LIBRARY("libDelphes")
 #include "../common_includes/combinations.h" 
 #include <iomanip>
 
+typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
+
 using namespace std;
 
 double btagEff=0.85;
@@ -51,6 +53,23 @@ std::vector <string> cutList_particle={"initial particle", "1 btag particle", "2
 std::vector <string> cutList_parton={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
 
 
+void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList, string label){
+  //  cout<<" Filling cutflow "<<label<<endl;
+    
+  for(int i=0; i<(int) cutList.size(); i++) {
+
+    const std::string cutName = cutList[i];
+    double passed_reco =  cutFlowMap[cutName].first;
+    double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
+    //cout<<"Bin "<<i+1<<" passed "<<passed_reco<<" eff "<<efficiency_reco<<endl;
+    hSel->GetXaxis()->SetBinLabel(i+1,cutName.c_str());
+    hEff->GetXaxis()->SetBinLabel(i+1,cutName.c_str());
+  
+    
+    hSel->SetBinContent(i+1,passed_reco);
+    hEff->Fill(i+1.0,efficiency_reco);
+  } 
+} 
 
 void PrintCutFlow(std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList, string label){
 
@@ -334,12 +353,65 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
 
   vector <TH1F*> listOfTH1;
   vector <TH2F*> listOfTH2;
+  vector <TProfile*> listOfTPorifles;
+  // cutflows
+  int cutVal_reco = 0;
+double cutValW_reco = 0;
+ 
+//std::vector <string> cutList_reco={"initial reco"};
+std::map<string, std::pair<int,double>> cutFlowMap_reco;
+for(int i=0; i<(int) cutList_reco.size(); i++) { 
+  cutFlowMap_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
+ }
+ 
+ int cutVal_particle = 0;
+ double cutValW_particle = 0;
+ 
+ //std::vector <string> cutList_particle={"initial particle"};
+ std::map<string, std::pair<int,double>> cutFlowMap_particle;
+ for(int i=0; i<(int) cutList_particle.size(); i++) { 
+   cutFlowMap_particle[cutList_particle.at(i)] = make_pair(0,0.0); 
+ }
+ 
+ int cutVal_parton = 0;
+ double cutValW_parton = 0;
+ std::map<string, std::pair<int,double>> cutFlowMap_parton;
+ for(int i=0; i<(int) cutList_parton.size(); i++) { 
+   cutFlowMap_parton[cutList_parton.at(i)] = make_pair(0,0.0); 
+ }
+
+ 
+ vector <string> selType={"reco","particle"};//"parton"};
+ std::map<string, vector<string>> cutFlowMByType;
+ cutFlowMByType["reco"]=cutList_reco;
+ cutFlowMByType["particle"]=cutList_particle;
+ //cutFlowMByType["parton"]=cutList_parton;
+ 
+  
+  std::map<string,TH1F*> cutFlowHists;
+  std::map<string,TProfile*> cutFlowEffs;
+
+  std::map<string, cutFlowMapDef* > cutFlowMapAll;
+  cutFlowMapAll["reco"] =  & cutFlowMap_reco;
+  cutFlowMapAll["particle"] = & cutFlowMap_particle;
+  cutFlowMapAll["parton"] = & cutFlowMap_parton;
   
   
-// higgs
-    // 1D
-    // reco 
-        // pT + m
+  
+  for(std::vector<string>::iterator it=selType.begin(); it!=selType.end(); it++){
+    cutFlowHists[(*it)]=new TH1F(Form("hSel_%s",(*it).c_str()),"",cutFlowMByType[(*it)].size(),0,cutFlowMByType[(*it)].size()+1);
+    cutFlowEffs[(*it)]=new TProfile(Form("hEff_%s",(*it).c_str()),"",cutFlowMByType[(*it)].size(),0,cutFlowMByType[(*it)].size()+1);
+    
+    listOfTH1.push_back(cutFlowHists[(*it)]);
+    listOfTPorifles.push_back((cutFlowEffs[(*it)]));
+  }
+   
+  
+  
+  // higgs
+  // 1D
+  // reco 
+  // pT + m
   TH1F *hHpTreco = new TH1F("hbb_pT_reco", "p^{T}_{hbb}_reco", pTBins, hpTmin, hpTmax); 	listOfTH1.push_back(hHpTreco);
   TH1F *hHmreco = new TH1F("hbb_m_reco", "m_{hbb}_reco", mBins, hmmin, hmmax); listOfTH1.push_back(hHmreco);
   TH1F *hb1pTreco = new TH1F("b1_pT_reco", "p^{T}_{b1}_reco", pTBins, hpTmin, hpTmax); listOfTH1.push_back(hb1pTreco);
@@ -815,36 +887,12 @@ void zAnalyzer(const char *inputFile,const char *outputFile) {
     mapKappaLambda[11]=+100;
 */
 
-int cutVal_reco = 0;
-double cutValW_reco = 0;
- 
-//std::vector <string> cutList_reco={"initial reco"};
-std::map<string, std::pair<int,double>> cutFlowMap_reco;
-for(int i=0; i<(int) cutList_reco.size(); i++) { 
-  cutFlowMap_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
-}
-
-int cutVal_particle = 0;
-double cutValW_particle = 0;
-
-//std::vector <string> cutList_particle={"initial particle"};
-std::map<string, std::pair<int,double>> cutFlowMap_particle;
-for(int i=0; i<(int) cutList_particle.size(); i++) { 
-  cutFlowMap_particle[cutList_particle.at(i)] = make_pair(0,0.0); 
-}
-
-int cutVal_parton = 0;
-double cutValW_parton = 0;
-std::map<string, std::pair<int,double>> cutFlowMap_parton;
-for(int i=0; i<(int) cutList_parton.size(); i++) { 
-  cutFlowMap_parton[cutList_parton.at(i)] = make_pair(0,0.0); 
-}
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // loop
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
-
+    //if( entry > 100) break;
     treeReader->ReadEntry(entry);
     std::map<int,double> kappaLambdaWeights;
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
@@ -2577,7 +2625,18 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // write histos
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+   cout<<" Reco CutF Flow "<<endl;
+   PrintCutFlow(cutFlowMap_reco,cutList_reco,  "Reco");
+   cout<<" Particle  CutF Flow "<<endl;
+   PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
    
+   for(std::vector<string>::iterator it=selType.begin(); it!=selType.end(); it++){
+     FillCutFlow(cutFlowHists[(*it)],cutFlowEffs[(*it)],*cutFlowMapAll[(*it)],cutFlowMByType[(*it)], (*it));
+   }
+  
+  
    TFile *hists= new TFile(outputFile,"recreate");
    hists->cd();
    for(std::vector<TH1F*>::iterator h=listOfTH1.begin(); h!=listOfTH1.end(); h++){
@@ -2588,59 +2647,17 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
      ( *h)->Write();
      delete (*h); 
    }
+
+   for(std::vector<TProfile*>::iterator h=listOfTPorifles.begin(); h!=listOfTPorifles.end(); h++){
+     ( *h)->Write();
+     delete (*h); 
+   }
    
-
-
-    kappaLambda -> Write();
-
-    hists->Close();
-    // gROOT->SetBatch(kTRUE);
-
-
-
-
-
-/*
-  std::vector<std::pair<std::string, std::pair<int, double>>> sortedCutFlow(cutFlowMap.begin(), cutFlowMap.end());
-  std::sort(sortedCutFlow.begin(), sortedCutFlow.end(), [](const auto& a, const auto& b) {
-    return a.second.first > b.second.first;
-  });
-*/
-
-   cout<<" Reco CutF Flow "<<endl;
-   PrintCutFlow(cutFlowMap_reco,cutList_reco,  "Reco");
-   cout<<" Particle  CutF Flow "<<endl;
-   PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
+   kappaLambda -> Write();
+   delete kappaLambda;
    
-	/*
-  std::cout<<std::left<<std::setw(25)<<"Reco Cut"<<std::setw(10)<<"Reco Passed"<<std::setw(15)<<" Rel Eff "<< std::setw(15)<<"Reco Efficiency"<< std::endl;
-    for(int i=0; i<(int) cutList_reco.size(); i++) {
-        const std::string cutName_reco = cutList_reco[i];
-        double passed_reco =  cutFlowMap_reco[cutName_reco].first;
-        double efficiency_reco = 100.00 * cutFlowMap_reco[cutName_reco].second / cutFlowMap_reco["initial reco"].second;
-
-	double relEff= 100;;
-	if(i>0)
-	  relEff = 100.00 * cutFlowMap_reco[cutName_reco].second / cutFlowMap_reco[cutList_reco.at(i-1)].second; 
-	std::cout<<std::left<<std::setw(25)<<cutName_reco<<std::setw(10)<<passed_reco<< std::setw(15)<<relEff <<std::setw(15)<<efficiency_reco<< std::endl;
-    }
-
-    std::cout<<std::left<<std::setw(25)<<"Particle Cut"<<std::setw(10)<<"Particle Passed"<<std::setw(15)<< "Rel Eff "<<std::setw(15)<<"Particle Efficiency"<< std::endl;
-    cout<<endl;
-    
-    for(int i=0; i<(int) cutList_particle.size(); i++) {
-        const std::string cutName_particle = cutList_particle[i];
-        double passed_particle =  cutFlowMap_particle[cutName_particle].first ;
-        double efficiency_particle = 100.00 * cutFlowMap_particle[cutName_particle].second / cutFlowMap_particle["initial particle"].second;
-
-	double relEff= 100;;
-	if(i>0)
-	  relEff = 100.00 * cutFlowMap_particle[cutName_particle].second / cutFlowMap_particle[cutList_particle.at(i-1)].second; 
-	
-        std::cout<<std::left<<std::setw(25)<<cutName_particle<<std::setw(10)<<passed_particle<<std::setw(15)<<relEff<<std::setw(15)<<efficiency_particle<< std::endl;
-  }
-	*/
-
+   hists->Close();
+   
   std::cout<<"Total number of entries "<<numberOfEntries<<" Passed "<<nPassed<<" raw "<<nPassedRaw<<std::endl;
 
 
