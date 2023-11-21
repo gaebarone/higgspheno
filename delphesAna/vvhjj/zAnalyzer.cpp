@@ -50,7 +50,7 @@ double fakeEff=0.01;
 vector <string> types={"4mu","4e", "2mu2e", "2e2mu"};
 std::vector <string> cutList_reco={"initial reco", "1 btag reco", "2 good j reco", "2 b-like jet pairs reco", "found bb reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"};
 std::vector <string> cutList_particle={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-std::vector <string> cutList_parton={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
+std::vector <string> cutList_parton={"initial parton", "Higgs Candidate", "ZZ parton"};
 
 
 void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList, string label){
@@ -59,7 +59,7 @@ void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<string, std::pair<int,doubl
   for(int i=0; i<(int) cutList.size(); i++) {
 
     const std::string cutName = cutList[i];
-    double passed_reco =  cutFlowMap[cutName].first;
+    double passed_reco =  cutFlowMap[cutName].second;
     double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
     //cout<<"Bin "<<i+1<<" passed "<<passed_reco<<" eff "<<efficiency_reco<<endl;
     hSel->GetXaxis()->SetBinLabel(i+1,cutName.c_str());
@@ -82,7 +82,7 @@ std::cout<<std::left<<std::setw(25)<<label<<" Cut"<<std::setw(10)<<label<<" Pass
 	double relEff= 100;;
 	if(i>0)
 	  relEff = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList.at(i-1)].second; 
-	std::cout<<std::left<<std::setw(25)<<cutName<<std::setw(10)<<passed_reco<< std::setw(15)<<relEff <<std::setw(15)<<efficiency_reco<< std::endl;
+	std::cout<<std::left<<std::setw(25)<<cutName<<std::setw(25)<<passed_reco<< std::setw(25)<<relEff <<std::setw(25)<<efficiency_reco<< std::endl;
     }
 
     cout<<endl;
@@ -102,6 +102,57 @@ void remove_overlaps(vector< pair<int,int>> muPairIndices){
     }
   }
 }
+
+bool FillHiggsTruthRecord(TClonesArray *branchGenParticle, TLorentzVector & h_parton, TLorentzVector & b1_parton, TLorentzVector & b2_parton, TLorentzVector & j1_parton, TLorentzVector &j2_parton){
+    
+    bool foundHiggsOrinTree=false;
+    bool foundHiggsToBbb=false;
+    bool foundHiggsToBbbJets=false;
+    GenParticle *daughter1=nullptr;
+    GenParticle *daughter2=nullptr;
+
+    for(int i=0; i<(int)branchGenParticle->GetEntries(); i++) {
+      GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
+      int d1_pid = 9999;
+      if (particle->D1 != -1) {
+        daughter1 = (GenParticle*) branchGenParticle->At(particle->D1);
+        d1_pid = daughter1 -> PID;
+      }
+      int d2_pid = 9999;
+      if (particle->D2 != -1) {
+        daughter2 = (GenParticle*) branchGenParticle->At(particle->D2);
+        d2_pid = daughter2 -> PID;
+      } 
+      // higgs parton
+      if (particle->PID == 25 && d1_pid != 25 && d2_pid != 25) {
+        h_parton = particle->P4();
+	foundHiggsOrinTree=true;
+	
+        // check for b parton children
+        if (abs(d1_pid) == 5 && abs(d2_pid) == 5) {
+	  foundHiggsToBbb=true; 
+          if (daughter1 -> PT > daughter2 -> PT) {
+            b1_parton = daughter1 -> P4();
+            b2_parton = daughter2 -> P4();
+          } else {
+            b1_parton = daughter2 -> P4();
+            b2_parton = daughter1 -> P4();
+          }
+        }
+      } else if ((particle->PID == 1 || particle->PID == 2 || particle->PID == 3 || particle->PID == 4 || particle->PID == 6) && d1_pid != particle->PID && d2_pid != particle->PID){
+	foundHiggsToBbbJets=true;
+	if (daughter1 -> PT > daughter2 -> PT) {
+	  j1_parton = daughter1 -> P4();
+	  j2_parton = daughter2 -> P4();
+	} else {
+	  j1_parton = daughter2 -> P4();
+	  j2_parton = daughter1 -> P4();
+	}
+      }
+    }
+    return (foundHiggsOrinTree && foundHiggsToBbb && foundHiggsToBbbJets); 
+  }
+
 
 std::vector<std::vector<int>> combinationsNoRepetitionAndOrderDoesNotMatter (int subsetSize, std::vector<int> setOfNumbers){
   std::vector<std::vector<int> > subsets{};
@@ -381,11 +432,11 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
  }
 
  
- vector <string> selType={"reco","particle"};//"parton"};
+ vector <string> selType={"reco","particle","parton"};
  std::map<string, vector<string>> cutFlowMByType;
  cutFlowMByType["reco"]=cutList_reco;
  cutFlowMByType["particle"]=cutList_particle;
- //cutFlowMByType["parton"]=cutList_parton;
+ cutFlowMByType["parton"]=cutList_parton;
  
   
   std::map<string,TH1F*> cutFlowHists;
@@ -781,22 +832,12 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
 	kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
 	
   double  nPassed=0;
-  double Lumi=3e3;
+  double Lumi=1;//3e3;
   double totWeightedEntries=0;
   int  nPassedRaw=0;
   int nQuads=0;
 
-  GenParticle *daughter1;
-  GenParticle *daughter2;
-
-  GenParticle *particle1;
-  GenParticle *particle2;
-
-  GenParticle *p1daughter1;
-  GenParticle *p1daughter2;
-  GenParticle *p2daughter1;
-  GenParticle *p2daughter2;
-
+  
   TLorentzVector j1_reco, j1_particle,  j1_parton;
   TLorentzVector j2_reco, j2_particle,  j2_parton;
 
@@ -870,6 +911,47 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
   double bbdeltaPhireco = 9999;
   double bbdeltaEtareco = 9999;
   double bbdeltaRreco = -9999;
+
+
+
+  double l1cosThetaBoostparton=-9999;
+  double l2cosThetaBoostparton=-9999;
+  double l3cosThetaBoostparton=-9999;
+  double l4cosThetaBoostparton=-9999;
+  double fourlcosThetaBoostparton=-9999;
+
+  double l1l2deltaPhiparton=-9999;
+    double l3l4deltaPhiparton=-9999;
+    double l1l2deltaEtaparton=-9999;
+    double l3l4deltaEtaparton=-9999;
+    
+    double l1l2deltaRparton=-9999;
+    double l3l4deltaRparton=-9999;
+    
+    double l1cosThetaparton=-9999;
+    double l2cosThetaparton=-9999;
+    double l3cosThetaparton=-9999;
+    double l4cosThetaparton=-9999;
+    double fourlcosThetaparton=-9999;
+    
+    int q1_parton = -9999;
+    int q2_parton = -9999;
+    int q3_parton = -9999;
+    int q4_parton = -9999;
+
+    double bbdeltaRparton=-9999;
+    double jjdeltaPhiparton = -9999;
+    double jjdeltaEtaparton = -9999;
+    double bbdeltaPhiparton = -9999;
+    double bbdeltaEtaparton = -9999;
+
+    double l1l2CScosThetaparton=-9999;
+    double l3l4CScosThetaparton=-9999;
+    
+    double zzdeltaPhiparton=-9999;
+    double zzdeltaEtaparton=-9999;
+    double zzdeltaRparton=-9999;
+  
   
 /*
   DelphesLHEFReader *reader = new DelphesLHEFReader;
@@ -887,6 +969,10 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
     mapKappaLambda[11]=+100;
 */
 
+  double sumOfWeights=0;
+  TH1F *hClosure = new TH1F("hClosure","hClosure",1,0,1);
+  listOfTH1.push_back(hClosure);
+  
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // loop
@@ -896,9 +982,12 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
     treeReader->ReadEntry(entry);
     std::map<int,double> kappaLambdaWeights;
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
-
-    Float_t weight = event->Weight/numberOfEntries*Lumi;
+    Float_t weight = event->Weight;///numberOfEntries*Lumi;
+    sumOfWeights+=weight;
+    weight = weight * Lumi / numberOfEntries; 
+    hClosure->Fill(0.5,weight);
     totWeightedEntries+=weight;
+    
 
 /*
  // cout << "Reading Event: " << entry << ", Weight:" << event->Weight << endl;
@@ -988,7 +1077,7 @@ int switchVal_reco = 0;
    vector<pair<int,int>> bJetPairs;
    vector<vector <int>> bJetPairsComb;
 
-   if(switchVal_reco == 0 )
+   if(switchVal_reco == 0 && goodJetIndex.size()>1 )
      bJetPairsComb= combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
    //  vector<vector <int>> bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
    
@@ -1193,7 +1282,7 @@ int switchVal_reco = 0;
 	return ((Muon*)branchMuon->At(lhs))->PT > ((Muon*)branchMuon->At(rhs))->PT;
       });
 
-    ///cout<<endl;
+    //cout<<endl;
     //cout<<"Electrons "<<endl;
     //for(int i=0;i<(int)goodE_reco_indices.size(); i++)
     //cout<<" e Pt: "<<((Electron*)branchElectron->At(goodE_reco_indices[i]))->PT<<" eta "<<((Electron*)branchElectron->At(goodE_reco_indices[i]))->Eta<<" i "<<i<<endl;
@@ -1595,7 +1684,9 @@ int switchVal_reco = 0;
     Jet *b2Particle=nullptr;
     
     vector<pair<int,int>> bJetPairsParticle;
-    vector<vector <int>> bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndexParticle);
+    vector<vector <int>> bJetPairsCombParticle;
+    if(goodJetIndexParticle.size() > 1)
+      bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndexParticle);
 //  vector<vector <int>> bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndexParticle);
     
     //if( bJetPairsCombParticle.size() < 1) continue; // need at least two good jets;  
@@ -2059,101 +2150,77 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
 // neutrinos 
 // jets we use the GenJet container
 
-
+    //cout<<"Done particle level "<<endl;
+    
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // parton
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // higgs
 
+    increaseCount(cutFlowMap_parton,"initial parton",weight);
 
+    int switchVal_parton = 0;
 
-
-    for(int i=0; i<(int)branchGenParticle->GetEntries(); i++) {
-      GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
-      int d1_pid = 9999;
-      if (particle->D1 != -1) {
-        daughter1 = (GenParticle*) branchGenParticle->At(particle->D1);
-        d1_pid = daughter1 -> PID;
+    bool HiggsRecord=FillHiggsTruthRecord(branchGenParticle,h_parton,b1_parton,b2_parton,j1_parton,j2_parton);
+    
+    if(switchVal_parton == 0 && HiggsRecord) { 
+      increaseCount(cutFlowMap_parton,"Higgs Candidate",weight);
+    } else  switchVal_parton = 1;
+    
+    if(HiggsRecord){
+      if (b1_parton.Eta() > b2_parton.Eta()) {
+	bbdeltaPhiparton = remainder( b1_parton.Phi() - b2_parton.Phi(), 2*M_PI );
+	bbdeltaEtaparton= b1_parton.Eta() - b2_parton.Eta();
       }
-      int d2_pid = 9999;
-      if (particle->D2 != -1) {
-        daughter2 = (GenParticle*) branchGenParticle->At(particle->D2);
-        d2_pid = daughter2 -> PID;
-      } 
-      // higgs parton
-      if (particle->PID == 25 && d1_pid != 25 && d2_pid != 25) {
-        h_parton = particle->P4();
-        // check for b parton children
-        if (abs(d1_pid) == 5 && abs(d2_pid) == 5) {
-          if (daughter1 -> PT > daughter2 -> PT) {
-            b1_parton = daughter1 -> P4();
-            b2_parton = daughter2 -> P4();
-          } else {
-            b1_parton = daughter2 -> P4();
-            b2_parton = daughter1 -> P4();
-          }
-        }
-      } else if ((particle->PID == 1 || particle->PID == 2 || particle->PID == 3 || particle->PID == 4 || particle->PID == 6) && d1_pid != particle->PID && d2_pid != particle->PID){
-          if (daughter1 -> PT > daughter2 -> PT) {
-            j1_parton = daughter1 -> P4();
-            j2_parton = daughter2 -> P4();
-          } else {
-            j1_parton = daughter2 -> P4();
-            j2_parton = daughter1 -> P4();
-          }
-        }
+      else{
+	bbdeltaPhiparton = remainder( b2_parton.Phi() - b1_parton.Phi(), 2*M_PI );
+	bbdeltaEtaparton= b2_parton.Eta() - b1_parton.Eta();
     }
+      
+      // double bbdeltaPhiparton=(b1_parton.Phi() > b2_parton.Phi() ? -1:+1)*TMath::Abs(b2_parton.Phi() - b1_parton.Phi());
+      // double bbdeltaEtaparton=(b1_parton.Eta() > b2_parton.Eta() ? -1:+1)*TMath::Abs(b2_parton.Eta() - b1_parton.Eta());
+      // double bbdeltaPhiparton= (b1_parton.Phi() - b2_parton.Phi());
+      // double bbdeltaEtaparton= (b1_parton.Eta() - b2_parton.Eta());
+      bbdeltaRparton=sqrt((bbdeltaPhiparton*bbdeltaPhiparton)+(bbdeltaEtaparton*bbdeltaEtaparton));
 
-    double bbdeltaPhiparton =  9999;
-    double bbdeltaEtaparton = 9999;
-
-	  if (b1_parton.Eta() > b2_parton.Eta()) {
-	    bbdeltaPhiparton = remainder( b1_parton.Phi() - b2_parton.Phi(), 2*M_PI );
-      bbdeltaEtaparton= b1_parton.Eta() - b2_parton.Eta();
-	  }
-	  else{
-	    bbdeltaPhiparton = remainder( b2_parton.Phi() - b1_parton.Phi(), 2*M_PI );
-      bbdeltaEtaparton= b2_parton.Eta() - b1_parton.Eta();
-	  }
-
-    // double bbdeltaPhiparton=(b1_parton.Phi() > b2_parton.Phi() ? -1:+1)*TMath::Abs(b2_parton.Phi() - b1_parton.Phi());
-    // double bbdeltaEtaparton=(b1_parton.Eta() > b2_parton.Eta() ? -1:+1)*TMath::Abs(b2_parton.Eta() - b1_parton.Eta());
-    // double bbdeltaPhiparton= (b1_parton.Phi() - b2_parton.Phi());
-    // double bbdeltaEtaparton= (b1_parton.Eta() - b2_parton.Eta());
-    double bbdeltaRparton=sqrt((bbdeltaPhiparton*bbdeltaPhiparton)+(bbdeltaEtaparton*bbdeltaEtaparton));
-  
-    double jjdeltaPhiparton = 9999;
-    double jjdeltaEtaparton = 9999;
-
-    if (j1_parton.Eta() > j2_parton.Eta()) {
-      jjdeltaPhiparton = remainder( j1_parton.Phi() - j2_parton.Phi(), 2*M_PI );
-      jjdeltaEtaparton= j1_parton.Eta() - j2_parton.Eta();
-    }
-    else{
-      jjdeltaPhiparton = remainder( j2_parton.Phi() - j1_parton.Phi(), 2*M_PI );
-      jjdeltaEtaparton= j2_parton.Eta() - j1_parton.Eta();
+      if (j1_parton.Eta() > j2_parton.Eta()) {
+	jjdeltaPhiparton = remainder( j1_parton.Phi() - j2_parton.Phi(), 2*M_PI );
+	jjdeltaEtaparton= j1_parton.Eta() - j2_parton.Eta();
+      }
+      else{
+	jjdeltaPhiparton = remainder( j2_parton.Phi() - j1_parton.Phi(), 2*M_PI );
+	jjdeltaEtaparton= j2_parton.Eta() - j1_parton.Eta();
+      }
     }
     
 // z + leptons
-
+   
     vector <int> genZBosons; 
     for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
       GenParticle *particle=(GenParticle*)branchGenParticle->At(i);
       int d1_pid = 9999;
       if (particle->D1 != -1) {
-        daughter1 = (GenParticle*) branchGenParticle->At(particle->D1);
+        GenParticle *daughter1 = (GenParticle*) branchGenParticle->At(particle->D1);
         d1_pid = daughter1 -> PID;
       }
       // find a Z.
-      if( particle->PID == 23 && d1_pid != 23) 
+      if( particle->PID == 23 && d1_pid != 23)
         genZBosons.push_back(i);
     }
-    
-    sort(genZBosons.begin(), genZBosons.end(), [branchGenParticle](const int& lhs, const int& rhs) {
-	return ((GenParticle*)branchGenParticle->At(lhs))->P4().M() > (((GenParticle*)branchGenParticle->At(rhs))->P4()).M(); 
-      });
-    
+
+    if(genZBosons.size() >1){
+      sort(genZBosons.begin(), genZBosons.end(), [branchGenParticle](const int& lhs, const int& rhs) {
+	  return ((GenParticle*)branchGenParticle->At(lhs))->P4().M() > (((GenParticle*)branchGenParticle->At(rhs))->P4()).M(); 
+	});
+    }
+
+    bool foundZZ=genZBosons.size() > 1;
+    if(switchVal_parton == 0 && foundZZ)
+      increaseCount(cutFlowMap_parton,"ZZ parton",weight);
+    else  switchVal_parton = 1;
+  
+     if(foundZZ){
     z1_parton = ((GenParticle*)branchGenParticle->At(genZBosons[0]))->P4(); 
     z2_parton = ((GenParticle*)branchGenParticle->At(genZBosons[1]))->P4(); 
     
@@ -2170,39 +2237,39 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     l3_parton = ((GenParticle*) branchGenParticle->At(Z2children[0]))->P4();
     l4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->P4();
     
-    int q1_parton = ((GenParticle*) branchGenParticle->At(Z1children[0]))->Charge;
-    int q2_parton = ((GenParticle*) branchGenParticle->At(Z1children[1]))->Charge;
-    int q3_parton = ((GenParticle*) branchGenParticle->At(Z2children[0]))->Charge;
-    int q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
+    q1_parton = ((GenParticle*) branchGenParticle->At(Z1children[0]))->Charge;
+    q2_parton = ((GenParticle*) branchGenParticle->At(Z1children[1]))->Charge;
+    q3_parton = ((GenParticle*) branchGenParticle->At(Z2children[0]))->Charge;
+    q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
     
     //z1_parton=l1_parton + l2_parton;
     //z2_parton=l3_parton + l4_parton;
     fourl_parton=l1_parton + l2_parton + l3_parton + l4_parton;
     
-    double l1l2deltaPhiparton=(l1_parton.Phi() > l2_parton.Phi() ? -1:+1)*TMath::Abs(l2_parton.Phi() - l1_parton.Phi());
-    double l3l4deltaPhiparton=(l3_parton.Phi() > l4_parton.Phi() ? -1:+1)*TMath::Abs(l4_parton.Phi() - l3_parton.Phi());
+    l1l2deltaPhiparton=(l1_parton.Phi() > l2_parton.Phi() ? -1:+1)*TMath::Abs(l2_parton.Phi() - l1_parton.Phi());
+    l3l4deltaPhiparton=(l3_parton.Phi() > l4_parton.Phi() ? -1:+1)*TMath::Abs(l4_parton.Phi() - l3_parton.Phi());
     
-    double l1l2deltaEtaparton=(l1_parton.Eta() > l2_parton.Eta() ? -1:+1)*TMath::Abs(l2_parton.Eta() - l1_parton.Eta());
-    double l3l4deltaEtaparton=(l3_parton.Eta() > l4_parton.Eta() ? -1:+1)*TMath::Abs(l4_parton.Eta() - l3_parton.Eta());
+    l1l2deltaEtaparton=(l1_parton.Eta() > l2_parton.Eta() ? -1:+1)*TMath::Abs(l2_parton.Eta() - l1_parton.Eta());
+    l3l4deltaEtaparton=(l3_parton.Eta() > l4_parton.Eta() ? -1:+1)*TMath::Abs(l4_parton.Eta() - l3_parton.Eta());
     
-    double l1l2deltaRparton=sqrt((l1l2deltaPhiparton*l1l2deltaPhiparton)+(l1l2deltaEtaparton*l1l2deltaEtaparton));
-    double l3l4deltaRparton=sqrt((l3l4deltaPhiparton*l3l4deltaPhiparton)+(l3l4deltaEtaparton*l3l4deltaEtaparton));
+    l1l2deltaRparton=sqrt((l1l2deltaPhiparton*l1l2deltaPhiparton)+(l1l2deltaEtaparton*l1l2deltaEtaparton));
+    l3l4deltaRparton=sqrt((l3l4deltaPhiparton*l3l4deltaPhiparton)+(l3l4deltaEtaparton*l3l4deltaEtaparton));
     
-    double l1cosThetaparton=l1_parton.CosTheta();
-    double l2cosThetaparton=l2_parton.CosTheta();
-    double l3cosThetaparton=l3_parton.CosTheta();
-    double l4cosThetaparton=l4_parton.CosTheta();
-    double fourlcosThetaparton=fourl_parton.CosTheta();
+    l1cosThetaparton=l1_parton.CosTheta();
+    l2cosThetaparton=l2_parton.CosTheta();
+    l3cosThetaparton=l3_parton.CosTheta();
+    l4cosThetaparton=l4_parton.CosTheta();
+    fourlcosThetaparton=fourl_parton.CosTheta();
 
     l1_parton.Boost(-z1_parton.BoostVector());
     l2_parton.Boost(-z1_parton.BoostVector());
     l3_parton.Boost(-z2_parton.BoostVector());
     l4_parton.Boost(-z2_parton.BoostVector());
-    double l1cosThetaBoostparton=l1_parton.CosTheta();
-    double l2cosThetaBoostparton=l2_parton.CosTheta();
-    double l3cosThetaBoostparton=l3_parton.CosTheta();
-    double l4cosThetaBoostparton=l4_parton.CosTheta();
-    double fourlcosThetaBoostparton=fourl_parton.CosTheta();
+    l1cosThetaBoostparton=l1_parton.CosTheta();
+    l2cosThetaBoostparton=l2_parton.CosTheta();
+    l3cosThetaBoostparton=l3_parton.CosTheta();
+    l4cosThetaBoostparton=l4_parton.CosTheta();
+    fourlcosThetaBoostparton=fourl_parton.CosTheta();
     l1_parton.Boost(z1_parton.BoostVector());
     l2_parton.Boost(z1_parton.BoostVector());
     l3_parton.Boost(z2_parton.BoostVector());
@@ -2215,7 +2282,7 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
     double zzdeltaPhiparton=(z1_parton.Phi() > z2_parton.Phi() ? -1:+1)*TMath::Abs(z2_parton.Phi() - z1_parton.Phi());
     double zzdeltaEtaparton=(z1_parton.Eta() > z2_parton.Eta() ? -1:+1)*TMath::Abs(z2_parton.Eta() - z1_parton.Eta());
     double zzdeltaRparton=sqrt((zzdeltaPhiparton*zzdeltaPhiparton)+(zzdeltaEtaparton*zzdeltaEtaparton));
-
+  }
     // Print cutflow intermideiate
 
     if( entry % 1000 == 0 ){
@@ -2224,6 +2291,8 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
       PrintCutFlow(cutFlowMap_reco,cutList_reco,"Reco");
       cout<<" Particle  CutF Flow "<<endl;
       PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
+      cout<<" Parton  CutF Flow "<<endl;
+      PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
     }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // fill histos
@@ -2283,7 +2352,8 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
       hbbdeltaRparticle -> Fill(bbdeltaRparticle,weight);
     }
     // parton
-      // pT + m
+    if(switchVal_parton==0){
+    // pT + m
       hHpTparton -> Fill(h_parton.Pt(), weight);
       hHmparton -> Fill(h_parton.M(), weight);
       hb1pTparton-> Fill(b1_parton.Pt(),weight);
@@ -2305,6 +2375,7 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
       hb1Rparton -> Fill(sqrt((b1_parton.Phi()*b1_parton.Phi())+(b1_parton.Eta()*b1_parton.Eta())),weight);
       hb2Rparton -> Fill(sqrt((b2_parton.Phi()*b2_parton.Phi())+(b2_parton.Eta()*b2_parton.Eta())),weight);
       hbbdeltaRparton -> Fill(bbdeltaRparton,weight);
+    }
 
 // jets
     // reco
@@ -2393,25 +2464,26 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
         hzzdeltaRparticle -> Fill(zzdeltaRparticle,weight);
       }
 
-    // parton
-        // pT + m
-        hz1pTparton->Fill(z1_parton.Pt(),weight);
-        hz2pTparton->Fill(z2_parton.Pt(),weight);
-        hz1mparton->Fill(z1_parton.M(),weight);
-        hz2mparton->Fill(z2_parton.M(),weight);
-        // phi
-        hz1phiparton->Fill(z1_parton.Phi(),weight); 
-        hz2phiparton->Fill(z2_parton.Phi(),weight); 
-        hzzdeltaPhiparton->Fill(zzdeltaPhiparton,weight); 
-        // eta
-        hz1etaparton->Fill(z1_parton.Eta(),weight); 
-        hz2etaparton->Fill(z2_parton.Eta(),weight);
-        hzzdeltaEtaparton->Fill(zzdeltaEtaparton, weight);
-        // R = sqrt[phi^2 + eta^2]^1/2
-        hz1Rparton -> Fill(sqrt((z1_parton.Phi()*z1_parton.Phi())+(z1_parton.Eta()*z1_parton.Eta())),weight);
-        hz2Rparton -> Fill(sqrt((z2_parton.Phi()*z2_parton.Phi())+(z2_parton.Eta()*z2_parton.Eta())),weight);
-        hzzdeltaRparton -> Fill(zzdeltaRparton,weight);
-
+      // parton
+      // pT + m
+      if(switchVal_parton==0 ){
+      hz1pTparton->Fill(z1_parton.Pt(),weight);
+      hz2pTparton->Fill(z2_parton.Pt(),weight);
+      hz1mparton->Fill(z1_parton.M(),weight);
+      hz2mparton->Fill(z2_parton.M(),weight);
+      // phi
+      hz1phiparton->Fill(z1_parton.Phi(),weight); 
+      hz2phiparton->Fill(z2_parton.Phi(),weight); 
+      hzzdeltaPhiparton->Fill(zzdeltaPhiparton,weight); 
+      // eta
+      hz1etaparton->Fill(z1_parton.Eta(),weight); 
+      hz2etaparton->Fill(z2_parton.Eta(),weight);
+      hzzdeltaEtaparton->Fill(zzdeltaEtaparton, weight);
+      // R = sqrt[phi^2 + eta^2]^1/2
+      hz1Rparton -> Fill(sqrt((z1_parton.Phi()*z1_parton.Phi())+(z1_parton.Eta()*z1_parton.Eta())),weight);
+      hz2Rparton -> Fill(sqrt((z2_parton.Phi()*z2_parton.Phi())+(z2_parton.Eta()*z2_parton.Eta())),weight);
+      hzzdeltaRparton -> Fill(zzdeltaRparton,weight);
+      }
 
 //leptons
     // reco
@@ -2504,6 +2576,7 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
         hl3l4CScosThetaparticle->Fill(l3l4CScosThetaparticle,weight);
 	}
       // parton
+	if(switchVal_parton==0 ){
         // pT + m
         hl1pTparton->Fill(l1_parton.Pt(),weight);
         hl2pTparton->Fill(l2_parton.Pt(),weight);
@@ -2543,75 +2616,77 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
         hfourlcosThetaBoostparton->Fill(fourlcosThetaBoostparton,weight);
         hl1l2CScosThetaparton->Fill(l1l2CScosThetaparton,weight);
         hl3l4CScosThetaparton->Fill(l3l4CScosThetaparton,weight);
+	}
 
 // comp
 // 2D - parton(1) particle(2) reco(3)
-
-  // higgs + b       
-    // pT + m
+	if(switchVal_parton==0 && switchVal_particle==0 ){
+	  hHpT12Comp -> Fill(h_parton.Pt(), h_particle.Pt(), weight);
+	  hHm12Comp -> Fill(h_parton.M(), h_particle.M(), weight);
+	  hbbdeltaPhi12Comp -> Fill(bbdeltaPhiparton, bbdeltaPhiparticle, weight);
+	  hbbdeltaEta12Comp -> Fill(bbdeltaEtaparton, bbdeltaEtaparticle, weight);
+	  hjjpT12Comp -> Fill(j1_parton.Pt()+j2_parton.Pt(),j1_particle.Pt()+j2_particle.Pt(), weight);
+	  hjjdeltaPhi12Comp -> Fill(jjdeltaPhiparton, jjdeltaPhiparticle, weight);
+	  hz1pT23Comp->Fill(z1_parton.Pt(), z1_particle.Pt(), weight);
+	  hz1m23Comp->Fill(z1_parton.M(), z1_particle.M(), weight);
+	  hz2pT23Comp->Fill(z2_parton.Pt(), z2_particle.Pt(), weight);
+	  hz2m23Comp->Fill(z2_parton.M(), z2_particle.M(), weight);
+	}
+	if(switchVal_reco ==0  && switchVal_particle==0 ){
+	  hHpT23Comp -> Fill(h_particle.Pt(), h_reco.Pt(), weight);
+	  hHm23Comp -> Fill(h_particle.M(), h_reco.M(), weight);
+	  hbbdeltaPhi23Comp -> Fill(bbdeltaPhiparticle, bbdeltaPhireco, weight);
+	  hbbdeltaEta23Comp -> Fill(bbdeltaEtaparticle, bbdeltaEtareco, weight);
+	  hjjpT23Comp -> Fill(j1_particle.Pt()+j2_particle.Pt(),j1_reco.Pt()+j2_reco.Pt(), weight);
+	  hjjdeltaPhi23Comp -> Fill(jjdeltaPhiparticle, jjdeltaPhireco, weight);
+	  hj1Phi23Comp -> Fill(j1_particle.Phi(), j1_reco.Phi(), weight);
+	  hj2Phi23Comp -> Fill(j2_particle.Phi(), j2_reco.Phi(), weight);
+	  hz1pT12Comp->Fill(z1_particle.Pt(), z1_reco.Pt(), weight);
+	  hz1m12Comp->Fill(z1_particle.M(), z1_reco.M(), weight);
+	  hz2pT12Comp->Fill(z2_particle.Pt(), z2_reco.Pt(), weight);
+	  hz2m12Comp->Fill(z2_particle.M(), z2_reco.M(), weight);
+	}
+	if(switchVal_reco==0  && switchVal_parton==0 ){
+	  hHpT13Comp -> Fill(h_parton.Pt(), h_reco.Pt(), weight);
+	  hHm13Comp -> Fill(h_parton.M(), h_reco.M(), weight);
+	  hbbdeltaPhi13Comp -> Fill(bbdeltaPhiparton, bbdeltaPhireco, weight);
+	  hbbdeltaEta13Comp -> Fill(bbdeltaEtaparton, bbdeltaEtareco, weight);
+	  hjjpT13Comp -> Fill(j1_parton.Pt()+j2_parton.Pt(),j1_reco.Pt()+j2_reco.Pt(), weight);
+	  hjjdeltaPhi13Comp -> Fill(jjdeltaPhiparton, jjdeltaPhireco, weight);
+	  hz1pT13Comp->Fill(z1_parton.Pt(), z1_reco.Pt(), weight);
+	  hz1m13Comp->Fill(z1_parton.M(), z1_reco.M(), weight);
+	  hz2pT13Comp->Fill(z2_parton.Pt(), z2_reco.Pt(), weight);
+	  hz2m13Comp->Fill(z2_parton.M(), z2_reco.M(), weight);
+	  // l vs h
+	  hl1l2deltaPhiHpTcompreco->Fill(l1l2deltaPhiparton, h_reco.Pt(), weight);
+	  hl3l4deltaPhiHpTcompreco->Fill(l3l4deltaPhiparton, h_reco.Pt(), weight);
+	}
 	
-    hHpT12Comp -> Fill(h_parton.Pt(), h_particle.Pt(), weight);
-    hHm12Comp -> Fill(h_parton.M(), h_particle.M(), weight);
-    hHpT23Comp -> Fill(h_particle.Pt(), h_reco.Pt(), weight);
-    hHm23Comp -> Fill(h_particle.M(), h_reco.M(), weight);
-    hHpT13Comp -> Fill(h_parton.Pt(), h_reco.Pt(), weight);
-    hHm13Comp -> Fill(h_parton.M(), h_reco.M(), weight);
-    hbbdeltaPhi12Comp -> Fill(bbdeltaPhiparton, bbdeltaPhiparticle, weight);
-    hbbdeltaPhi23Comp -> Fill(bbdeltaPhiparticle, bbdeltaPhireco, weight);
-    hbbdeltaPhi13Comp -> Fill(bbdeltaPhiparton, bbdeltaPhireco, weight);
-    hbbdeltaEta12Comp -> Fill(bbdeltaEtaparton, bbdeltaEtaparticle, weight);
-    hbbdeltaEta23Comp -> Fill(bbdeltaEtaparticle, bbdeltaEtareco, weight);
-    hbbdeltaEta13Comp -> Fill(bbdeltaEtaparton, bbdeltaEtareco, weight);
+  
+	
+	if(switchVal_reco==0){
+	  hHz1pTcompreco->Fill(h_reco.Pt(), z1_reco.Pt(), weight);
+	  hHz2pTcompreco->Fill(h_reco.Pt(), z2_reco.Pt(), weight);
+	  hHpTz1etacompreco->Fill(h_reco.Pt(), z1_reco.Eta(), weight);
+	  hHpTz2etacompreco->Fill(h_reco.Pt(), z2_reco.Eta(), weight);
+	  hHzzpTcompreco->Fill(h_reco.Pt(), z1_reco.Pt() + z2_reco.Pt(), weight);
+	}
+	if(switchVal_particle==0){
+	  hHz1pTcompparticle->Fill(h_particle.Pt(), z1_particle.Pt(), weight);
+	  hHz2pTcompparticle->Fill(h_particle.Pt(), z2_particle.Pt(), weight);
+	  hHpTz1etacompparticle->Fill(h_particle.Pt(), z1_particle.Eta(), weight);
+	  hHpTz2etacompparticle->Fill(h_particle.Pt(), z2_particle.Eta(), weight);
+	  hHzzpTcompparticle->Fill(h_particle.Pt(), z1_particle.Pt() + z2_particle.Pt(), weight);
+	}
+	if(switchVal_parton){
+	  hHz1pTcompparton->Fill(h_parton.Pt(), z1_parton.Pt(), weight);
+	  hHz2pTcompparton->Fill(h_parton.Pt(), z2_parton.Pt(), weight);
+	  hHpTz1etacompparton->Fill(h_parton.Pt(), z1_parton.Eta(), weight);
+	  hHpTz2etacompparton->Fill(h_parton.Pt(), z2_parton.Eta(), weight);
+	  hHzzpTcompparton->Fill(h_parton.Pt(), z1_parton.Pt() + z2_parton.Pt(), weight);
+	}
 
-  // jets
-    hjjpT12Comp -> Fill(j1_parton.Pt()+j2_parton.Pt(),j1_particle.Pt()+j2_particle.Pt(), weight);
-    hjjpT23Comp -> Fill(j1_particle.Pt()+j2_particle.Pt(),j1_reco.Pt()+j2_reco.Pt(), weight);
-    hjjpT13Comp -> Fill(j1_parton.Pt()+j2_parton.Pt(),j1_reco.Pt()+j2_reco.Pt(), weight);
-
-    hjjdeltaPhi12Comp -> Fill(jjdeltaPhiparton, jjdeltaPhiparticle, weight);
-    hjjdeltaPhi23Comp -> Fill(jjdeltaPhiparticle, jjdeltaPhireco, weight);
-    hjjdeltaPhi13Comp -> Fill(jjdeltaPhiparton, jjdeltaPhireco, weight);
-
-    hj1Phi23Comp -> Fill(j1_particle.Phi(), j1_reco.Phi(), weight);
-    hj2Phi23Comp -> Fill(j2_particle.Phi(), j2_reco.Phi(), weight);
-
-  // z 
-    hz1pT13Comp->Fill(z1_parton.Pt(), z1_reco.Pt(), weight);
-    hz1m13Comp->Fill(z1_parton.M(), z1_reco.M(), weight);
-    hz2pT13Comp->Fill(z2_parton.Pt(), z2_reco.Pt(), weight);
-    hz2m13Comp->Fill(z2_parton.M(), z2_reco.M(), weight);
-
-    hz1pT12Comp->Fill(z1_particle.Pt(), z1_reco.Pt(), weight);
-    hz1m12Comp->Fill(z1_particle.M(), z1_reco.M(), weight);
-    hz2pT12Comp->Fill(z2_particle.Pt(), z2_reco.Pt(), weight);
-    hz2m12Comp->Fill(z2_particle.M(), z2_reco.M(), weight);
-
-    hz1pT23Comp->Fill(z1_parton.Pt(), z1_particle.Pt(), weight);
-    hz1m23Comp->Fill(z1_parton.M(), z1_particle.M(), weight);
-    hz2pT23Comp->Fill(z2_parton.Pt(), z2_particle.Pt(), weight);
-    hz2m23Comp->Fill(z2_parton.M(), z2_particle.M(), weight);
-
-  // l vs h
-    hl1l2deltaPhiHpTcompreco->Fill(l1l2deltaPhiparton, h_reco.Pt(), weight);
-    hl3l4deltaPhiHpTcompreco->Fill(l3l4deltaPhiparton, h_reco.Pt(), weight);
-
-    hHz1pTcompreco->Fill(h_reco.Pt(), z1_reco.Pt(), weight);
-    hHz2pTcompreco->Fill(h_reco.Pt(), z2_reco.Pt(), weight);
-    hHz1pTcompparticle->Fill(h_particle.Pt(), z1_particle.Pt(), weight);
-    hHz2pTcompparticle->Fill(h_particle.Pt(), z2_particle.Pt(), weight);
-    hHz1pTcompparton->Fill(h_parton.Pt(), z1_parton.Pt(), weight);
-    hHz2pTcompparton->Fill(h_parton.Pt(), z2_parton.Pt(), weight);
-
-    hHpTz1etacompreco->Fill(h_reco.Pt(), z1_reco.Eta(), weight);
-    hHpTz2etacompreco->Fill(h_reco.Pt(), z2_reco.Eta(), weight);
-    hHpTz1etacompparticle->Fill(h_particle.Pt(), z1_particle.Eta(), weight);
-    hHpTz2etacompparticle->Fill(h_particle.Pt(), z2_particle.Eta(), weight);
-    hHpTz1etacompparton->Fill(h_parton.Pt(), z1_parton.Eta(), weight);
-    hHpTz2etacompparton->Fill(h_parton.Pt(), z2_parton.Eta(), weight);
-
-    hHzzpTcompreco->Fill(h_reco.Pt(), z1_reco.Pt() + z2_reco.Pt(), weight);
-    hHzzpTcompparticle->Fill(h_particle.Pt(), z1_particle.Pt() + z2_particle.Pt(), weight);
-    hHzzpTcompparton->Fill(h_parton.Pt(), z1_parton.Pt() + z2_parton.Pt(), weight);
+    
     
   nPassed+=weight;
   nPassedRaw++;
@@ -2631,6 +2706,8 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
    PrintCutFlow(cutFlowMap_reco,cutList_reco,  "Reco");
    cout<<" Particle  CutF Flow "<<endl;
    PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
+   cout<<" Parton  CutF Flow "<<endl;
+   PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
    
    for(std::vector<string>::iterator it=selType.begin(); it!=selType.end(); it++){
      FillCutFlow(cutFlowHists[(*it)],cutFlowEffs[(*it)],*cutFlowMapAll[(*it)],cutFlowMByType[(*it)], (*it));
