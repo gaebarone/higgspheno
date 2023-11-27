@@ -1,6 +1,6 @@
 #include "classes/DelphesClasses.h"
 #include "ExRootAnalysis/ExRootTreeReader.h"
-#include "../common_includes/ghost_tagging.h"
+#include "ghost_tagging.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -25,28 +25,52 @@
 #include "TParticle.h"
 #include <vector>
 #include "TClonesArray.h"
-#include "../common_includes/get_cross_section.h"
+#include "get_cross_section.h"
+//------------------------------------------------------------------------------
 
-Long64_t get_num_entries(const char *inputName) {
-  TChain chain("Delphes");
-  chain.Add(inputName);
-  ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
-  return treeReader->GetEntries();
-}
-
-Long64_t get_total_num_entries(const char *process_name) {
+Long64_t get_total_events(const char *process_name) {
   std::string inputFileName = std::string(process_name) + "_inputs.txt";
   std::ifstream inputFile(inputFileName.c_str());
   std::string line;
   TChain chain("Delphes");
   Long64_t total = 0;
   while (std::getline(inputFile, line)) {
-    total += get_num_entries(line.c_str());
+    chain.Add(line.c_str());
   }
-  return total;
+  ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
+  Long64_t numEntries = treeReader->GetEntries();
+  delete treeReader;
+  return numEntries;
 }
 
-//------------------------------------------------------------------------------
+// be able to calculate total weight of events in a process
+/*Float_t get_file_weight(const char *inputName) {
+  TChain chain("Delphes");
+  chain.Add(inputName);
+  ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
+  Float_t file_weight = 0;
+  Long64_t numberOfEntries = treeReader->GetEntries();
+  TClonesArray *branchEvent = (TClonesArray*)treeReader->UseBranch("Event");
+  for(Int_t entry = 0; entry < numberOfEntries; ++entry){
+    // Load selected branches with data from specified event
+    treeReader->ReadEntry(entry);
+    HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
+    file_weight += event->Weight;
+  }
+  return file_weight;
+}
+
+Float_t get_total_weight(const char *process_name) {
+  std::string inputFileName = std::string(process_name) + "_inputs.txt";
+  std::ifstream inputFile(inputFileName.c_str());
+  std::string line;
+  TChain chain("Delphes");
+  Float_t total = 0;
+  while (std::getline(inputFile, line)) {
+    total += get_file_weight(line.c_str());
+  }
+  return total;
+}*/
 // make a ton of plots for zhbb events (z -> l l) (h -> b b)
 void zhbb_analyze(const char *inputFile, const char *outputFile, const char *process_name) {
   // SET CUTS
@@ -56,19 +80,24 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   const double mu_pt_cut_sub = 12;
   const double eta_cut = 2.5;
   const double jet_pt_cut = 20;
-  const double higgs_mass_cut_low = 70;
-  const double higgs_mass_cut_hi = 140;
+  const double higgs_mass_cut_low = 0;
+  const double higgs_mass_cut_hi = 250;
+  const double higgs_pt_cut = 1e-6;
   const double z_mass_cut_low = 80;
   const double z_mass_cut_hi = 100;
+  const double z_pt_cut = 20;
+  const double dphi_zh_cut = 2.5;
   // get process cross section
-  const double cross_section = get_cross_section(process_name);
+  double Lumi=200e3;
   // Create chain of and append the file
   TChain chain("Delphes");
   chain.Add(inputFile);
   // Create object of class ExRootTreeReader
   ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
   Long64_t numberOfEntries = treeReader->GetEntries();
-  Long64_t totalEntries = get_total_num_entries(process_name);
+  Long64_t numEntries = get_total_events(process_name);
+  double cross_section = get_cross_section(process_name);
+  Float_t totalWeight = 0.0;
   // Get pointers to branches used in this analysis
   TClonesArray *branchJet = (TClonesArray*)treeReader->UseBranch("Jet");
   TClonesArray *branchElectron = (TClonesArray*)treeReader->UseBranch("Electron");
@@ -77,6 +106,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   TClonesArray *branchGenParticle = (TClonesArray*)treeReader->UseBranch("Particle");
   TClonesArray *branchGenJet = (TClonesArray*) treeReader->UseBranch("GenJet");
   // Book histograms
+  TH1 *hWeight = new TH1F("weights", "weight", 50, 0.0, 1.0);
   // mass
   TH1 *hMZH = new TH1F("mass_ZH", "m_{ZH}", 50, 120.0, 670.0);
   TH1 *hMbbR = new TH1F("mass_bb_reco", "Reco m_{bb}", 50, higgs_mass_cut_low, higgs_mass_cut_hi);
@@ -246,6 +276,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   TH1 *hPhiZH = new TH1F("phi_ZH", "#phi_{ZH}", 50, -3.15, 3.15);
   TH1 *hDPhiEE = new TH1F("dphi_EE", "#Delta#phi_{EE}", 50, -3.15, 3.15);
   TH1 *hDPhiMM = new TH1F("dphi_MM", "#Delta#phi_{MM}", 50, -3.15, 3.15);
+  TH1 *hDPhiZH = new TH1F("dphi_ZH", "#Delta#phi_{ZH}", 50, -3.15, 3.15);
   // phi reco level
   TH1 *hPhiBBR = new TH1F("phi_bb_reco", "Reco #phi_{bb}", 50, -3.15, 3.15);
   TH1 *hPhiLLR = new TH1F("phi_ll_reco", "Reco #phi_{ll}", 50, -3.15, 3.15);
@@ -258,6 +289,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   TH1 *hPhiBBLLR = new TH1F("phi_bbll_reco", "Reco #phi_{bbll}", 50, -3.15, 3.15);
   TH1 *hDPhiEER = new TH1F("dphi_EE_reco", "Reco #Delta#phi_{EE}", 50, -3.15, 3.15);
   TH1 *hDPhiMMR = new TH1F("dphi_MM_reco", "Reco #Delta#phi_{MM}", 50, -3.15, 3.15);
+  TH1 *hDPhiZHR = new TH1F("dphi_ZH_reco", "Reco #Delta#phi_{bb,ll}", 50, -3.15, 3.15);
   // phi particle level
   TH1 *hPhiBBP = new TH1F("phi_bb_particle", "#phi_{bb}", 50, -3.15, 3.15);
   TH1 *hPhiLLP = new TH1F("phi_ll_particle", "#phi_{ll}", 50, -3.15, 3.15);
@@ -270,6 +302,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   TH1 *hPhiBBLLP = new TH1F("phi_bbll_particle", "#phi_{bbll}", 50, -3.15, 3.15);
   TH1 *hDPhiEEP = new TH1F("dphi_EE_particle", "#Delta#phi_{EE}", 50, -3.15, 3.15);
   TH1 *hDPhiMMP = new TH1F("dphi_MM_particle", "#Delta#phi_{MM}", 50, -3.15, 3.15);
+  TH1 *hDPhiZHP = new TH1F("dphi_ZH_particle", "#Delta#phi_{bb,ll}", 50, -3.15, 3.15);
   // phi comparison
   TH2 *hPhiHComp = new TH2F("phi_H_Comp", "#phi_{H}", 50, -3.15, 3.15, 50, -3.15, 3.15);
   TH2 *hPhiZComp = new TH2F("phi_Z_Comp", "#phi_{Z}", 50, -3.15, 3.15, 50, -3.15, 3.15);
@@ -288,7 +321,6 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   // info for totals
   double  nPassed=0;
   int  nPassedRaw=0;
-  double Lumi=200e3;
   // variables to keep track of event content
   int bjets = 0;
   int num_elec_reco;
@@ -331,13 +363,21 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   Muon *muon2;
   GenParticle *daughter1;
   GenParticle *daughter2;
-
+  // calculate total weight
+  for(Int_t entry = 0; entry < numberOfEntries; ++entry){
+    // Load selected branches with data from specified event
+    treeReader->ReadEntry(entry);
+    HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
+    totalWeight += event->Weight;
+  }
   // Loop over events
   for(Int_t entry = 0; entry < numberOfEntries; ++entry){
     // Load selected branches with data from specified event
     treeReader->ReadEntry(entry);
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
-    Float_t weight = event->Weight/totalEntries*Lumi*cross_section;
+    Float_t weight = event->Weight*Lumi*cross_section*numberOfEntries/(numEntries*totalWeight);
+    Float_t test_weight = event->Weight*cross_section*numberOfEntries/(numEntries*totalWeight);
+    hWeight -> Fill(event->Weight, test_weight);
     bool fill_reco = true;
     bool fill_parton = true;
     bool fill_particle = true;
@@ -345,7 +385,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
     bjets = 0;
     for(int i=0; i<(int)branchJet->GetEntries(); i++){
       Jet *jet=(Jet*) branchJet->At(i);
-      if (jet->BTag == 1 && abs(jet->Eta) < eta_cut && jet->PT > jet_pt_cut) {
+      if (isMyBTag(jet, branchGenParticle) && abs(jet->Eta) < eta_cut && jet->PT > jet_pt_cut) {
         bjets += 1;
         if (bjets == 1) {
           b1_reco = jet->P4();
@@ -357,7 +397,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
     }
     if (bjets != 2) fill_reco = false;
     higgsvec = b1_reco + b2_reco;
-    if (higgsvec.M() > higgs_mass_cut_hi || higgsvec.M() < higgs_mass_cut_low) {
+    if (higgsvec.M() > higgs_mass_cut_hi || higgsvec.M() < higgs_mass_cut_low || higgsvec.Pt() < higgs_pt_cut) {
         fill_reco = false;
     }
     // Check for two electrons meeting requirements 
@@ -409,7 +449,8 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
       elecvec1 = elec1->P4();
       elecvec2 = elec2->P4();
       zvec = elecvec1 + elecvec2;
-      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low) {
+
+      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low || zvec.Pt() < z_pt_cut || abs(deltaPhi(zvec.Phi(), higgsvec.Phi())) < dphi_zh_cut) {
         fill_reco = false;
       } else {
         hPtLER -> Fill(elec1->PT, weight);
@@ -432,7 +473,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
       muvec1 = muon1->P4();
       muvec2 = muon2->P4();
       zvec = muvec1 + muvec2;
-      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low) {
+      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low || zvec.Pt() < z_pt_cut || abs(deltaPhi(zvec.Phi(), higgsvec.Phi())) < dphi_zh_cut) {
         fill_reco = false;
       } else {
         hPtLMR -> Fill(muon1->PT, weight);
@@ -477,6 +518,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
       hPhiLBR -> Fill(b1_reco.Phi(), weight);
       hPhiSLBR -> Fill(b2_reco.Phi(), weight);
       hPhiBBLLR -> Fill(sysvec.Phi(), weight);
+      hDPhiZHR -> Fill(deltaPhi(zvec.Phi(), higgsvec.Phi()), weight);
       // fill cos theta reco histograms
       b1_reco.Boost(-higgsvec.BoostVector());
       b2_reco.Boost(-higgsvec.BoostVector());
@@ -592,7 +634,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
         }
       }
     }
-    if (hpartonvec.Pt() == 0 || zpartonvec.Pt() == 0) fill_parton = false;
+    if (hpartonvec.Pt() < higgs_pt_cut || zpartonvec.Pt() < z_pt_cut || hpartonvec.Pt() < higgs_pt_cut  || abs(deltaPhi(zpartonvec.Phi(), hpartonvec.Phi())) < dphi_zh_cut) fill_parton = false;
     if (fill_parton) {
       // fill electron parton histograms
       if (elec_ev_parton) {
@@ -725,6 +767,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
       hPtZH -> Fill((zpartonvec+hpartonvec).Pt(), weight);
       hEtaZH -> Fill((zpartonvec+hpartonvec).Eta(), weight);
       hPhiZH -> Fill((zpartonvec+hpartonvec).Phi(), weight);
+      hDPhiZH -> Fill(deltaPhi(zpartonvec.Phi(), hpartonvec.Phi()), weight);
       if (fill_reco) {
         hMZHComp -> Fill((zpartonvec+hpartonvec).M(), sysvec.M(), weight);
         hPtZHComp -> Fill((zpartonvec+hpartonvec).Pt(), sysvec.Pt(), weight);
@@ -750,12 +793,14 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
         }
       }
       if (bjets != 2) fill_particle = false;
+      hparticlevec = b1_particle + b2_particle;
+      if (hparticlevec.M() > higgs_mass_cut_hi || hparticlevec.M() < higgs_mass_cut_low || hparticlevec.Pt() < higgs_pt_cut) fill_particle = false;
     }
     if (fill_particle) {
       if (num_elec_particle == 2) {
       // fill electron particle histograms
         zparticlevec = e1_particle + e2_particle;
-        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low) {
+        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low || zparticlevec.Pt() < z_pt_cut  || abs(deltaPhi(zparticlevec.Phi(), hparticlevec.Phi())) < dphi_zh_cut) {
           fill_particle = false;
         } else {
           hPtLEP -> Fill(e1_particle.Pt(), weight);
@@ -797,7 +842,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
         // LEFT OFF HERE
         // fill muon particle histograms
         zparticlevec = m1_particle + m2_particle;
-        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low) {
+        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low || zparticlevec.Pt() < z_pt_cut  || abs(deltaPhi(zparticlevec.Phi(), hparticlevec.Phi())) < dphi_zh_cut) {
           fill_particle = false;
         } else {
           hPtLMP -> Fill(m1_particle.Pt(), weight);
@@ -837,8 +882,6 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
         }
       }
     }
-    hparticlevec = b1_particle + b2_particle;
-    if (hparticlevec.M() > higgs_mass_cut_hi || hparticlevec.M() < higgs_mass_cut_low) fill_particle = false;
     if (fill_particle) {
       // fill particle level b jet histograms
       hPtLBP -> Fill(b1_particle.Pt(), weight);
@@ -898,6 +941,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
       hPtBBLLP -> Fill((hparticlevec+zparticlevec).Pt(), weight);
       hEtaBBLLP -> Fill((hparticlevec+zparticlevec).Eta(), weight);
       hPhiBBLLP -> Fill((hparticlevec+zparticlevec).Phi(), weight);
+      hDPhiZHP -> Fill(deltaPhi(zparticlevec.Phi(), hparticlevec.Phi()), weight);
       if (fill_reco) {
         hPtZHCompP -> Fill((zparticlevec+hparticlevec).Pt(), sysvec.Pt(), weight);
         hEtaZHCompP -> Fill((zparticlevec+hparticlevec).Eta(), sysvec.Eta(), weight);
@@ -933,6 +977,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   TFile *hists= new TFile(outputFile,"recreate");
   hists->cd();
   //mass
+  hWeight->Write();
   hMZH->Write();
   hMbbR->Write();
   hMllR->Write();
@@ -1086,6 +1131,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   hPhiSLM->Write();
   hDPhiEE->Write();
   hDPhiMM->Write();
+  hDPhiZH->Write();
   hPhiLB->Write();
   hPhiSLB->Write();
   hPhiZH->Write();
@@ -1097,6 +1143,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   hPhiSLMR->Write();
   hDPhiEER->Write();
   hDPhiMMR->Write();
+  hDPhiZHR->Write();
   hPhiLBR->Write();
   hPhiSLBR->Write();
   hPhiBBLLR->Write();
@@ -1108,6 +1155,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   hPhiSLMP->Write();
   hDPhiEEP->Write();
   hDPhiMMP->Write();
+  hDPhiZHP->Write();
   hPhiLBP->Write();
   hPhiSLBP->Write();
   hPhiBBLLP->Write();
@@ -1127,6 +1175,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   hists->Close();
   // clear all the histograms
   //mass
+  hWeight->Clear();
   hMZH->Clear();
   hMbbR->Clear();
   hMllR->Clear();
@@ -1280,6 +1329,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   hPhiSLM->Clear();
   hDPhiEE->Clear();
   hDPhiMM->Clear();
+  hDPhiZH->Clear();
   hPhiLB->Clear();
   hPhiSLB->Clear();
   hPhiZH->Clear();
@@ -1291,6 +1341,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   hPhiSLMR->Clear();
   hDPhiEER->Clear();
   hDPhiMMR->Clear();
+  hDPhiZHR->Clear();
   hPhiLBR->Clear();
   hPhiSLBR->Clear();
   hPhiBBLLR->Clear();
@@ -1302,6 +1353,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   hPhiSLMP->Clear();
   hDPhiEEP->Clear();
   hDPhiMMP->Clear();
+  hDPhiZHP->Clear();
   hPhiLBP->Clear();
   hPhiSLBP->Clear();
   hPhiBBLLP->Clear();
