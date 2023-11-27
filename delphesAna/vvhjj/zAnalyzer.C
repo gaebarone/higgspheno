@@ -1040,42 +1040,37 @@ int switchVal_reco = 0;
       else noBtag.push_back(i);
            goodJetIndex.push_back(i);
     }
-
+    
     increaseCount(cutFlowMap_reco,"initial reco",weight);
     //cutFlowMap_reco["initial reco"] = {cutVal_reco,cutValW_reco};
 
-   sort(btagIndex.begin(), btagIndex.end(), [branchJet](const int& lhs, const int& rhs) {
-       return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
+    sort(btagIndex.begin(), btagIndex.end(), [branchJet](const int& lhs, const int& rhs) {
+	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
+      });
+    sort(noBtag.begin(), noBtag.end(), [branchJet](const int& lhs, const int& rhs) {
+	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
+      });
+    sort(goodJetIndex.begin(), goodJetIndex.end(), [branchJet](const int& lhs, const int& rhs) {
+	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
      });
-   sort(noBtag.begin(), noBtag.end(), [branchJet](const int& lhs, const int& rhs) {
-       return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
-     });
-   sort(goodJetIndex.begin(), goodJetIndex.end(), [branchJet](const int& lhs, const int& rhs) {
-       return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
-     });
+    
+    //cout<<"Cut 1 btag reco";
+    if(switchVal_reco == 0 && btagIndex.size() > 1) { // at least one b tag 
+      increaseCount(cutFlowMap_reco,"1 btag reco",weight);
+    } else{
+      switchVal_reco = 1;
+    }
 
-   //cout<<"Cut 1 btag reco";
-   if(switchVal_reco == 0 && btagIndex.size() > 1) { // at least one b tag 
-     increaseCount(cutFlowMap_reco,"1 btag reco",weight);
-     //cutFlowMap_reco["1 btag reco"] = {cutVal_reco,cutValW_reco};
-     //cout<<" passed "<<endl;
-   } else{
-     switchVal_reco = 1;
-   //cout<<" failed "<<endl;
-   }
+    if(switchVal_reco == 0 && goodJetIndex.size() > 2) { // at least two jets 
+      increaseCount(cutFlowMap_reco,"2 good j reco",weight);
+    } else  switchVal_reco = 1;
+    
+    
+    Jet *b1=nullptr;
+    Jet *b2=nullptr;
    
-  
-   if(switchVal_reco == 0 && goodJetIndex.size() > 2) { // at least two jets 
-     increaseCount(cutFlowMap_reco,"2 good j reco",weight);
-     //cutFlowMap_reco["2 good j reco"] = {cutVal_reco,cutValW_reco};
-   } else  switchVal_reco = 1;
-   
-   
-   Jet *b1=nullptr;
-   Jet *b2=nullptr;
-   
-   vector<pair<int,int>> bJetPairs;
-   vector<vector <int>> bJetPairsComb;
+    vector<pair<int,int>> bJetPairs;
+    vector<vector <int>> bJetPairsComb;
 
    if(switchVal_reco == 0 && goodJetIndex.size()>1 )
      bJetPairsComb= combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
