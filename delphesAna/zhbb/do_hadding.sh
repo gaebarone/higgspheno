@@ -1,4 +1,4 @@
-cd ../outputs/histograms
+cd ../../../outputs/histograms
 rm *.root
 rm wwjj_j/wwjj_j.root
 rm wzjj_j/wzjj_j.root
@@ -16,4 +16,4 @@ hadd diboson.root wwjj_j/wwjj_j.root wzjj_j/wzjj_j.root wz_wjj_123j/wz_wjj_123j.
 hadd drellyan.root zll_123j/del*.root
 hadd signal.root zh_zll_hbb_012j/del*.root
 hadd all_bkg.root ttbar.root ttHbb.root diboson.root drellyan.root
-cd ../../zhbb
+cd ../../higgsandmore/delphesAna/zhbb

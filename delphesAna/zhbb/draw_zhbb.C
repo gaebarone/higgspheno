@@ -133,7 +133,7 @@ void draw_hist2(TFile *file, const char *name, const char *title, const char *xa
   c->Close();
 }
 
-void draw_zhbb(const char *sig_filename, const char *bkg_filename, const char *ttbar_filename, const char *ttHbb_filename, const char *diboson_filename, const char *drellyan_filename, const char *outputFolder) {
+void draw_zhbb(const char *sig_filename = "../../../outputs/histograms/signal.root", const char *bkg_filename = "../../../outputs/histograms/all_bkg.root", const char *ttbar_filename = "../../../outputs/histograms/ttbar.root", const char *ttHbb_filename = "../../../outputs/histograms/ttHbb.root", const char *diboson_filename = "../../../outputs/histograms/diboson.root", const char *drellyan_filename = "../../../outputs/histograms/drellyan.root", const char *outputFolder = "../../../outputs/plots") {
   // set scales according to total number of events
   /*sig_scale = 1.0/get_total_events("zh_zll_hbb_012j");
   ttbar_scale = 1.0/get_total_events("ttbar012j");
@@ -427,6 +427,7 @@ void draw_zhbb(const char *sig_filename, const char *bkg_filename, const char *t
   draw_hist2(bkg_file, "phi_SLB_Comp", "Sublead #phi_{b}","Parton Level #phi (Rad)", "Reco Level #phi (Rad)", outputFolder, "bkg2D");
   draw_hist2(bkg_file, "phi_ZH_Comp", "Sublead #phi_{ZH}", "Parton Level #phi (Rad)", "Reco Level #phi (Rad)", outputFolder, "bkg2D");
   // print signal significance
+  std::cout<<"Reco Level Contrubutions:"<<std::endl;
   TH1 *sig_mbb = dynamic_cast<TH1*>(sig_file->Get("mass_bb_reco"));
   TH1 *bkg_mbb = dynamic_cast<TH1*>(bkg_file->Get("mass_bb_reco"));
   TH1 *ttbar_mbb = dynamic_cast<TH1*>(ttbar_file->Get("mass_bb_reco"));
@@ -434,14 +435,31 @@ void draw_zhbb(const char *sig_filename, const char *bkg_filename, const char *t
   TH1 *diboson_mbb = dynamic_cast<TH1*>(diboson_file->Get("mass_bb_reco"));
   TH1 *drellyan_mbb = dynamic_cast<TH1*>(drellyan_file->Get("mass_bb_reco"));
 
-  std::cout<<"ttbar contribution: "<<ttbar_mbb->Integral()<<std::endl;
-  std::cout<<"ttHbb contribution: "<<ttHbb_mbb->Integral()<<std::endl;
-  std::cout<<"diboson contribution: "<<diboson_mbb->Integral()<<std::endl;
-  std::cout<<"drell-yan contribution: "<<drellyan_mbb->Integral()<<std::endl;
-  std::cout<<"signal contribution: "<<sig_mbb->Integral()<<std::endl;
+  std::cout<<"ttbar: "<<ttbar_mbb->Integral()<<std::endl;
+  std::cout<<"ttHbb: "<<ttHbb_mbb->Integral()<<std::endl;
+  std::cout<<"diboson: "<<diboson_mbb->Integral()<<std::endl;
+  std::cout<<"drell-yan: "<<drellyan_mbb->Integral()<<std::endl;
+  std::cout<<"signal: "<<sig_mbb->Integral()<<std::endl;
   double sig_sig = sig_mbb->Integral()/sqrt(bkg_mbb->Integral());
   std::cout<<"Signal Significance: "<<sig_sig<<std::endl;
 
+  std::cout<<"Particle Level Contributions:"<<std::endl;
+  TH1 *sig_mbb_p = dynamic_cast<TH1*>(sig_file->Get("mass_bb_particle"));
+  TH1 *bkg_mbb_p = dynamic_cast<TH1*>(bkg_file->Get("mass_bb_particle"));
+  TH1 *ttbar_mbb_p = dynamic_cast<TH1*>(ttbar_file->Get("mass_bb_particle"));
+  TH1 *ttHbb_mbb_p = dynamic_cast<TH1*>(ttHbb_file->Get("mass_bb_particle"));
+  TH1 *diboson_mbb_p = dynamic_cast<TH1*>(diboson_file->Get("mass_bb_particle"));
+  TH1 *drellyan_mbb_p = dynamic_cast<TH1*>(drellyan_file->Get("mass_bb_particle"));
+
+  std::cout<<"ttbar: "<<ttbar_mbb_p->Integral()<<std::endl;
+  std::cout<<"ttHbb: "<<ttHbb_mbb_p->Integral()<<std::endl;
+  std::cout<<"diboson: "<<diboson_mbb_p->Integral()<<std::endl;
+  std::cout<<"drell-yan: "<<drellyan_mbb_p->Integral()<<std::endl;
+  std::cout<<"signal: "<<sig_mbb_p->Integral()<<std::endl;
+  double sig_sig_p = sig_mbb_p->Integral()/sqrt(bkg_mbb_p->Integral());
+  std::cout<<"Signal Significance: "<<sig_sig_p<<std::endl;
+
+  std::cout<<"Integral before cuts with Lumi=1:"<<std::endl;
   TH1 *sig_w = dynamic_cast<TH1*>(sig_file->Get("weights"));
   TH1 *bkg_w = dynamic_cast<TH1*>(bkg_file->Get("weights"));
   TH1 *ttbar_w = dynamic_cast<TH1*>(ttbar_file->Get("weights"));
@@ -449,17 +467,16 @@ void draw_zhbb(const char *sig_filename, const char *bkg_filename, const char *t
   TH1 *diboson_w = dynamic_cast<TH1*>(diboson_file->Get("weights"));
   TH1 *drellyan_w = dynamic_cast<TH1*>(drellyan_file->Get("weights"));
 
-  std::cout<<"ttbar integral: "<<ttbar_w->Integral()<<std::endl;
-  std::cout<<"ttHbb integral: "<<ttHbb_w->Integral()<<std::endl;
-  std::cout<<"diboson integral: "<<diboson_w->Integral()<<std::endl;
-  std::cout<<"drell-yan integral: "<<drellyan_w->Integral()<<std::endl;
-  std::cout<<"signal integral: "<<sig_w->Integral()<<std::endl;
+  std::cout<<"ttbar: "<<ttbar_w->Integral()<<std::endl;
+  std::cout<<"ttHbb: "<<ttHbb_w->Integral()<<std::endl;
+  std::cout<<"diboson: "<<diboson_w->Integral()<<std::endl;
+  std::cout<<"drell-yan: "<<drellyan_w->Integral()<<std::endl;
+  std::cout<<"signal: "<<sig_w->Integral()<<std::endl;
 
   /*TFile *test_file = TFile::Open("../outputs/histograms/ttbar012j/delphes_704728_5.root", "READ");
   TH1 *test_w = dynamic_cast<TH1*>(test_file->Get("weights"));
   std::cout<<"single file ttbar integral: "<<test_w->Integral()<<std::endl;
   test_file->Close();*/
-
   
   sig_file->Close();
   bkg_file->Close();

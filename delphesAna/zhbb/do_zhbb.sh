@@ -16,11 +16,11 @@ pwd
 cp -r /home/trussel1/MG2/Madgraph/MG5_aMC_v2_6_7/Delphes/* .
 
 ulimit -s unlimited
-cd examples/zhbb
+cd examples/higgsandmore/delphesAna/zhbb
 
 ./zhbb_analyze $1 $2 $3
 
 cp -p $2 $outdir/$2
 
-cd ../../..
-rm -rf job_$2
+cd ../../../../..
+rm -r job_$2
