@@ -6,7 +6,10 @@
 #include "inEllipse.h"
 #include "TRandom.h"
 #include "TRandom3.h"
-#include <iostream> 
+#include <iostream>
+#include "Rivet/Analysis.hh"
+#include "Rivet/Projections/FinalState.hh"
+
 // see https://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
 int get_bottom_number(int pid) {
   pid = abs(pid) ;
@@ -37,8 +40,8 @@ bool ghost_btag(TClonesArray *branchGenParticle, Jet *jet,double jet_radius = 0.
     if (jet->P4().DeltaR(particle->P4()) > jet_radius) continue;
     // check for b hadrons
     // rivet equivalent 
-    
-    if (get_bottom_number(particle->PID) > 0) { /*std::cout<< "return b"<<std::endl;*/ return true;}
+    if (Rivet::PID::hasBottom(particle->PID)) { /*std::cout<< "return b"<<std::endl;*/ return true;}
+    //if (get_bottom_number(particle->PID) > 0) { /*std::cout<< "return b"<<std::endl;*/ return true;}
     //if(   isBottomMeson )
   }
   // no b, return false
@@ -47,14 +50,15 @@ bool ghost_btag(TClonesArray *branchGenParticle, Jet *jet,double jet_radius = 0.
 
 bool ghost_bbtag(TClonesArray *branchGenParticle, Jet *jet1, Jet *jet2) {
   int num_bs = 0;
-  int particle_bs = 0;
+  //int particle_bs = 0;
+  int  particle_bs = 0;
   // loop through particles and check if in jet
   for(int i=0; i<(int) ((TClonesArray*)branchGenParticle)->GetEntries(); i++){
     GenParticle *particle=(GenParticle*) (branchGenParticle->At(i));
     if (!inEllipse(jet1, jet2, particle)) continue;
     // check for b hadrons
-    particle_bs = get_bottom_number(particle->PID);
-    if (particle_bs > 0) {
+    //particle_bs = get_bottom_number(particle->PID);
+    if (Rivet::PID::hasBottom(particle->PID)) {
       // safely check that daughters are not more bs
       int d1_pid = 9999;
       if (particle->D1 != -1) {
@@ -66,10 +70,12 @@ bool ghost_bbtag(TClonesArray *branchGenParticle, Jet *jet1, Jet *jet2) {
         GenParticle* daughter2 = (GenParticle*) branchGenParticle->At(particle->D2);
         d2_pid = daughter2 -> PID;
       }
-      if (get_bottom_number(d1_pid) == 0 && get_bottom_number(d2_pid) == 0) {
-        // add to total number of bs and return true if hit 2
-        num_bs += particle_bs;
-        if (num_bs > 1) return true;
+      //if (get_bottom_number(d1_pid) == 0 && get_bottom_number(d2_pid) == 0) {
+      if( Rivet::PID::hasBottom(d1_pid) && Rivet::PID::hasBottom(d2_pid)){
+	// add to total number of bs and return true if hit 2
+        //num_bs += particle_bs;
+	num_bs++; 
+	if (num_bs > 1) return true;
       }
     }
   }
@@ -89,8 +95,8 @@ bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle,int seed=0,double jet_r
   //bool passEff=randEff.Uniform(0,1) < effWrk; 
   //bool passFake=randIneff.Uniform(0,1) < fake_eff;
 
-  bool passEff=randEff.Binomial(1,effWrk) > effWrk; 
-  bool passFake=randIneff.Uniform(1,fake_eff) > fake_eff; 
+  bool passEff=randEff.Binomial(1,effWrk) > 0; 
+  bool passFake=randIneff.Binomial(1,fake_eff) > 0;
   
   if( isB) return passEff;
   else return passFake; 
