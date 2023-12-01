@@ -56,7 +56,7 @@ void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<std::string, std::pair<int,
 }*/
 
 void increaseCount(std::map<std::string, std::pair<int,double>> & cutFlowMap, std::string cutName, double weight){
-  cutFlowMap[cutName]=make_pair(cutFlowMap[cutName].first+1,cutFlowMap[cutName].second+weight);
+  cutFlowMap[cutName]=std::make_pair(cutFlowMap[cutName].first+1,cutFlowMap[cutName].second+weight);
 }
 
 Long64_t get_total_events(const char *process_name) {
@@ -124,10 +124,10 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   std::map<std::string, std::pair<int,double>> cutMap_reco;
   std::map<std::string, std::pair<int,double>> cutMap_particle;
   for(int i=0; i<(int) cutList_reco.size(); i++) { 
-    cutMap_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
+    cutMap_reco[cutList_reco.at(i)] = std::make_pair(0,0.0); 
   }
   for(int i=0; i<(int) cutList_particle.size(); i++) { 
-    cutMap_reco[cutList_particle.at(i)] = make_pair(0,0.0); 
+    cutMap_reco[cutList_particle.at(i)] = std::make_pair(0,0.0); 
   }
   // get process cross section
   double Lumi=200e3;
@@ -149,8 +149,8 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   TClonesArray *branchGenJet = (TClonesArray*) treeReader->UseBranch("GenJet");
   // Book histograms
   TH1 *hWeight = new TH1F("weights", "weight", 50, 0.0, 1.0);
-  TH1 *hCutFlowR = new TH1F("cutflow_reco", "Reco CutFlow", cutList_reco.size(), 0, cutList_reco.size()+1);
-  TH1 *hCutFlowP = new TH1F("cutflow_particle", "Particle CutFlow", cutList_particle.size(), 0, cutList_particle.size()+1);
+  TH1F *hCutFlowR = new TH1F("cutflow_reco", "Reco CutFlow", cutList_reco.size(), 0, cutList_reco.size()+1);
+  TH1F *hCutFlowP = new TH1F("cutflow_particle", "Particle CutFlow", cutList_particle.size(), 0, cutList_particle.size()+1);
   TProfile *hCutFlowEffR = new TProfile("cutflow_eff_reco", "Reco CutFlow Efficiency", cutList_reco.size(), 0, cutList_reco.size()+1);
   TProfile *hCutFlowEffP = new TProfile("cutflow_eff_particle", "Particle CutFlow Efficiency", cutList_particle.size(), 0, cutList_particle.size()+1);
   // mass
