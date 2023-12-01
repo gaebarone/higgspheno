@@ -25,8 +25,39 @@
 #include "TParticle.h"
 #include <vector>
 #include "TClonesArray.h"
+#include "TProfile.h"
 #include "../common_includes/get_cross_section.h"
 //------------------------------------------------------------------------------
+// fill histogram and profile with the cut flow map data
+void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList){
+  for(int i=0; i<(int) cutList.size(); i++) {
+    const std::string cutName = cutList[i];
+    double passed_reco =  cutFlowMap[cutName].second;
+    double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
+    //cout<<"Bin "<<i+1<<" passed "<<passed_reco<<" eff "<<efficiency_reco<<endl;
+    hSel->GetXaxis()->SetBinLabel(i+1,cutName.c_str());
+    hEff->GetXaxis()->SetBinLabel(i+1,cutName.c_str());
+    hSel->SetBinContent(i+1,passed_reco);
+    hEff->Fill(i+1.0,efficiency_reco);
+  } 
+}
+
+void PrintCutFlow(std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList, string label){
+  std::cout<<std::left<<std::setw(25)<<label<<" Cut"<<std::setw(10)<<label<<" Passed"<<std::setw(15)<<" Rel Eff "<< std::setw(15)<<label <<" Efficiency"<< std::endl;
+  for(int i=0; i<(int) cutList.size(); i++) {
+    const std::string cutName = cutList[i];
+    double passed_reco =  cutFlowMap[cutName].first; // switch to second if one wants to use weighted events!
+    double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
+    double relEff= 100;
+    if(i>0) relEff = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList.at(i-1)].second; 
+    std::cout<<std::left<<std::setw(25)<<cutName<<std::setw(25)<<passed_reco<< std::setw(25)<<relEff <<std::setw(25)<<efficiency_reco<< std::endl;
+  }
+  cout<<endl;
+}
+
+void increaseCount(std::map<string, std::pair<int,double>> & cutFlowMap, string cutName, double weight){
+  cutFlowMap[cutName]=make_pair(cutFlowMap[cutName].first+1,cutFlowMap[cutName].second+weight);
+}
 
 Long64_t get_total_events(const char *process_name) {
   std::string inputFileName = std::string(process_name) + "_inputs.txt";
@@ -74,6 +105,8 @@ Float_t get_total_weight(const char *process_name) {
 // make a ton of plots for zhbb events (z -> l l) (h -> b b)
 void zhbb_analyze(const char *inputFile, const char *outputFile, const char *process_name) {
   // SET CUTS
+  std::vector <string> cutList_reco={"reco initial", "reco bb", "reco higgs mass", "reco higgs pt", "reco ll", "reco z mass", "reco z pt", "reco zh dphi"};
+  std::vector <string> cutList_particle={"particle initial", "particle bb", "particle higgs mass", "particle higgs pt", "particle ll", "particle z mass", "particle z pt", "particle zh dphi"};
   const double e_pt_cut_lead = 27;
   const double mu_pt_cut_lead = 20;
   const double e_pt_cut_sub = 15;
@@ -83,10 +116,19 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   const double higgs_mass_cut_low = 0;
   const double higgs_mass_cut_hi = 250;
   const double higgs_pt_cut = 1e-6;
-  const double z_mass_cut_low = 80;
-  const double z_mass_cut_hi = 100;
-  const double z_pt_cut = 20;
+  const double z_mass_cut_low = 75;
+  const double z_mass_cut_hi = 105;
+  const double z_pt_cut = 50;
   const double dphi_zh_cut = 2.5;
+  // initialize cutflow maps
+  std::map<string, std::pair<int,double>> cutMap_reco;
+  std::map<string, std::pair<int,double>> cutMap_particle;
+  for(int i=0; i<(int) cutList_reco.size(); i++) { 
+    cutMap_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
+  }
+  for(int i=0; i<(int) cutList_particle.size(); i++) { 
+    cutMap_reco[cutList_particle.at(i)] = make_pair(0,0.0); 
+  }
   // get process cross section
   double Lumi=200e3;
   // Create chain of and append the file
@@ -107,6 +149,10 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   TClonesArray *branchGenJet = (TClonesArray*) treeReader->UseBranch("GenJet");
   // Book histograms
   TH1 *hWeight = new TH1F("weights", "weight", 50, 0.0, 1.0);
+  TH1 *hCutFlowR = new TH1F("cutflow_reco", "Reco CutFlow", cutList_reco.size(), 0, cutList_reco.size()+1);
+  TH1 *hCutFlowP = new TH1F("cutflow_particle", "Particle CutFlow", cutList_particle.size(), 0, cutList_particle.size()+1);
+  TProfile *hCutFlowEffR = new TProfile("cutflow_eff_reco", "Reco CutFlow Efficiency", cutList_reco.size(), 0, cutList_reco.size()+1);
+  TProfile *hCutFlowEffP = new TProfile("cutflow_eff_particle", "Particle CutFlow Efficiency", cutList_particle.size(), 0, cutList_particle.size()+1);
   // mass
   TH1 *hMZH = new TH1F("mass_ZH", "m_{ZH}", 50, 120.0, 670.0);
   TH1 *hMbbR = new TH1F("mass_bb_reco", "Reco m_{bb}", 50, higgs_mass_cut_low, higgs_mass_cut_hi);
@@ -372,12 +418,15 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   }
   // Loop over events
   for(Int_t entry = 0; entry < numberOfEntries; ++entry){
-    // Load selected branches with data from specified event
+    // Load selected branches with data from specified event and calculate weight
     treeReader->ReadEntry(entry);
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
     Float_t weight = event->Weight*Lumi*cross_section*numberOfEntries/(numEntries*totalWeight);
     Float_t test_weight = event->Weight*cross_section*numberOfEntries/(numEntries*totalWeight);
     hWeight -> Fill(event->Weight, test_weight);
+    // keep track of what is being filled
+    increaseCount(cutMap_reco, "reco initial", weight);
+    increaseCount(cutMap_particle, "particle initial", weight);
     bool fill_reco = true;
     bool fill_parton = true;
     bool fill_particle = true;
@@ -395,11 +444,14 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
         }
       }
     }
+    // cut on bjets and higgs mass/pt
     if (bjets != 2) fill_reco = false;
+    else increaseCount(cutMap_reco, "reco bb", weight);
     higgsvec = b1_reco + b2_reco;
-    if (higgsvec.M() > higgs_mass_cut_hi || higgsvec.M() < higgs_mass_cut_low || higgsvec.Pt() < higgs_pt_cut) {
-        fill_reco = false;
-    }
+    if (higgsvec.M() > higgs_mass_cut_hi || higgsvec.M() < higgs_mass_cut_low) fill_reco = false;
+    else if (fill_reco) increaseCount(cutMap_reco, "reco higgs mass", weight);
+    if (higgsvec.Pt() < higgs_pt_cut) fill_reco = false;
+    else if (fill_reco) increaseCount(cutMap_reco, "reco higgs pt", weight);
     // Check for two electrons meeting requirements 
     num_elec_reco = 0;
     num_mu_reco = 0;
@@ -444,15 +496,21 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
         }
       }
     }
-    // fill electron data
+    // two electron case
     if (fill_reco && num_elec_reco == 2 && num_mu_reco == 0) {
       elecvec1 = elec1->P4();
       elecvec2 = elec2->P4();
       zvec = elecvec1 + elecvec2;
-
-      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low || zvec.Pt() < z_pt_cut || abs(deltaPhi(zvec.Phi(), higgsvec.Phi())) < dphi_zh_cut) {
-        fill_reco = false;
-      } else {
+      // cut on z requirements
+      increaseCount(cutMap_reco, "reco ll", weight);
+      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low) fill_reco = false;
+      else increaseCount(cutMap_reco, "reco z mass", weight);
+      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low) fill_reco = false;
+      else if (fill_reco) increaseCount(cutMap_reco, "reco z pt", weight);
+      if (abs(deltaPhi(zvec.Phi(), higgsvec.Phi())) < dphi_zh_cut) fill_reco = false;
+      else if (fill_reco) increaseCount(cutMap_reco, "reco zh dphi", weight);
+      // fill electron data
+      if (fill_reco) {
         hPtLER -> Fill(elec1->PT, weight);
         hEtaLER -> Fill(elec1->Eta, weight);
         hPhiLER -> Fill(elec1->Phi, weight);
@@ -468,14 +526,21 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
         elecvec1.Boost(zvec.BoostVector());
         elecvec2.Boost(zvec.BoostVector());
       }
-    // fill muon data
+    // two muon case
     } else if (fill_reco && num_elec_reco == 0 && num_mu_reco == 2) {
       muvec1 = muon1->P4();
       muvec2 = muon2->P4();
       zvec = muvec1 + muvec2;
-      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low || zvec.Pt() < z_pt_cut || abs(deltaPhi(zvec.Phi(), higgsvec.Phi())) < dphi_zh_cut) {
-        fill_reco = false;
-      } else {
+      // cut on z requirements
+      increaseCount(cutMap_reco, "reco ll", weight);
+      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low) fill_reco = false;
+      else increaseCount(cutMap_reco, "reco z mass", weight);
+      if (zvec.M() > z_mass_cut_hi || zvec.M() < z_mass_cut_low) fill_reco = false;
+      else if (fill_reco) increaseCount(cutMap_reco, "reco z pt", weight);
+      if (abs(deltaPhi(zvec.Phi(), higgsvec.Phi())) < dphi_zh_cut) fill_reco = false;
+      else if (fill_reco) increaseCount(cutMap_reco, "reco zh dphi", weight);
+      // fill muon data
+      if (fill_reco) {
         hPtLMR -> Fill(muon1->PT, weight);
         hEtaLMR -> Fill(muon1->Eta, weight);
         hPhiLMR -> Fill(muon1->Phi, weight);
@@ -527,6 +592,26 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
       b1_reco.Boost(higgsvec.BoostVector());
       b2_reco.Boost(higgsvec.BoostVector());
     }
+    // test for generated b jets (particle level)
+    bjets = 0;
+    for(int i=0; i<(int)branchGenJet->GetEntries(); i++){
+      Jet *genjet=(Jet*) branchGenJet->At(i);
+      if (ghost_btag(branchGenParticle, genjet) && abs(genjet->Eta) < eta_cut && genjet->PT > jet_pt_cut) {
+        bjets += 1;
+        if (bjets == 1) {
+          b1_particle = genjet->P4();
+        } else if (bjets == 2) {
+          b2_particle = genjet->P4();
+        } else break;
+      }
+    }
+    if (bjets != 2) fill_particle = false;
+    else increaseCount(cutMap_particle, "particle bb", weight);
+    hparticlevec = b1_particle + b2_particle;
+    if (hparticlevec.M() > higgs_mass_cut_hi || hparticlevec.M() < higgs_mass_cut_low) fill_particle = false;
+    else if (fill_particle) increaseCount(cutMap_particle, "particle higgs mass", weight);
+    if (hparticlevec.Pt() < higgs_pt_cut) fill_particle = false;
+    else if (fill_particle) increaseCount(cutMap_particle, "particle higgs pt", weight);
     // loop over true particles and fill those histograms
     b1_parton.SetPtEtaPhiM(0,0,0,0);
     b2_parton.SetPtEtaPhiM(0,0,0,0);
@@ -605,7 +690,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
           }
         } else fill_parton = false;
       // now look for status 1 (particle level) electrons
-      } else if (abs(particle -> PID) == 11 && particle -> Status == 1 && abs(particle -> Eta) < eta_cut) {
+      } else if (fill_particle && abs(particle -> PID) == 11 && particle -> Status == 1 && abs(particle -> Eta) < eta_cut) {
         if (num_elec_particle > 1 && particle->PT > e_pt_cut_sub) {
           fill_particle = false;
           continue;
@@ -619,7 +704,7 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
           e2_particle = particle -> P4();
         }
       // now look for status 1 (particle level) muons
-      } else if (abs(particle -> PID) == 13 && particle -> Status == 1 && abs(particle -> Eta) < eta_cut) {
+      } else if (fill_particle && abs(particle -> PID) == 13 && particle -> Status == 1 && abs(particle -> Eta) < eta_cut) {
         if (num_mu_particle > 1 && particle->PT > mu_pt_cut_sub) {
           fill_particle = false;
           continue;
@@ -775,34 +860,22 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
         hPhiZHComp -> Fill((zpartonvec+hpartonvec).Phi(), sysvec.Phi(), weight);
       }
     }
-    // gather generated b jets if the particle level leptons look good
-    if (!((num_elec_particle == 2 && num_mu_particle == 0) || (num_elec_particle == 0 && num_mu_particle == 2))) {
-      fill_particle = false;
-    }
+    // cut on dilepton requirement for particle level
+    if (!((num_elec_particle == 2 && num_mu_particle == 0) || (num_elec_particle == 0 && num_mu_particle == 2))) fill_particle = false;
+    else if (fill_particle) increaseCount(cutMap_particle, "particle ll", weight);
     if (fill_particle) {
-      bjets = 0;
-      for(int i=0; i<(int)branchGenJet->GetEntries(); i++){
-        Jet *genjet=(Jet*) branchGenJet->At(i);
-        if (ghost_btag(branchGenParticle, genjet) && abs(genjet->Eta) < eta_cut && genjet->PT > jet_pt_cut) {
-          bjets += 1;
-          if (bjets == 1) {
-            b1_particle = genjet->P4();
-          } else if (bjets == 2) {
-            b2_particle = genjet->P4();
-          } else break;
-        }
-      }
-      if (bjets != 2) fill_particle = false;
-      hparticlevec = b1_particle + b2_particle;
-      if (hparticlevec.M() > higgs_mass_cut_hi || hparticlevec.M() < higgs_mass_cut_low || hparticlevec.Pt() < higgs_pt_cut) fill_particle = false;
-    }
-    if (fill_particle) {
+      // 2 electron case
       if (num_elec_particle == 2) {
-      // fill electron particle histograms
         zparticlevec = e1_particle + e2_particle;
-        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low || zparticlevec.Pt() < z_pt_cut  || abs(deltaPhi(zparticlevec.Phi(), hparticlevec.Phi())) < dphi_zh_cut) {
-          fill_particle = false;
-        } else {
+        // cut on z requirements
+        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low) fill_particle = false;
+        else if (fill_particle) increaseCount(cutMap_particle, "particle z mass", weight);
+        if (zparticlevec.Pt() < z_pt_cut) fill_particle = false;
+        else if (fill_particle) increaseCount(cutMap_particle, "particle z pt", weight);
+        if (abs(deltaPhi(zparticlevec.Phi(), hparticlevec.Phi())) < dphi_zh_cut) fill_particle = false;
+        else if (fill_particle) increaseCount(cutMap_particle, "particle zh dphi", weight);
+        // fill electron particle histograms
+        if (fill_particle) {
           hPtLEP -> Fill(e1_particle.Pt(), weight);
           hEtaLEP -> Fill(e1_particle.Eta(), weight);
           hPhiLEP -> Fill(e1_particle.Phi(), weight);
@@ -838,13 +911,18 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
             hDEtaEECompP -> Fill(e1_particle.Eta()-e2_particle.Eta(), elecvec1.Eta()-elecvec2.Eta(), weight);
           }
         }
+      // 2 muon case
       } else if (num_mu_particle == 2){
-        // LEFT OFF HERE
-        // fill muon particle histograms
         zparticlevec = m1_particle + m2_particle;
-        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low || zparticlevec.Pt() < z_pt_cut  || abs(deltaPhi(zparticlevec.Phi(), hparticlevec.Phi())) < dphi_zh_cut) {
-          fill_particle = false;
-        } else {
+        // cut on z requirements
+        if (zparticlevec.M() > z_mass_cut_hi || zparticlevec.M() < z_mass_cut_low) fill_particle = false;
+        else if (fill_particle) increaseCount(cutMap_particle, "particle z mass", weight);
+        if (zparticlevec.Pt() < z_pt_cut) fill_particle = false;
+        else if (fill_particle) increaseCount(cutMap_particle, "particle z pt", weight);
+        if (abs(deltaPhi(zparticlevec.Phi(), hparticlevec.Phi())) < dphi_zh_cut) fill_particle = false;
+        else if (fill_particle) increaseCount(cutMap_particle, "particle zh dphi", weight);
+        // fill muon particle histograms
+        if (fill_particle) {
           hPtLMP -> Fill(m1_particle.Pt(), weight);
           hEtaLMP -> Fill(m1_particle.Eta(), weight);
           hPhiLMP -> Fill(m1_particle.Phi(), weight);
@@ -976,6 +1054,12 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   // Write histograms
   TFile *hists= new TFile(outputFile,"recreate");
   hists->cd();
+  FillCutFlow(hCutFlowR, hCutFlowEffR, cutMap_reco, cutList_reco);
+  FillCutFlow(hCutFlowP, hCutFlowEffP, cutMap_particle, cutList_particle);
+  hCutFlowR->Write();
+  hCutFlowP->Write();
+  hCutFlowEffR->Write();
+  hCutFlowEffR->Write();
   //mass
   hWeight->Write();
   hMZH->Write();
@@ -1174,6 +1258,10 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   hPhiZHComp->Write();
   hists->Close();
   // clear all the histograms
+  hCutFlowR->Clear();
+  hCutFlowP->Clear();
+  hCutFlowEffR->Clear();
+  hCutFlowEffR->Clear();
   //mass
   hWeight->Clear();
   hMZH->Clear();

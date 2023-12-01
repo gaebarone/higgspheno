@@ -13,8 +13,7 @@
 // see https://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
 int get_bottom_number(int pid) {
   pid = abs(pid) ;
-  if( pid % 10 == 5 ) return pid; 
-
+  //if( pid % 10 == 5 ) return pid; 
   if (pid == 5) {
     return 1;
   } else if (pid / 100 == 55) {
@@ -84,7 +83,7 @@ bool ghost_bbtag(TClonesArray *branchGenParticle, Jet *jet1, Jet *jet2) {
 }
 
 
-bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle,int seed=0,double jet_radius = 0.4, double effWrk=0.5,double fake_eff=0.1){
+bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle,int seed=0,double jet_radius = 0.4, double effWrk=0.9,double fake_eff=0.01){
   // tracker acceptance
   
   bool isB=ghost_btag(branchGenParticle,jet,jet_radius);
