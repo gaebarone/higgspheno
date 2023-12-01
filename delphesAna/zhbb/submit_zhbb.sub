@@ -8,7 +8,7 @@ Notification     = never
 #request_cpus = 4
 max_materialize = 5000
 Output     = condor/log_$(Cluster)_$(Process).out
-Error      = condor/log_$(Cluster)_$(Process).out
+Error      = condor/log_$(Cluster)_$(Process).err
 Log        = condor/log_$(Cluster)_$(Process).log
 arguments = $(IN) $(OUT) $(PNAME)
 

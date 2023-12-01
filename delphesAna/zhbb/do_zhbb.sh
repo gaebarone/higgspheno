@@ -1,6 +1,6 @@
 #!/bin/bash
 
-outdir="/home/trussel1/MG2/Madgraph/MG5_aMC_v2_6_7/Delphes/examples/outputs/"
+outdir="/home/trussel1/MG2/Madgraph/MG5_aMC_v2_6_7/Delphes/examples/outputs"
 
 MGPATH=/home/trussel1/MG2/Madgraph
 source /cvmfs/sft.cern.ch/lcg/views/LCG_94/x86_64-slc6-gcc7-opt/setup.sh
