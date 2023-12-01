@@ -29,7 +29,7 @@
 #include "../common_includes/get_cross_section.h"
 //------------------------------------------------------------------------------
 // fill histogram and profile with the cut flow map data
-void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList){
+void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<std::string, std::pair<int,double>> cutFlowMap, std::vector<std::string> cutList){
   for(int i=0; i<(int) cutList.size(); i++) {
     const std::string cutName = cutList[i];
     double passed_reco =  cutFlowMap[cutName].second;
@@ -42,7 +42,7 @@ void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<string, std::pair<int,doubl
   } 
 }
 
-void PrintCutFlow(std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList, string label){
+/*void PrintCutFlow(std::map<std::string, std::pair<int,double>> cutFlowMap, std::vector <std::string> cutList, std::string label){
   std::cout<<std::left<<std::setw(25)<<label<<" Cut"<<std::setw(10)<<label<<" Passed"<<std::setw(15)<<" Rel Eff "<< std::setw(15)<<label <<" Efficiency"<< std::endl;
   for(int i=0; i<(int) cutList.size(); i++) {
     const std::string cutName = cutList[i];
@@ -53,9 +53,9 @@ void PrintCutFlow(std::map<string, std::pair<int,double>> cutFlowMap, std::vecto
     std::cout<<std::left<<std::setw(25)<<cutName<<std::setw(25)<<passed_reco<< std::setw(25)<<relEff <<std::setw(25)<<efficiency_reco<< std::endl;
   }
   cout<<endl;
-}
+}*/
 
-void increaseCount(std::map<string, std::pair<int,double>> & cutFlowMap, string cutName, double weight){
+void increaseCount(std::map<std::string, std::pair<int,double>> & cutFlowMap, std::string cutName, double weight){
   cutFlowMap[cutName]=make_pair(cutFlowMap[cutName].first+1,cutFlowMap[cutName].second+weight);
 }
 
@@ -105,8 +105,8 @@ Float_t get_total_weight(const char *process_name) {
 // make a ton of plots for zhbb events (z -> l l) (h -> b b)
 void zhbb_analyze(const char *inputFile, const char *outputFile, const char *process_name) {
   // SET CUTS
-  std::vector <string> cutList_reco={"reco initial", "reco bb", "reco higgs mass", "reco higgs pt", "reco ll", "reco z mass", "reco z pt", "reco zh dphi"};
-  std::vector <string> cutList_particle={"particle initial", "particle bb", "particle higgs mass", "particle higgs pt", "particle ll", "particle z mass", "particle z pt", "particle zh dphi"};
+  std::vector <std::string> cutList_reco={"reco initial", "reco bb", "reco higgs mass", "reco higgs pt", "reco ll", "reco z mass", "reco z pt", "reco zh dphi"};
+  std::vector <std::string> cutList_particle={"particle initial", "particle bb", "particle higgs mass", "particle higgs pt", "particle ll", "particle z mass", "particle z pt", "particle zh dphi"};
   const double e_pt_cut_lead = 27;
   const double mu_pt_cut_lead = 20;
   const double e_pt_cut_sub = 15;
@@ -121,8 +121,8 @@ void zhbb_analyze(const char *inputFile, const char *outputFile, const char *pro
   const double z_pt_cut = 50;
   const double dphi_zh_cut = 2.5;
   // initialize cutflow maps
-  std::map<string, std::pair<int,double>> cutMap_reco;
-  std::map<string, std::pair<int,double>> cutMap_particle;
+  std::map<std::string, std::pair<int,double>> cutMap_reco;
+  std::map<std::string, std::pair<int,double>> cutMap_particle;
   for(int i=0; i<(int) cutList_reco.size(); i++) { 
     cutMap_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
   }
