@@ -19,5 +19,5 @@ double get_cross_section(const char *process_name) {
   else if (process_name == wz_wjj_123j) return 1.615;
   else if (process_name == zzjj_j) return 0.0124;
   else if (process_name == zz_zjj_123j) return 0.4964;
-  else return 0;
+  else return 1.0;
 }
