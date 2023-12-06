@@ -357,9 +357,13 @@ Long64_t get_num_entries(const char *inputName) {
 Long64_t get_total_num_entries(const char *process_name) {
   std::string inputFileName = std::string(process_name) + "_inputs.txt";
   std::ifstream inputFile(inputFileName.c_str());
+  if(inputFile.fail()){
+    cout<<" File "<<inputFileName<<" does not exist returing -1 total num entries"<<endl;
+    return -1;
+  }
   std::string line;
   TChain chain("Delphes");
-  Long64_t total = 0;
+  Long64_t total=0;
   while (std::getline(inputFile, line)) {
     total += get_num_entries(line.c_str());
   }
@@ -369,6 +373,10 @@ Long64_t get_total_num_entries(const char *process_name) {
 Long64_t get_total_events(const char *process_name) {
   std::string inputFileName = std::string(process_name) + "_inputs.txt";
   std::ifstream inputFile(inputFileName.c_str());
+  if(inputFile.fail()){
+    cout<<" File "<<inputFileName<<" does not exist returing -1 total events"<<endl;
+    return -1;
+  }
   std::string line;
   TChain chain("Delphes");
   Long64_t total = 0;
@@ -426,12 +434,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
   Long64_t numberOfEntries = treeReader->GetEntries();
   Long64_t numEntries = get_total_events(process_name);  
+  if(numEntries==-1) numEntries=numberOfEntries;
+  cout<<"Num entries "<<numEntries<<endl;
   double cross_section = get_cross_section(process_name);
+  cout<<" cross section is "<<cross_section<<endl;
   Float_t totalWeight = 0.0;
-
-  
-  
-
   
   TClonesArray *branchJet = treeReader->UseBranch("Jet");
   TClonesArray *branchElectron = treeReader->UseBranch("Electron");
@@ -1065,6 +1072,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     totalWeight += event->Weight;
   }
 
+  cout<<" Total weight is "<<totalWeight<<endl;
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // loop
@@ -1077,9 +1085,6 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     Float_t weight = event->Weight*Lumi*cross_section*numberOfEntries/(numEntries*totalWeight);
     Float_t test_weight = event->Weight*cross_section*numberOfEntries/(numEntries*totalWeight);
     hWeight -> Fill(event->Weight, test_weight);
-    
-    
-
     /*
     // cout << "Reading Event: " << entry << ", Weight:" << event->Weight << endl;
     Float_t weight = event->Weight/numberOfEntries*Lumi;
