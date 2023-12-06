@@ -2815,8 +2815,9 @@ int main(int argc, char* argv[]) {
   // O: for ZZ H JJ, 1: (->H) ZZ  jj: 2: (->H) ZZ, 3: Hjj, 4: WW H JJ, 5: WW (->H) jj: 6: (->H) WW,
 
   string analysisType="HZZJJ";
-    if( argc > 2 )  analysisType=argv[3];
+  if( argc > 2 )  analysisType=string(argv[3]);
   
+  cout<<"Running analysis "<<analysisType<<endl;
   zAnalyzer(inputFileName, outputFileName,analysisType);
-  return 1;
+  return 0;
 }
