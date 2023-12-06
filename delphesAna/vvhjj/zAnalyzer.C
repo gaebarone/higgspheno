@@ -366,6 +366,22 @@ Long64_t get_total_num_entries(const char *process_name) {
   return total;
 }
 
+Long64_t get_total_events(const char *process_name) {
+  std::string inputFileName = std::string(process_name) + "_inputs.txt";
+  std::ifstream inputFile(inputFileName.c_str());
+  std::string line;
+  TChain chain("Delphes");
+  Long64_t total = 0;
+  while (std::getline(inputFile, line)) {
+    chain.Add(line.c_str());
+  }
+  ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
+  Long64_t numEntries = treeReader->GetEntries();
+  delete treeReader;
+  return numEntries;
+}
+
+
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -373,7 +389,7 @@ Long64_t get_total_num_entries(const char *process_name) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // void zAnalyzer(const char *inputFile,const char *outputFile, int kappaVal = 8) {
-void zAnalyzer(const char *inputFile,const char *outputFile,  string analysis="HZZJJ") {
+void zAnalyzer(const char *inputFile,const char *outputFile, const char *process_name, string analysis="HZZJJ") {
 
   
   
@@ -409,7 +425,14 @@ void zAnalyzer(const char *inputFile,const char *outputFile,  string analysis="H
 
   ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
   Long64_t numberOfEntries = treeReader->GetEntries();
+  Long64_t numEntries = get_total_events(process_name);  
+  double cross_section = get_cross_section(process_name);
+  Float_t totalWeight = 0.0;
 
+  
+  
+
+  
   TClonesArray *branchJet = treeReader->UseBranch("Jet");
   TClonesArray *branchElectron = treeReader->UseBranch("Electron");
   TClonesArray *branchMuon = treeReader->UseBranch("Muon");
@@ -517,7 +540,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile,  string analysis="H
     listOfTPorifles.push_back((cutFlowEffs[(*it)]));
   }
    
-  
+  TH1F *hWeight = new TH1F("weights", "weight", 50, 0.0, 1.0);
+  listOfTH1.push_back(hWeight);
   
   // higgs
   // 1D
@@ -1034,6 +1058,14 @@ void zAnalyzer(const char *inputFile,const char *outputFile,  string analysis="H
   listOfTH1.push_back(hClosure);
   
 
+  for(Int_t entry = 0; entry < numberOfEntries; ++entry){
+    // Load selected branches with data from specified event
+    treeReader->ReadEntry(entry);
+    HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
+    totalWeight += event->Weight;
+  }
+
+  
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // loop
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1042,11 +1074,10 @@ void zAnalyzer(const char *inputFile,const char *outputFile,  string analysis="H
     treeReader->ReadEntry(entry);
     std::map<int,double> kappaLambdaWeights;
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
-    Float_t weight = event->Weight;///numberOfEntries*Lumi;
-    sumOfWeights+=weight;
-    weight = weight * Lumi / numberOfEntries; 
-    hClosure->Fill(0.5,weight);
-    totWeightedEntries+=weight;
+    Float_t weight = event->Weight*Lumi*cross_section*numberOfEntries/(numEntries*totalWeight);
+    Float_t test_weight = event->Weight*cross_section*numberOfEntries/(numEntries*totalWeight);
+    hWeight -> Fill(event->Weight, test_weight);
+    
     
 
     /*
@@ -2812,12 +2843,14 @@ void zAnalyzer(const char *inputFile,const char *outputFile,  string analysis="H
 int main(int argc, char* argv[]) {
   const char *inputFileName = argv[1];
   const char *outputFileName = argv[2];
-  // O: for ZZ H JJ, 1: (->H) ZZ  jj: 2: (->H) ZZ, 3: Hjj, 4: WW H JJ, 5: WW (->H) jj: 6: (->H) WW,
-
+  const char *process_name = argv[3];
   string analysisType="HZZJJ";
-  if( argc > 2 )  analysisType=string(argv[3]);
+  // O: for ZZ H JJ, 1: (->H) ZZ  jj: 2: (->H) ZZ, 3: Hjj, 4: WW H JJ, 5: WW (->H) jj: 6: (->H) WW,
+  if( argc > 2 )  analysisType=string(argv[4]);
+
+  
   
   cout<<"Running analysis "<<analysisType<<endl;
-  zAnalyzer(inputFileName, outputFileName,analysisType);
+  zAnalyzer(inputFileName, outputFileName,process_name,analysisType);
   return 0;
 }
