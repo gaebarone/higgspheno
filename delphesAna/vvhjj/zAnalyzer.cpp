@@ -331,6 +331,20 @@ Long64_t get_total_num_entries(const char *process_name) {
   return total;
 }
 
+Long64_t get_total_events(const char *process_name) {
+  std::string inputFileName = std::string(process_name) + "_inputs.txt";
+  std::ifstream inputFile(inputFileName.c_str());
+  std::string line;
+  TChain chain("Delphes");
+  Long64_t total = 0;
+  while (std::getline(inputFile, line)) {
+    chain.Add(line.c_str());
+  }
+  ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
+  Long64_t numEntries = treeReader->GetEntries();
+  delete treeReader;
+  return numEntries;
+}
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -338,18 +352,21 @@ Long64_t get_total_num_entries(const char *process_name) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // void zAnalyzer(const char *inputFile,const char *outputFile, int kappaVal = 8) {
-void zAnalyzer(const char *inputFile,const char *outputFile, int analysisType=0) {
+void zAnalyzer(const char *inputFile, const char *outputFile, const char *process_name, int analysisType=0) {
 
 #ifdef __CLING__
   gSystem->Load("libDelphes");
 #endif
+
  // const double cross_section = get_cross_section(process_name);
   TChain chain("Delphes");
   chain.Add(inputFile);
 
   ExRootTreeReader *treeReader = new ExRootTreeReader(&chain);
   Long64_t numberOfEntries = treeReader->GetEntries();
-
+  Long64_t numEntries = get_total_events(process_name);  
+  double cross_section = get_cross_section(process_name);
+  Float_t totalWeight = 0.0;
   TClonesArray *branchJet = treeReader->UseBranch("Jet");
   TClonesArray *branchElectron = treeReader->UseBranch("Electron");
   TClonesArray *branchMuon = treeReader->UseBranch("Muon");
@@ -830,6 +847,8 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
 
 	TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
 	kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
+
+	TH1 *hWeight = new TH1F("weights", "weight", 50, 0.0, 1.0);
 	
   double  nPassed=0;
   double Lumi=1;//3e3;
@@ -977,6 +996,24 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // loop
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  for(Int_t entry = 0; entry < numberOfEntries; ++entry){
+    // Load selected branches with data from specified event
+    treeReader->ReadEntry(entry);
+    HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
+    totalWeight += event->Weight;
+  }
+
+  for(Int_t entry = 0; entry < numberOfEntries; ++entry){
+     // Load selected branches with data from specified event and calculate weight
+     treeReader->ReadEntry(entry);
+     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
+     Float_t weight = event->Weight*Lumi*cross_section*numberOfEntries/(numEntries*totalWeight);
+     Float_t test_weight = event->Weight*cross_section*numberOfEntries/(numEntries*totalWeight);
+     hWeight -> Fill(event->Weight, test_weight);
+
+
+/*
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
     //if( entry > 100) break;
     treeReader->ReadEntry(entry);
@@ -987,7 +1024,7 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
     weight = weight * Lumi / numberOfEntries; 
     hClosure->Fill(0.5,weight);
     totWeightedEntries+=weight;
-    
+*/    
 
 /*
  // cout << "Reading Event: " << entry << ", Weight:" << event->Weight << endl;
@@ -1019,6 +1056,7 @@ for(int i=0; i<(int) cutList_reco.size(); i++) {
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // reco
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+    cout<<"start"; 
 
 // higgs
 
@@ -1054,8 +1092,8 @@ int switchVal_reco = 0;
 	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
      });
     
-    //cout<<"Cut 1 btag reco";
-    if(switchVal_reco == 0 && btagIndex.size() > 1) { // at least one b tag 
+    cout<<"Cut 1 btag reco";
+     if(switchVal_reco == 0 && btagIndex.size() > 1) { // at least one b tag 
       increaseCount(cutFlowMap_reco,"1 btag reco",weight);
     } else{
       switchVal_reco = 1;
@@ -1079,7 +1117,7 @@ int switchVal_reco = 0;
    // This is a cut !!
    if( switchVal_reco == 0  && bJetPairsComb.size() >= 1) { ////continue; // need at least two good jets;x
      increaseCount(cutFlowMap_reco,"2 b-like jet pairs reco",weight);
-     //cutFlowMap_reco["2 b-like jet pairs reco"] = {cutVal_reco,cutValW_reco};
+     cutFlowMap_reco["2 b-like jet pairs reco"] = {cutVal_reco,cutValW_reco};
    }
    else switchVal_reco = 1;
    
@@ -1097,7 +1135,7 @@ int switchVal_reco = 0;
    for(int i=0; i<(int) bJetPairs.size(); i++){
      b1=(Jet*)branchJet->At(bJetPairs[i].first);
      b2=(Jet*)branchJet->At(bJetPairs[i].second);
-     //if( b1->BTag>0 && b2->BTag>0) {
+     if( b1->BTag>0 && b2->BTag>0) {
      // Attention 
      if( isMyBTag(b1, branchGenParticle,0,0.4,btagEff,fakeEff) && abs(b1->Eta) < 2.5 || (isMyBTag(b2, branchGenParticle,0,0.4,btagEff,fakeEff) && abs(b2->Eta)<2.5) ) {
        higgsbbcandidate=bJetPairs[i];
@@ -1684,7 +1722,7 @@ int switchVal_reco = 0;
       bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndexParticle);
 //  vector<vector <int>> bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndexParticle);
     
-    //if( bJetPairsCombParticle.size() < 1) continue; // need at least two good jets;  
+    if( bJetPairsCombParticle.size() < 1) continue; // need at least two good jets;  
     if(switchVal_particle==0 && bJetPairsCombParticle.size() >0 ) 
       increaseCount(cutFlowMap_particle,"2 b-like jet pairs part",weight);
     else switchVal_particle=1; 
@@ -1713,7 +1751,7 @@ int switchVal_reco = 0;
     
     if(switchVal_particle == 0 && foundBjetParticle) { // b pair
       increaseCount(cutFlowMap_particle,"found bb particle",weight);
-   } else  switchVal_particle = 1;
+     } else  switchVal_particle = 1;
     
    if(switchVal_particle == 0 && b1Particle !=nullptr && b2Particle !=nullptr && foundBjetParticle){
     
@@ -2733,16 +2771,19 @@ for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
   std::cout<<"Total number of entries "<<numberOfEntries<<" Passed "<<nPassed<<" raw "<<nPassedRaw<<std::endl;
 
 
-  
+  }
 }
 
 int main(int argc, char* argv[]) {
   const char *inputFileName = argv[1];
   const char *outputFileName = argv[2];
-  // O: for ZZ H JJ, 1: (->H) ZZ  jj: 2: (->H) ZZ, 3: Hjj, 4: WW H JJ, 5: WW (->H) jj: 6: (->H) WW,
-  int analysisType=0;
-  if( argc > 2 )  analysisType=atoi(argv[3]);
-  //  const char *process_name = argv[3];                                                                                                                                                                                                                                                                                                                                   
-  zAnalyzer(inputFileName, outputFileName,analysisType);
+  const char *process_name = argv[3];
+  
+ // O: for ZZ H JJ, 1: (->H) ZZ  jj: 2: (->H) ZZ, 3: Hjj, 4: WW H JJ, 5: WW (->H) jj: 6: (->H) WW,
+   int analysisType=0;
+   if( argc > 3 )  analysisType=atoi(argv[4]);
+  //  const char *process_name = argv[3];
+  
+   zAnalyzer(inputFileName, outputFileName, process_name, analysisType);
   return 1;
 }
