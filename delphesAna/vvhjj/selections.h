@@ -162,7 +162,46 @@ vector< pair<int,int>> GetmuRecoPairIndices(TClonesArray *branchMuon=nullptr, ve
 }
 
 
+vector<pair<int,pair<int,int>>> GetRecoPairIndices(vector< pair<int,int>> elecRecoPairIndices, vector< pair<int,int>> muRecoPairIndices,int &thisRecoEventType,TClonesArray *branchElectron=nullptr,TClonesArray *branchMuon=nullptr){
 
+  vector<pair<int,pair<int,int>>> RecoPairIndices;
+
+
+for(int i=0; i<(int) elecRecoPairIndices.size(); i++)
+      RecoPairIndices.push_back(make_pair(0,elecRecoPairIndices.at(i)));
+    for(int i=0; i<(int) muRecoPairIndices.size(); i++)
+      RecoPairIndices.push_back(make_pair(1,muRecoPairIndices.at(i)));
+
+    // sort all of the indices by closeness to mZ
+    sort(RecoPairIndices.begin(), RecoPairIndices.end(), [branchMuon,branchElectron]  ( const pair<int,pair<int,int>>  lhs , const pair<int,pair<int,int>>   rhs ){
+
+	double mass1_reco=0 ;
+    	double mass2_reco=0;
+	
+	if( lhs.first==0 ) mass1_reco = (((Electron*)branchElectron->At(lhs.second.first))->P4() + ((Electron*)branchElectron->At(lhs.second.second))->P4()).M();
+	else mass1_reco = (((Muon*)branchMuon->At(lhs.second.first))->P4() + ((Muon*)branchMuon->At(lhs.second.second))->P4()).M();
+	
+	if( rhs.first==0 ) mass2_reco = (((Electron*)branchElectron->At(rhs.second.first))->P4() + ((Electron*)branchElectron->At(rhs.second.second))->P4()).M();
+	else mass2_reco = (((Muon*)branchMuon->At(rhs.second.first))->P4() + ((Muon*)branchMuon->At(rhs.second.second))->P4()).M();
+	
+	return fabs(mass1_reco -91.0 )  <  fabs(mass2_reco -91.0); 
+	
+      });
+
+     //cout<<"Reco pair indices "<<RecoPairIndices.size()<<endl;
+    //for( int i=0; i<(int)RecoPairIndices.size(); i++){
+    //if(RecoPairIndices[i].first==0) 
+    //	cout<<" "<<"electrons "<< (((Electron*)branchElectron->At(RecoPairIndices[i].second.first))->P4() + ((Electron*)branchElectron->At(RecoPairIndices[i].second.second))->P4()).M()<<" "<<i<<endl;
+    //else
+    //	cout<<" "<<"muons "<< (((Muon*)branchMuon->At(RecoPairIndices[i].second.first))->P4() + ((Muon*)branchMuon->At(RecoPairIndices[i].second.second))->P4()).M()<<"  "<<i<<endl;
+    //}
+    
+
+    
+    return RecoPairIndices;
+
+
+}
 
 
 
