@@ -85,7 +85,7 @@ bool ghost_bbtag(TClonesArray *branchGenParticle, Jet *jet1, Jet *jet2) {
 }
 
 
-bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle,int seed=0,double jet_radius = 0.4, double effWrk=0.9,double fake_eff=0.01){
+bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle=nullptr,int seed=0,double jet_radius = 0.4, double effWrk=0.9,double fake_eff=0.01){
   // tracker acceptance
   
   bool isB=ghost_btag(branchGenParticle,jet,jet_radius);

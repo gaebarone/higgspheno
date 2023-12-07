@@ -44,8 +44,6 @@ typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
 
 using namespace std;
 
-double btagEff=0.85;
-double fakeEff=0.01;
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // initialize combinations
@@ -949,30 +947,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     
     vector <int> btagIndex;
     vector <int> noBtag;
-    vector <int> goodJetIndex;
+    vector <int> goodJetIndex=GoodJetIndices(btagIndex,noBtag,branchJet,branchGenParticle);
 
-    for(int i=0; i<(int)branchJet->GetEntries(); i++){
-      Jet *jet=(Jet*) branchJet->At(i);
-      //if( jet->PT < 20) continue;
-      //if (fabs(jet->Eta) > 4.4) continue; 
-      //  if( jet->BTag>0) btagIndex.push_back(i);
-      if( isMyBTag(jet, branchGenParticle,0,0.4,btagEff,fakeEff) && abs(jet->Eta) < 2.5 ) btagIndex.push_back(i); 
-
-      else noBtag.push_back(i);
-      goodJetIndex.push_back(i);
-    }
-    
-    
-
-    sort(btagIndex.begin(), btagIndex.end(), [branchJet](const int& lhs, const int& rhs) {
-	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
-      });
-    sort(noBtag.begin(), noBtag.end(), [branchJet](const int& lhs, const int& rhs) {
-	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
-      });
-    sort(goodJetIndex.begin(), goodJetIndex.end(), [branchJet](const int& lhs, const int& rhs) {
-	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
-      });
     
     if(enableCutReco["1 btag reco"]){
       if(switchVal_reco == 0 && btagIndex.size() > 1)
@@ -989,9 +965,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     Jet *b1=nullptr;
     Jet *b2=nullptr;
    
-    vector<pair<int,int>> bJetPairs;
+    
     vector<vector <int>> bJetPairsComb;
-
+    vector<pair<int,int>> bJetPairs;
+    pair<int,int> b12pos;
+    
     if(switchVal_reco == 0 && goodJetIndex.size()>1 )
       bJetPairsComb= combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
     //  vector<vector <int>> bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
@@ -1002,30 +980,17 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       //cutFlowMap_reco["2 b-like jet pairs reco"] = {cutVal_reco,cutValW_reco};
     }
     else switchVal_reco = 1;
-   
-    for(int i=0; i<(int)bJetPairsComb.size(); i++)
-      bJetPairs.push_back(make_pair(bJetPairsComb[i][0],bJetPairsComb[i][1]));
-   
-    if( bJetPairs.size() > 1) 
-      sort(bJetPairs.begin(), bJetPairs.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
-	  return fabs(((((Jet*)branchJet->At(lhs.first))->P4() + ((Jet*)branchJet->At(lhs.second))->P4())).M() - 125 ) <
-	    fabs( ((((Jet*)branchJet->At(rhs.first))->P4() + ((Jet*)branchJet->At(rhs.second))->P4()).M()) - 125 ) ; 
-	});
-   
-    pair <int,int> higgsbbcandidate;
-    bool foundBjet=false; 
-    for(int i=0; i<(int) bJetPairs.size(); i++){
-      b1=(Jet*)branchJet->At(bJetPairs[i].first);
-      b2=(Jet*)branchJet->At(bJetPairs[i].second);
-      //if( b1->BTag>0 && b2->BTag>0) {
-      // Attention 
-      if( isMyBTag(b1, branchGenParticle,0,0.4,btagEff,fakeEff) && abs(b1->Eta) < 2.5 || (isMyBTag(b2, branchGenParticle,0,0.4,btagEff,fakeEff) && abs(b2->Eta)<2.5) ) {
-	higgsbbcandidate=bJetPairs[i];
-	foundBjet=true;
-	break;
-      }
+
+    bool foundBjet=false;
+    pair <int,int> higgsbbcandidate=Gethiggsbbcandidate(bJetPairsComb,bJetPairs,b12pos,foundBjet,branchJet,branchGenParticle);
+    //b1=(Jet*)branchJet->At(b12pos.first);
+    //b2=(Jet*)branchJet->At(b12pos.second);
+    if(foundBjet){
+      b1=(Jet*)branchJet->At(higgsbbcandidate.first);
+      b2=(Jet*)branchJet->At(higgsbbcandidate.second);
     }
 
+    
     if(enableCutReco["found bb reco"]){
       if(switchVal_reco == 0 && foundBjet) increaseCount(cutFlowMap_reco,"found bb reco",weight);
       else  switchVal_reco = 1;
