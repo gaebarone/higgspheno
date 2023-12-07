@@ -1,3 +1,5 @@
+#ifndef GET_CROSS_SECTION_H
+#define GET_CROSS_SECTION_H
 #include <string>
 
 double get_cross_section(const char *process_name) {
@@ -21,3 +23,4 @@ double get_cross_section(const char *process_name) {
   else if (process_name == zz_zjj_123j) return 0.4964;
   else return 1.0;
 }
+#endif

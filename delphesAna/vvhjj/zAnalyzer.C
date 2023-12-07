@@ -7,6 +7,7 @@ R__LOAD_LIBRARY("libDelphes")
 #include "classes/DelphesLHEFReader.h"
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
 #include "../common_includes/ghost_tagging.h"
+#include "../common_includes/combinations.h"
 #include "../common_includes/get_cross_section.h"
 #include <iostream>
 #include <fstream>
@@ -34,7 +35,7 @@ R__LOAD_LIBRARY("libDelphes")
 #include "TCanvas.h"
 #include "TProfile.h"
 #include <vector>
-#include "../common_includes/combinations.h" 
+#include "selections.h"
 #include <iomanip>
 
 
@@ -68,9 +69,9 @@ void DefineSelections(){
   cutSelectionProcessParticle["HZZJJ"]={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
   cutSelectionProcessParton["HZZJJ"]={"initial parton", "Higgs Candidate", "ZZ parton"};
   
-  cutSelectionProcessReco["ZZjj"]={"initial reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"}; 
-  cutSelectionProcessParticle["ZZjj"]={"initial particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-  cutSelectionProcessParton["ZZjj"]={"initial parton","ZZ parton"};
+  cutSelectionProcessReco["ZZJJ"]={"initial reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"}; 
+  cutSelectionProcessParticle["ZZJJ"]={"initial particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
+  cutSelectionProcessParton["ZZJJ"]={"initial parton","ZZ parton"};
 }
 
 bool hasCut(vector<string> cutList,string cut){
@@ -127,15 +128,8 @@ void increaseAllCounts(std::vector<string,std::map<string, std::pair<int,double>
 }
 */
 
-void remove_overlaps(vector< pair<int,int>> muPairIndices){
-  for( vector< pair<int,int>>::iterator it=muPairIndices.begin(); it!=muPairIndices.end(); it++){
-    pair<int,int> one=(*it);
-    for(vector< pair<int,int>>::iterator it2=it+1; it2!=muPairIndices.end(); it2++){
-      pair<int,int> two=(*it2);
-      if( one.first == two.first || one.first == two.second || one.second == two.second || one.second == two.second) muPairIndices.erase(it2--);
-    }
-  }
-}
+
+
 
 
 bool FillHiggsTruthRecord(TClonesArray *branchGenParticle, TLorentzVector & h_parton, TLorentzVector & b1_parton, TLorentzVector & b2_parton, TLorentzVector & j1_parton, TLorentzVector &j2_parton){
@@ -186,39 +180,6 @@ bool FillHiggsTruthRecord(TClonesArray *branchGenParticle, TLorentzVector & h_pa
     }
   }
   return (foundHiggsOrinTree && foundHiggsToBbb && foundHiggsToBbbJets); 
-}
-
-
-std::vector<std::vector<int>> combinationsNoRepetitionAndOrderDoesNotMatter (int subsetSize, std::vector<int> setOfNumbers){
-  std::vector<std::vector<int> > subsets{};
-  subsets.reserve (count_each_combination (setOfNumbers.begin (), setOfNumbers.begin () + subsetSize, setOfNumbers.end ()));
-  for_each_combination (setOfNumbers.begin (), setOfNumbers.begin () + subsetSize, setOfNumbers.end (), [&subsets] (auto first, auto last) {
-      subsets.push_back (std::vector<int>{ first, last });
-      return false;
-    });
-  return subsets;
-}
-
-std::vector <std::vector <int>> getAllCombinations(vector<int> inputVector, int k){
-  std::vector<vector<int>> combinations; 
-  std::vector<int> selector(inputVector.size());
-  std::fill(selector.begin(), selector.begin() + k, 1);
-
-  do {
-    std::vector<int> selectedIds;
-    std::vector<int> selectedVectorElements;
-    for (int i = 0; i < inputVector.size(); i++) {
-      if (selector[i]) {
-	selectedIds.push_back(i);
-      }
-    }
-    for (auto& id : selectedIds) {
-      selectedVectorElements.push_back(inputVector[id]);
-    }
-    combinations.push_back(selectedVectorElements);
-  } while (std::prev_permutation(selector.begin(), selector.end()));
-
-  return combinations;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -388,6 +349,8 @@ Long64_t get_total_events(const char *process_name) {
   delete treeReader;
   return numEntries;
 }
+
+
 
 
 
@@ -1321,34 +1284,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   
     // leptons + z
 
-    vector <int> goodE_reco_indices; 
-    for(int i=0; i<(int)branchElectron->GetEntries(); i++){
-      Electron *el_reco = (Electron *) branchElectron->At(i);
-
-      // pT and eta cuts 
-      if( el_reco->PT > 5.0 && fabs(el_reco->Eta) < 2.5) goodE_reco_indices.push_back(i);
-      
-    }
-
-    // sort the indices by pT ;
-    sort(goodE_reco_indices.begin(), goodE_reco_indices.end(), [branchElectron](const int& lhs, const int& rhs) {
-	return ((Electron*)branchElectron->At(lhs))->PT > ((Electron*)branchElectron->At(rhs))->PT;
-      });
-
-    vector <int> goodMu_reco_indices; 
-    for(int i=0; i<(int)branchMuon->GetEntries(); i++){
-      Muon *mu_reco = (Muon *) branchMuon->At(i);
+    vector <int> goodE_reco_indices = GoodElectronIndices(branchElectron);
+    vector <int> goodMu_reco_indices=GoodMuonIndices(branchMuon);
     
-      // pT and eta cuts 
-      if( mu_reco->PT > 5.0 && fabs(mu_reco->Eta) < 2.5) goodMu_reco_indices.push_back(i);
-
-    }
-
-    // sort the indices by pT ;
-    sort(goodMu_reco_indices.begin(), goodMu_reco_indices.end(), [branchMuon](const int& lhs, const int& rhs) {
-	return ((Muon*)branchMuon->At(lhs))->PT > ((Muon*)branchMuon->At(rhs))->PT;
-      });
-
     //cout<<endl;
     //cout<<"Electrons "<<endl;
     //for(int i=0;i<(int)goodE_reco_indices.size(); i++)
@@ -1360,82 +1298,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     // form pairs for each flavour
 
     // electrons 
-    vector< pair<int,int>> elecRecoPairIndices;
-    vector< pair<int,int>> elecRecoPairIndicesIn;
-    vector <vector<int>> elecRecoPairIndices_;
-    if( goodE_reco_indices.size() > 1 )
-      elecRecoPairIndices_=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodE_reco_indices);
-
-    // remove all combinations not satisfying criteria 
-    for(int i=0;i<(int)elecRecoPairIndices_.size(); i++){
-      int elecRecoIndex=elecRecoPairIndices_[i].at(0);
-      int elecRecoIndex2=elecRecoPairIndices_[i].at(1);
-      
-      Electron *el1_reco=(Electron*) branchElectron->At(elecRecoIndex);
-      Electron *el2_reco=(Electron*) branchElectron->At(elecRecoIndex2);
-
-      if( el1_reco->Charge == el2_reco->Charge ) continue;
-      
-      elecRecoPairIndicesIn.push_back(make_pair(elecRecoIndex,elecRecoIndex2));
-    }
-
-    elecRecoPairIndices=elecRecoPairIndicesIn;
-    
-    sort(elecRecoPairIndices.begin(), elecRecoPairIndices.end(), [branchElectron](const pair<int,int> lhs, const pair<int,int> rhs) {
-    	return fabs(((((Electron*)branchElectron->At(lhs.first))->P4() + ((Electron*)branchElectron->At(lhs.second))->P4())).M() -91 ) <
-	  fabs( ((((Electron*)branchElectron->At(rhs.first))->P4() + ((Electron*)branchElectron->At(rhs.second))->P4()).M()) -91 ) ; 
-      });
-
-    remove_overlaps(elecRecoPairIndices);
-
+    vector< pair<int,int>> elecRecoPairIndices=GetelecRecoPairIndices(branchElectron,goodE_reco_indices); 
     // muons 
-    vector< pair<int,int>> muRecoPairIndicesIn;
-    vector< pair<int,int>> muRecoPairIndices;
-    vector <vector<int>> muRecoPairIndices_;
-    if(goodMu_reco_indices.size() > 1) 
-      muRecoPairIndices_=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodMu_reco_indices);
-
-    // remove all combinations not satifing criteria 
-    for(int i=0; i<(int)muRecoPairIndices_.size(); i++){
-      int elecRecoIndex=muRecoPairIndices_[i].at(0);
-      int elecRecoIndex2=muRecoPairIndices_[i].at(1);
-
-      Muon *el1_reco= (Muon*) branchMuon->At(elecRecoIndex);
-      Muon *el2_reco=(Muon*) branchMuon->At(elecRecoIndex2);
-      if( el1_reco->Charge ==  el2_reco->Charge ) continue;
-      muRecoPairIndicesIn.push_back(make_pair(elecRecoIndex,elecRecoIndex2));
-    }
-
-    muRecoPairIndices=muRecoPairIndicesIn;
-
-    sort(muRecoPairIndices.begin(), muRecoPairIndices.end(), [branchMuon](const pair<int,int> lhs, const pair<int,int> rhs) {
-    	return fabs(((((Muon*)branchMuon->At(lhs.first))->P4() + ((Muon*)branchMuon->At(lhs.second))->P4())).M() -91 ) <
-	  fabs( ((((Muon*)branchMuon->At(rhs.first))->P4() + ((Muon*)branchMuon->At(rhs.second))->P4()).M()) -91 ) ; 
-      });
+    vector< pair<int,int>> muRecoPairIndices=GetmuRecoPairIndices(branchMuon,goodMu_reco_indices);
     
-    //sort(muRecoPairIndices.begin(),muRecoPairIndices.end(), [branchMuon]( pair<int,int>   & lhs,  pair<int,int>   & rhs) {
-    //	    int index11_reco=(lhs).first;
-    //	    int index12_reco=(lhs).second;
-    //	    int index21_reco=(rhs).first;
-    //	int index22_reco=(rhs).second;
-    //	    return fabs(((((Muon*)branchMuon->At(index11_reco))->P4() + ((Muon*)branchMuon->At(index12_reco))->P4())).M() - 91) <
-    //	  fabs( ((((Muon*)branchMuon->At(index21_reco))->P4() + ((Muon*)branchMuon->At(index22_reco))->P4()).M()) -91);
-    //});
-    
-    remove_overlaps(muRecoPairIndices);
-
-
     //increaseCount(cutFlowMap_reco,"at least two lep pairs",weight);
-    
-    // GB: Isn't this a cut ??
-    // order quads by mZ1 and mZ2
-    //if( muRecoPairIndices.size() + elecRecoPairIndices.size() < 2) continue; // no candidate found;
-    //if( switchVal_reco==0 && ( muRecoPairIndices.size() + elecRecoPairIndices.size() > 1)) {
-    //increaseCount(cutFlowMap_reco,"at least two lep pairs",weight);
-    ////cutFlowMap_reco["at least two lep pairs"] = {cutVal_reco,cutValW_reco};
-    //}
-    //else switchVal_reco=1; 
-    
     int thisRecoEventType=-1; 
     
     vector<pair<int,pair<int,int>>> RecoPairIndices; // 0 for electron 1 for muon

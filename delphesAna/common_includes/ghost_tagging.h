@@ -1,5 +1,7 @@
 //#ifdef __CLING__
 //R__LOAD_LIBRARY(libDelphes)
+#ifndef GHOST_TAGGING_H
+#define GHOST_TAGGING_H
 #include "TClonesArray.h"
 #include "classes/DelphesClasses.h"
 //#endif
@@ -100,3 +102,4 @@ bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle,int seed=0,double jet_r
   if( isB) return passEff;
   else return passFake; 
 }
+#endif
