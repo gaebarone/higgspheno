@@ -60,6 +60,7 @@ std::map<std::string, std::vector<string> > cutSelectionProcessParton;
 
 void DefineSelections(){
   // Cut selections to consider
+  // ghost seleciton
   cutSelectionProcessReco["all"]={"initial reco", "1 btag reco", "2 good j reco", "2 b-like jet pairs reco", "found bb reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"}; 
   cutSelectionProcessParticle["all"]={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
   cutSelectionProcessParton["all"]={"initial parton", "Higgs Candidate", "ZZ parton"};
@@ -893,6 +894,10 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   }
 
   cout<<" Total weight is "<<totalWeight<<endl;
+
+  //std::map<string, Selection*> selections;
+  //selections["hvvbfjj"]=new Selection..;
+  //selections["vvjj"]=new Selection..; 
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // loop
@@ -905,6 +910,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     Float_t weight = event->Weight*Lumi*cross_section*numberOfEntries/(numEntries*totalWeight);
     Float_t test_weight = event->Weight*cross_section*numberOfEntries/(numEntries*totalWeight);
     hWeight -> Fill(event->Weight, test_weight);
+
+
+    //for( h in selections)
+    // CutMap[h]=passSelection=selections[h].PasSelection(event); 
+    
     /*
     // cout << "Reading Event: " << entry << ", Weight:" << event->Weight << endl;
     Float_t weight = event->Weight/numberOfEntries*Lumi;
@@ -990,12 +1000,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       b2=(Jet*)branchJet->At(higgsbbcandidate.second);
     }
 
-    
     if(enableCutReco["found bb reco"]){
       if(switchVal_reco == 0 && foundBjet) increaseCount(cutFlowMap_reco,"found bb reco",weight);
       else  switchVal_reco = 1;
     }
-   
+    
     if(switchVal_reco == 0 && b1 !=nullptr && b2 !=nullptr && foundBjet){
       b1_reco = b1->P4();
       b2_reco = b2->P4();
@@ -1025,10 +1034,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       nonHiggsJet.push_back(i);
     }
 
-    if(nonHiggsJet.size() > 1) {
-      sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchJet](const int& lhs, const int& rhs) {
-	  return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
-	});}
+    SortByPtIndices(nonHiggsJet,branchJet);
+    //if(nonHiggsJet.size() > 1) {
+    //sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchJet](const int& lhs, const int& rhs) {
+    //return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
+    //});}
     
     if(enableCutReco["2 vbfj reco"]){
       if(switchVal_reco == 0 && nonHiggsJet.size() > 1) increaseCount(cutFlowMap_reco,"2 vbfj reco",weight);
@@ -1039,16 +1049,17 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     vector<vector <int>> vbfJetIndexComb;
 
     if(enableCutReco["vbfj pairs"]){
-    if(switchVal_reco==0 && nonHiggsJet.size() > 1 ) {
-      increaseCount(cutFlowMap_reco,"vbfj pairs",weight);
-      vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
-    }
-    else switchVal_reco=1;
+      if(switchVal_reco==0 && nonHiggsJet.size() > 1 ) {
+	increaseCount(cutFlowMap_reco,"vbfj pairs",weight);
+	vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
+      }
+      else switchVal_reco=1;
     }
 
-    //if(switchVal_reco==0)    
-    for(int i=0; i<(int)vbfJetIndexComb.size(); i++)
-      vbfJetIndex.push_back(make_pair(vbfJetIndexComb[i][0],vbfJetIndexComb[i][1]));
+    //if(switchVal_reco==0)
+    vbfJetIndex=GetvbfJetIndex(vbfJetIndexComb);
+    //for(int i=0; i<(int)vbfJetIndexComb.size(); i++)
+    //vbfJetIndex.push_back(make_pair(vbfJetIndexComb[i][0],vbfJetIndexComb[i][1]));
     
     int vbfJetsIndexCandidate = -1;
     vector<pair<int,int>> vbfJetIndex2;
