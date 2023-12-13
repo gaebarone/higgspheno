@@ -98,6 +98,43 @@ void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<string, std::pair<int,doubl
   } 
 } 
 
+
+void PrintCutFlow(std::map<std::string, std::pair<int, double>> cutFlowMap, std::vector<std::string> cutList, std::string label) {
+  int nameWidth = 30;
+  int valueWidth = 10;
+
+  auto printLine = [&]() {
+    std::cout << std::setw(nameWidth + valueWidth * 3 + 7) << std::setfill('-') << "" << std::setfill(' ') << std::endl;
+  };
+
+  auto printRow = [&](const std::string& name, int passed, double relEff, double efficiency) {
+    std::cout << "| " << std::setw(nameWidth) << std::left << name << "|";
+    std::cout << std::setw(valueWidth) << std::left << passed << "|";
+    std::cout << std::setw(valueWidth) << std::left << relEff << "|";
+    std::cout << std::setw(valueWidth) << std::left << efficiency << "|" << std::endl;
+  };
+
+  // Table header
+  printLine();
+  std::cout << "| " << std::setw(nameWidth) << std::left << label + " Cut" << "|";
+  std::cout << std::setw(valueWidth) << std::left << label + " Passed" << "|";
+  std::cout << std::setw(valueWidth) << std::left << " Rel Eff " << "|";
+  std::cout << std::setw(valueWidth) << std::left << label + " Efficiency" << "|" << std::endl;
+  printLine();
+
+  // Table rows
+  for (const std::string& cutName : cutList) {
+    double passed_reco = cutFlowMap[cutName].first;
+    double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
+    double relEff = (cutList.size() > 1 && &cutName != &cutList[0]) ? 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList.at(&cutName - &cutList[1])].second : 100;
+
+    printRow(cutName, passed_reco, relEff, efficiency_reco);
+  }
+  printLine();
+}
+
+
+/*
 void PrintCutFlow(std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList, string label){
 
   std::cout<<std::left<<std::setw(25)<<label<<" Cut"<<std::setw(10)<<label<<" Passed"<<std::setw(15)<<" Rel Eff "<< std::setw(15)<<label <<" Efficiency"<< std::endl;
@@ -114,7 +151,7 @@ void PrintCutFlow(std::map<string, std::pair<int,double>> cutFlowMap, std::vecto
 
   cout<<endl;
 }
-
+*/
 
 void increaseCount(std::map<string, std::pair<int,double>> & cutFlowMap, string cutName, double weight){
   cutFlowMap[cutName]=make_pair(cutFlowMap[cutName].first+1,cutFlowMap[cutName].second+weight);
@@ -255,9 +292,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   Long64_t numberOfEntries = treeReader->GetEntries();
   Long64_t numEntries = get_total_events(process_name);  
   if(numEntries==-1) numEntries=numberOfEntries;
-  cout<<"Num entries "<<numEntries<<endl;
+  cout<<"NUMBER OF ENTRIES: "<<numEntries<<endl;
   double cross_section = get_cross_section(process_name);
-  cout<<" cross section is "<<cross_section<<endl;
+  cout<<"CROSS SECTION: "<<cross_section<<endl;
   Float_t totalWeight = 0.0;
   
   TClonesArray *branchJet = treeReader->UseBranch("Jet");
@@ -730,11 +767,22 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   // mixed comps
     
     // higgs dphi vs. vbfj dphi
-    // higgs deta vs. vbfj deta
+      TH2F*hbbjjdeltaPhicompreco = new TH2F("bb_jj_#Delta#phi_comp_reco", "bb_jj_#Delta#phi_comp_reco", phiBins, -TMath::Pi(), +TMath::Pi(), phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hbbjjdeltaPhicompreco);
+      TH2F*hbbjjdeltaPhicompparticle = new TH2F("bb_jj_#Delta#phi_comp_particle", "bb_jj_#Delta#phi_comp_particle", phiBins, -TMath::Pi(), +TMath::Pi(), phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hbbjjdeltaPhicompparticle);
+      TH2F*hbbjjdeltaPhicompparton = new TH2F("bb_jj_#Delta#phi_comp_parton", "bb_jj_#Delta#phi_comp_parton", phiBins, -TMath::Pi(), +TMath::Pi(), phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hbbjjdeltaPhicompparton);
 
-    // lepton dphi vs. higgs pT 
-      TH2F*hl1l2deltaPhiHpTcompreco = new TH2F("l1l2_delta#phi_H_pT_comp_reco", "l1l2_delta#phi_H_pT_comp_reco", phiBins, -TMath::Pi(),+TMath::Pi(), pTBins, hpTmin, hpTmax); listOfTH2.push_back(hl1l2deltaPhiHpTcompreco);
-      TH2F*hl3l4deltaPhiHpTcompreco = new TH2F("l3l4_delta#phi_H_pT_comp_reco", "l1l2_delta#phi_H_pT_comp_reco", phiBins, -TMath::Pi(),+TMath::Pi(), pTBins, hpTmin, hpTmax); listOfTH2.push_back(hl3l4deltaPhiHpTcompreco);
+    // higgs deta vs. vbfj deta
+      TH2F*hbbdeltaEtajjdeltaPhicompreco = new TH2F("bb_#Delta#eta_jj_#Delta#phi_comp_reco", "bb_#Delta#eta_jj_#Delta#phi_comp_reco", etaBins, hetamin, hetamax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hbbdeltaEtajjdeltaPhicompreco);
+      TH2F*hbbdeltaEtajjdeltaPhicompparticle = new TH2F("bb_#Delta#eta_jj_#Delta#phi_comp_particle", "bb_#Delta#eta_jj_#Delta#phi_comp_particle", etaBins, hetamin, hetamax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hbbdeltaEtajjdeltaPhicompparticle);
+      TH2F*hbbdeltaEtajjdeltaPhicompparton = new TH2F("bb_#Delta#eta_jj_#Delta#phi_comp_parton", "bb_#Delta#eta_jj_#Delta#phi_comp_parton", etaBins, hetamin, hetamax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hbbdeltaEtajjdeltaPhicompparton);
+
+    // higgs pT vs. lepton dphi 
+      TH2F*hHpTl1l2deltaPhicompreco = new TH2F("h_pT_l1l2_delta#phi_comp_reco", "h_pT_l1l2_delta#phi_comp_reco", pTBins, hpTmin, hpTmax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hHpTl1l2deltaPhicompreco);
+      TH2F*hHpTl3l4deltaPhicompreco = new TH2F("h_pT_l3l4_delta#phi_comp_reco", "h_pT_l1l2_delta#phi_comp_reco", pTBins, hpTmin, hpTmax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hHpTl3l4deltaPhicompreco);
+      TH2F*hHpTl1l2deltaPhicompparticle = new TH2F("h_pT_l1l2_delta#phi_comp_particle", "h_pT_l1l2_delta#phi_comp_particle", pTBins, hpTmin, hpTmax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hHpTl1l2deltaPhicompparticle);
+      TH2F*hHpTl3l4deltaPhicompparticle = new TH2F("h_pT_l3l4_delta#phi_comp_particle", "h_pT_l1l2_delta#phi_comp_particle", pTBins, hpTmin, hpTmax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hHpTl3l4deltaPhicompparticle);
+      TH2F*hHpTl1l2deltaPhicompparton = new TH2F("h_pT_l1l2_delta#phi_comp_parton", "h_pT_l1l2_delta#phi_comp_parton", pTBins, hpTmin, hpTmax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hHpTl1l2deltaPhicompparton);
+      TH2F*hHpTl3l4deltaPhicompparton = new TH2F("h_pT_l3l4_delta#phi_comp_parton", "h_pT_l1l2_delta#phi_comp_parton", pTBins, hpTmin, hpTmax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hHpTl3l4deltaPhicompparton);
 
     // higgs pT vs. z pT
       TH2F*hHz1pTcompreco = new TH2F("h_z1_pT_comp_reco", "h_z1_pT_comp_reco", pTBins, hpTmin, hpTmax, pTBins, zpTmin, zpTmax); listOfTH2.push_back(hHz1pTcompreco);
@@ -749,9 +797,16 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       TH2F*hHzzpTcompparticle = new TH2F("h_zz_pT_comp_particle", "h_zz_pT_comp_particle", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax); listOfTH2.push_back(hHzzpTcompparticle);
       TH2F*hHzzpTcompparton = new TH2F("h_zz_pT_comp_parton", "h_zz_pT_comp_parton", pTBins, hpTmin, 2*hpTmax, pTBins, zpTmin, 2*zpTmax); listOfTH2.push_back(hHzzpTcompparton);
 
-    // higgs pT vs. zz dphi    
-    // higgs pT vs. zz deta    
+    // higgs pT vs. zz dphi
+      TH2F*hHpTzzdeltaPhicompreco = new TH2F("h_pT_zz_delta#phi_comp_reco", "h_pT_zz_delta#phi_comp_reco", pTBins, hpTmin, hpTmax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hHpTzzdeltaPhicompreco);
+      TH2F*hHpTzzdeltaPhicompparticle = new TH2F("h_pT_zz_delta#phi_comp_particle", "h_pT_zz_delta#phi_comp_particle", pTBins, hpTmin, hpTmax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hHpTzzdeltaPhicompparticle);
+      TH2F*hHpTzzdeltaPhicompparton = new TH2F("h_pT_zz_delta#phi_comp_parton", "h_pT_zz_delta#phi_comp_parton", pTBins, hpTmin, hpTmax, phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hHpTzzdeltaPhicompparton);
     
+    // higgs pT vs. zz deta    
+      TH2F*hHpTzzdeltaEtacompreco = new TH2F("h_pT_zz_delta#eta_comp_reco", "h_pT_zz_delta#eta_comp_reco", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTzzdeltaEtacompreco);
+      TH2F*hHpTzzdeltaEtacompparticle = new TH2F("h_pT_zz_delta#eta_comp_particle", "h_pT_zz_delta#eta_comp_particle", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTzzdeltaEtacompparticle);
+      TH2F*hHpTzzdeltaEtacompparton = new TH2F("h_pT_zz_delta#eta_comp_parton", "h_pT_zz_delta#eta_comp_parton", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTzzdeltaEtacompparton);
+
     // higgs pT vs. z eta
       //TH2F*hHpTz1etacompreco = new TH2F("h_pT_z1_eta_comp_reco", "h_pT_z1_eta_comp_reco", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTz1etacompreco);
       //TH2F*hHpTz2etacompreco = new TH2F("h_pT_z2_eta_comp_reco", "h_pT_z2_eta_comp_reco", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTz2etacompreco);
@@ -761,9 +816,14 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       //TH2F*hHpTz2etacompparton= new TH2F("h_pT_z2_eta_comp_parton", "h_pT_z2_eta_comp_parton", pTBins, hpTmin, hpTmax, etaBins, zetamin, zetamax); listOfTH2.push_back(hHpTz2etacompparton);
     
     // higgs dphi vs. zz dphi
+      TH2F*hbbzzdeltaPhicompreco = new TH2F("bb_zz_#Delta#phi_comp_reco", "bb_zz_#Delta#phi_comp_reco", phiBins, -TMath::Pi(), +TMath::Pi(), phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hbbzzdeltaPhicompreco);
+      TH2F*hbbzzdeltaPhicompparticle = new TH2F("bb_zz_#Delta#phi_comp_particle", "bb_zz_#Delta#phi_comp_particle", phiBins, -TMath::Pi(), +TMath::Pi(), phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hbbzzdeltaPhicompparticle);
+      TH2F*hbbzzdeltaPhicompparton = new TH2F("bb_zz_#Delta#phi_comp_parton", "bb_zz_#Delta#phi_comp_parton", phiBins, -TMath::Pi(), +TMath::Pi(), phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH2.push_back(hbbzzdeltaPhicompparton);
+
     // higgs deta vs. zz deta  
-
-
+      TH2F*hbbzzdeltaEtacompreco = new TH2F("bb_zz_delta#eta_comp_reco", "bb_zz_delta#eta_comp_reco", etaBins, hetamin, hetamax, etaBins, zetamin, zetamax); listOfTH2.push_back(hbbzzdeltaEtacompreco);
+      TH2F*hbbzzdeltaEtacompparticle = new TH2F("bb_zz_delta#eta_comp_particle", "bb_zz_delta#eta_comp_particle", etaBins, hetamin, hetamax, etaBins, zetamin, zetamax); listOfTH2.push_back(hbbzzdeltaEtacompparticle);
+      TH2F*hbbzzdeltaEtacompparton = new TH2F("bb_zz_delta#eta_comp_parton", "bb_zz_delta#eta_comp_parton", etaBins, hetamin, hetamax, etaBins, zetamin, zetamax); listOfTH2.push_back(hbbzzdeltaEtacompparton);
 
   TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
   kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
@@ -918,7 +978,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     totalWeight += event->Weight;
   }
 
-  cout<<" Total weight is "<<totalWeight<<endl;
+  cout<<"TOTAL WEIGHT: "<<totalWeight<<endl;
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // loop
@@ -2058,15 +2118,15 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     }
     // Print cutflow intermideiate
 
-    if( entry % 1000 == 0 ){
-      cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
-      cout<<" Reco CutF Flow "<<endl;
-      PrintCutFlow(cutFlowMap_reco,cutList_reco,"Reco");
-      cout<<" Particle  CutF Flow "<<endl;
-      PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
-      cout<<" Parton  CutF Flow "<<endl;
-      PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
-    }
+    //if( entry % 1000 == 0 ){
+    //  cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
+    //  cout<<" Reco CutF Flow "<<endl;
+    //  PrintCutFlow(cutFlowMap_reco,cutList_reco,"Reco");
+    //  cout<<" Particle  CutF Flow "<<endl;
+    //  PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
+    // cout<<" Parton  CutF Flow "<<endl;
+    //  PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
+    //}
 
 
     
@@ -2416,8 +2476,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       }
     }
 
-    // comp
-    // 2D - parton(1) particle(2) reco(3)
+// 2D comps - parton(1) particle(2) reco(3)
     if(switchVal_parton==0 && switchVal_particle==0 ){
       hHpT12Comp -> Fill(h_parton.Pt(), h_particle.Pt(), weight);
       hHm12Comp -> Fill(h_parton.M(), h_particle.M(), weight);
@@ -2425,12 +2484,12 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       hbbdeltaEta12Comp -> Fill(bbdeltaEtaparton, bbdeltaEtaparticle, weight);
       hjjpT12Comp -> Fill(j1_parton.Pt()+j2_parton.Pt(),j1_particle.Pt()+j2_particle.Pt(), weight);
       hjjdeltaPhi12Comp -> Fill(jjdeltaPhiparton, jjdeltaPhiparticle, weight);
-      hz1pT23Comp->Fill(z1_parton.Pt(), z1_particle.Pt(), weight);
-      hz1m23Comp->Fill(z1_parton.M(), z1_particle.M(), weight);
-      hz2pT23Comp->Fill(z2_parton.Pt(), z2_particle.Pt(), weight);
-      hz2m23Comp->Fill(z2_parton.M(), z2_particle.M(), weight);
+      hz1pT12Comp->Fill(z1_parton.Pt(), z1_particle.Pt(), weight);
+      hz1m12Comp->Fill(z1_parton.M(), z1_particle.M(), weight);
+      hz2pT12Comp->Fill(z2_parton.Pt(), z2_particle.Pt(), weight);
+      hz2m12Comp->Fill(z2_parton.M(), z2_particle.M(), weight);
     }
-    if(switchVal_reco ==0  && switchVal_particle==0 ){
+    if(switchVal_particle==0  && switchVal_reco==0 ){
       hHpT23Comp -> Fill(h_particle.Pt(), h_reco.Pt(), weight);
       hHm23Comp -> Fill(h_particle.M(), h_reco.M(), weight);
       hbbdeltaPhi23Comp -> Fill(bbdeltaPhiparticle, bbdeltaPhireco, weight);
@@ -2439,12 +2498,12 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       hjjdeltaPhi23Comp -> Fill(jjdeltaPhiparticle, jjdeltaPhireco, weight);
       //hj1Phi23Comp -> Fill(j1_particle.Phi(), j1_reco.Phi(), weight);
       //hj2Phi23Comp -> Fill(j2_particle.Phi(), j2_reco.Phi(), weight);
-      hz1pT12Comp->Fill(z1_particle.Pt(), z1_reco.Pt(), weight);
-      hz1m12Comp->Fill(z1_particle.M(), z1_reco.M(), weight);
-      hz2pT12Comp->Fill(z2_particle.Pt(), z2_reco.Pt(), weight);
-      hz2m12Comp->Fill(z2_particle.M(), z2_reco.M(), weight);
+      hz1pT23Comp->Fill(z1_particle.Pt(), z1_reco.Pt(), weight);
+      hz1m23Comp->Fill(z1_particle.M(), z1_reco.M(), weight);
+      hz2pT23Comp->Fill(z2_particle.Pt(), z2_reco.Pt(), weight);
+      hz2m23Comp->Fill(z2_particle.M(), z2_reco.M(), weight);
     }
-    if(switchVal_reco==0  && switchVal_parton==0 ){
+    if(switchVal_parton==0  && switchVal_reco==0 ){
       hHpT13Comp -> Fill(h_parton.Pt(), h_reco.Pt(), weight);
       hHm13Comp -> Fill(h_parton.M(), h_reco.M(), weight);
       hbbdeltaPhi13Comp -> Fill(bbdeltaPhiparton, bbdeltaPhireco, weight);
@@ -2455,33 +2514,53 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       hz1m13Comp->Fill(z1_parton.M(), z1_reco.M(), weight);
       hz2pT13Comp->Fill(z2_parton.Pt(), z2_reco.Pt(), weight);
       hz2m13Comp->Fill(z2_parton.M(), z2_reco.M(), weight);
-      // l vs h
-      hl1l2deltaPhiHpTcompreco->Fill(l1l2deltaPhiparton, h_reco.Pt(), weight);
-      hl3l4deltaPhiHpTcompreco->Fill(l3l4deltaPhiparton, h_reco.Pt(), weight);
     }
     
     if(switchVal_reco==0){
+      hbbjjdeltaPhicompreco->Fill(bbdeltaPhireco,jjdeltaPhireco,weight);
+      hbbdeltaEtajjdeltaPhicompreco->Fill(bbdeltaEtareco,jjdeltaPhireco,weight);
+      hHpTl1l2deltaPhicompreco->Fill(h_reco.Pt(), l1l2deltaPhireco, weight);
+      hHpTl3l4deltaPhicompreco->Fill(h_reco.Pt(), l3l4deltaPhireco, weight);
       hHz1pTcompreco->Fill(h_reco.Pt(), z1_reco.Pt(), weight);
       hHz2pTcompreco->Fill(h_reco.Pt(), z2_reco.Pt(), weight);
+      hHzzpTcompreco->Fill(h_reco.Pt(), z1_reco.Pt() + z2_reco.Pt(), weight);
+      hHpTzzdeltaPhicompreco->Fill(h_reco.Pt(), zzdeltaPhireco, weight);
+      hHpTzzdeltaEtacompreco->Fill(h_reco.Pt(), zzdeltaEtareco, weight);
       //hHpTz1etacompreco->Fill(h_reco.Pt(), z1_reco.Eta(), weight);
       //hHpTz2etacompreco->Fill(h_reco.Pt(), z2_reco.Eta(), weight);
-      hHzzpTcompreco->Fill(h_reco.Pt(), z1_reco.Pt() + z2_reco.Pt(), weight);
+      hbbzzdeltaPhicompreco->Fill(bbdeltaPhireco, zzdeltaPhireco, weight);
+      hbbzzdeltaEtacompreco->Fill(bbdeltaEtareco, zzdeltaEtareco, weight);   
     }
     if(switchVal_particle==0){
+      hbbjjdeltaPhicompparticle->Fill(bbdeltaPhiparticle,jjdeltaPhiparticle,weight);
+      hbbdeltaEtajjdeltaPhicompparticle->Fill(bbdeltaEtaparticle,jjdeltaPhiparticle,weight);
+      hHpTl1l2deltaPhicompparticle->Fill(h_particle.Pt(), l1l2deltaPhiparticle, weight);
+      hHpTl3l4deltaPhicompparticle->Fill(h_particle.Pt(), l3l4deltaPhiparticle, weight);
       hHz1pTcompparticle->Fill(h_particle.Pt(), z1_particle.Pt(), weight);
       hHz2pTcompparticle->Fill(h_particle.Pt(), z2_particle.Pt(), weight);
-      //hHpTz1etacompparticle->Fill(h_particle.Pt(), z1_particle.Eta(), weight);
-      //hHpTz2etacompparticle->Fill(h_particle.Pt(), z2_particle.Eta(), weight);
       hHzzpTcompparticle->Fill(h_particle.Pt(), z1_particle.Pt() + z2_particle.Pt(), weight);
+      hHpTzzdeltaPhicompparticle->Fill(h_particle.Pt(), zzdeltaPhiparticle, weight);
+      hHpTzzdeltaEtacompparticle->Fill(h_particle.Pt(), zzdeltaEtaparticle, weight);
+      //hHpTz1etacompparticle->Fill(h_particle.Pt(), z1_particle.Eta(), weight);                                          
+      //hHpTz2etacompparticle->Fill(h_particle.Pt(), z2_particle.Eta(), weight);                                          
+      hbbzzdeltaPhicompparticle->Fill(bbdeltaPhiparticle, zzdeltaPhiparticle, weight);
+      hbbzzdeltaEtacompparticle->Fill(bbdeltaEtaparticle, zzdeltaEtaparticle, weight);
     }
     if(switchVal_parton){
+      hbbjjdeltaPhicompparton->Fill(bbdeltaPhiparton,jjdeltaPhiparton,weight);
+      hbbdeltaEtajjdeltaPhicompparton->Fill(bbdeltaEtaparton,jjdeltaPhiparton,weight);
+      hHpTl1l2deltaPhicompparton->Fill(h_parton.Pt(), l1l2deltaPhiparton, weight);
+      hHpTl3l4deltaPhicompparton->Fill(h_parton.Pt(), l3l4deltaPhiparton, weight);
       hHz1pTcompparton->Fill(h_parton.Pt(), z1_parton.Pt(), weight);
       hHz2pTcompparton->Fill(h_parton.Pt(), z2_parton.Pt(), weight);
-      //hHpTz1etacompparton->Fill(h_parton.Pt(), z1_parton.Eta(), weight);
-      //hHpTz2etacompparton->Fill(h_parton.Pt(), z2_parton.Eta(), weight);
       hHzzpTcompparton->Fill(h_parton.Pt(), z1_parton.Pt() + z2_parton.Pt(), weight);
+      hHpTzzdeltaPhicompparton->Fill(h_parton.Pt(), zzdeltaPhiparton, weight);
+      hHpTzzdeltaEtacompparton->Fill(h_parton.Pt(), zzdeltaEtaparton, weight);
+      //hHpTz1etacompparton->Fill(h_parton.Pt(), z1_parton.Eta(), weight);                                          
+      //hHpTz2etacompparton->Fill(h_parton.Pt(), z2_parton.Eta(), weight);                                          
+      hbbzzdeltaPhicompparton->Fill(bbdeltaPhiparton, zzdeltaPhiparton, weight);
+      hbbzzdeltaEtacompparton->Fill(bbdeltaEtaparton, zzdeltaEtaparton, weight);
     }
-    
     
     
     nPassed+=weight;
@@ -2498,11 +2577,12 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-  cout<<" Reco CutF Flow "<<endl;
+cout<<" "<<endl;
+cout<<"RECO CUT FLOW"<<endl;
   PrintCutFlow(cutFlowMap_reco,cutList_reco,  "Reco");
-  cout<<" Particle  CutF Flow "<<endl;
+cout<<"PARTICLE CUT FLOW"<<endl;
   PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
-  cout<<" Parton  CutF Flow "<<endl;
+cout<<"PARTON CUT FLOW"<<endl;
   PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
    
   for(std::vector<string>::iterator it=selType.begin(); it!=selType.end(); it++){
@@ -2531,7 +2611,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
    
   hists->Close();
    
-  std::cout<<"Total number of entries "<<numberOfEntries<<" Passed "<<nPassed<<" raw "<<nPassedRaw<<std::endl;
+  //std::cout<<"Total number of entries "<<numberOfEntries<<" Passed "<<nPassed<<" raw "<<nPassedRaw<<std::endl;
 
 
   
@@ -2547,7 +2627,7 @@ int main(int argc, char* argv[]) {
 
   
   
-  cout<<"Running analysis "<<analysisType<<endl;
+  cout<<"RUNNING ANALYSIS: "<<analysisType<<endl;
   zAnalyzer(inputFileName, outputFileName,process_name,analysisType);
   return 0;
 }
