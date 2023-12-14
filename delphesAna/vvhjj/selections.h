@@ -277,7 +277,19 @@ for(int i=0; i<(int) elecRecoPairIndices.size(); i++)
 
 
 }
+void SortByPtIndices(vector <int> nonHiggsJet, TClonesArray *branchJet){
+  if( nonHiggsJet.size() > 1 ){
+    sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchJet](const int& lhs, const int& rhs) {
+	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
+      });}  
+}
 
+vector<pair<int,int>> GetvbfJetIndex( vector<vector <int>> vbfJetIndexComb){
+  vector<pair<int,int>> vbfJetIndex;
+  for(int i=0; i<(int)vbfJetIndexComb.size(); i++)
+    vbfJetIndex.push_back(make_pair(vbfJetIndexComb[i][0],vbfJetIndexComb[i][1]));
+  return vbfJetIndex;
+}
 
 
 
