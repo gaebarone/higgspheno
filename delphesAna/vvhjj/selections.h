@@ -63,13 +63,13 @@ pair<int,int> GethiggsbbcandidateNoMass(vector<vector <int>>  &bJetPairsComb,
  
   for(int i=0; i<(int)bJetPairsComb.size(); i++)
     bJetPairs.push_back(make_pair(bJetPairsComb[i][0],bJetPairsComb[i][1]));
-
+  
   // sort the pairs of b-tags by pT;
-  if( bJetPairs.size() > 1){
-    sort(bJetPairs.begin(), bJetPairs.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
-      return ((Jet*)branchJet->At(lhs.first))->PT > ((Jet*)branchJet->At(rhs.first))->PT; 
-    });
-  }
+  //if( bJetPairs.size() > 1){
+  //sort(bJetPairs.begin(), bJetPairs.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
+  //  return ((Jet*)branchJet->At(lhs.first))->PT > ((Jet*)branchJet->At(rhs.first))->PT; 
+  //});
+  //}
   
   for(int i=0; i<(int) bJetPairs.size(); i++){
     higgsbbcandidate=bJetPairs[i];
@@ -80,8 +80,9 @@ pair<int,int> GethiggsbbcandidateNoMass(vector<vector <int>>  &bJetPairsComb,
     break; 
   }
   
-  return higgsbbcandidate;
+    return higgsbbcandidate;
   
+
 }
 
 pair <int,int> Gethiggsbbcandidate(vector<vector <int>>  &bJetPairsComb,
@@ -121,7 +122,31 @@ pair <int,int> Gethiggsbbcandidate(vector<vector <int>>  &bJetPairsComb,
     return higgsbbcandidate;
 }
 
-vector<pair <int,double>> JetBtagScoreIndex(vector <int> goodJetIndex,
+
+vector<pair <int,double>> JetBtagScoreIndexParicle(vector <int> goodJetIndex,
+						   TClonesArray *branchGenJet=nullptr,
+						   TClonesArray *branchGenParticle=nullptr){
+  
+  
+  vector<pair <int,double>> scores;
+  for( unsigned int i=0; i<goodJetIndex.size(); i++){
+    
+    scores.push_back( make_pair(goodJetIndex[i],
+				ghost_btagPseudoRecoScore(branchGenParticle,
+							  dynamic_cast <Jet*> (branchGenJet->At(i)),
+							  0.4)));
+    
+   
+  }
+  
+
+  sort( scores.begin(), scores.end(), [branchGenJet](const pair<int,double> lhs, const pair <int,double> rhs){
+    return lhs.second > rhs.second;
+  });
+  return scores; 
+}
+
+vector<pair <int,double>>  JetBtagScoreIndex(std::vector <int> goodJetIndex,
 					    TClonesArray *branchJet=nullptr,
 					    TClonesArray *branchGenParticle=nullptr){
   
