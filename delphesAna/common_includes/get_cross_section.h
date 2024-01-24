@@ -13,9 +13,9 @@ double get_cross_section(const char *process_name) {
   std::string zzjj_j = "zzjj_j";
   std::string zz_zjj_123j = "zz_zjj_123j";
   std::string zzhqq = "zzhqq";
-  std::string zzhqq = "z0z0hqq";
-  std::string zzhqq = "z0zThqq";
-  std::string zzhqq = "zTzThqq";
+  std::string z0z0hqq = "z0z0hqq";
+  std::string z0zThqq = "z0zThqq";
+  std::string zTzThqq = "zTzThqq";
   if (process_name == ttbar012j) return 88.29;
   else if (process_name == zll_123j) return 830.4;
   else if (process_name == zh_zll_hbb_012j) return 0.04718;
