@@ -107,6 +107,9 @@ bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle=nullptr,int seed=0,doub
   else return passFake; 
 }
 
+
+
+
 double ghost_btagPseudoRecoScore(TClonesArray *branchGenParticle, Jet *jet,double jet_radius = 0.4) {
   
   // loop through particles and check if in jet
@@ -117,6 +120,8 @@ double ghost_btagPseudoRecoScore(TClonesArray *branchGenParticle, Jet *jet,doubl
     
     if (Rivet::PID::hasBottom(particle->PID)) {
       double score = (1 - jet->P4().DeltaR(particle->P4())/jet_radius);
+      //std::cout<<" Ghost tagging schore "<<score<<std::endl;
+      return score; 
     }
   }
   // no b, return false
@@ -132,6 +137,8 @@ double ghost_btagPseudoRecoScoreSmeared(TClonesArray *branchGenParticle, Jet *je
   double smeared_score=smearRand.Gaus(true_score,true_score*smear);
   return smeared_score;
 }
+
+
 
 
 

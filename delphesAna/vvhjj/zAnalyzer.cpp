@@ -1059,10 +1059,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
     for(int i=0; i<(int)btagScores.size(); i++){
       if(  i > 1) break;
+      //cout<<"Jet index " <<btagScores[i].first<<" score "<<btagScores[i].second<<endl;
+      //if( i==0) 
       btagIndex.push_back( btagScores[i].first);
-      
     }
-    
+    //cout<<endl;
     
     if(enableCutReco["1 btag reco"]){
       if(switchVal_reco == 0 && btagIndex.size() > 1)
@@ -1084,7 +1085,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     vector<pair<int,int>> bJetPairs;
     pair<int,int> b12pos;
     
-    if(switchVal_reco == 0 && goodJetIndex.size()>1 )
+    //if(switchVal_reco == 0 && goodJetIndex.size()>1 )
+    if(switchVal_reco == 0 && btagIndex.size()>1 )
       //bJetPairsComb= combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
       bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
     
@@ -1528,15 +1530,32 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     sort(goodJetIndexParticle.begin(), goodJetIndexParticle.end(), [branchGenJet](const int& lhs, const int& rhs) {
 	return ((Jet*)branchGenJet->At(lhs))->PT > ((Jet*)branchGenJet->At(rhs))->PT;
       });
+
+    // get the sorted jets; 
+    vector<pair<int,double>> btagScoresParticle=JetBtagScoreIndex(goodJetIndexParticle,branchGenJet,branchGenParticle);
+    
+    //consider as b-jets the ones with the highest scrore
+    btagIndexParticle.clear();
+
+    // Take only the first two 
+    for(int i=0; i<(int)btagScoresParticle.size(); i++){
+      if(  i > 1) break;
+      //cout<<"Jet index " <<btagScoresParticle[i].first<<" score "<<btagScoresParticle[i].second<<endl;
+      //if( i==0) 
+
+      btagIndexParticle.push_back( btagScoresParticle[i].first);
+    }
+    //cout<<endl;
+
     
     Jet *b1Particle=nullptr;
     Jet *b2Particle=nullptr;
     
     vector<pair<int,int>> bJetPairsParticle;
     vector<vector <int>> bJetPairsCombParticle;
-    if(goodJetIndexParticle.size() > 1)
-      bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndexParticle);
-    //  vector<vector <int>> bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndexParticle);
+    if(btagIndexParticle.size() > 1)
+      //bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndexParticle);
+      bJetPairsCombParticle=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndexParticle);
     
     if(enableCutParticle["2 b-like jet pairs part"]){
       if(switchVal_particle==0 && bJetPairsCombParticle.size() >0 ) 
@@ -1546,23 +1565,28 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
     for(int i=0; i<(int)bJetPairsCombParticle.size(); i++)
       bJetPairsParticle.push_back(make_pair(bJetPairsCombParticle[i][0],bJetPairsCombParticle[i][1]));
+
+    //cout<<" bJetPairsParticle Size "<<bJetPairsParticle.size()<<endl;
     
-    if( bJetPairsParticle.size() > 1) 
-      sort(bJetPairsParticle.begin(), bJetPairsParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
-	  return fabs(((((Jet*)branchGenJet->At(lhs.first))->P4() + ((Jet*)branchGenJet->At(lhs.second))->P4())).M() - 125 ) <
-	    fabs( ((((Jet*)branchGenJet->At(rhs.first))->P4() + ((Jet*)branchGenJet->At(rhs.second))->P4()).M()) - 125 ) ; 
-	});
+    //if( bJetPairsParticle.size() > 1) 
+    //sort(bJetPairsParticle.begin(), bJetPairsParticle.end(), [branchGenJet](const pair<int,int> lhs, const pair<int,int> rhs) {
+    ////return ((Jet*)branchGenJet->At(lhs.first))->PT > ((Jet*)branchGenJet->At(rhs.second))->PT;
+    //	// old style 
+    //	//return fabs(((((Jet*)branchGenJet->At(lhs.first))->P4() + ((Jet*)branchGenJet->At(lhs.second))->P4())).M() - 125 ) <
+    //	//  fabs( ((((Jet*)branchGenJet->At(rhs.first))->P4() + ((Jet*)branchGenJet->At(rhs.second))->P4()).M()) - 125 ) ; 
+    //	});
     
     pair <int,int> higgsbbcandidateParticle;
     bool foundBjetParticle=false; 
     for(int i=0; i<(int) bJetPairsParticle.size(); i++){
       b1Particle=(Jet*)branchGenJet->At(bJetPairsParticle[i].first);
       b2Particle=(Jet*)branchGenJet->At(bJetPairsParticle[i].second);
-      if( ghost_btag(branchGenParticle, b1Particle) || ghost_btag(branchGenParticle, b2Particle)) {
-	higgsbbcandidateParticle=bJetPairsParticle[i];
-	foundBjetParticle=true;
-	break;
-      }
+      // not needed 
+      //if( ghost_btag(branchGenParticle, b1Particle) || ghost_btag(branchGenParticle, b2Particle)) {
+      higgsbbcandidateParticle=bJetPairsParticle[i];
+      foundBjetParticle=true;
+      break;
+      //}
     }
     
     if(enableCutParticle["found bb particle"]){
