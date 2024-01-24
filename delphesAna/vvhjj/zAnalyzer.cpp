@@ -1051,6 +1051,18 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     vector <int> noBtag;
     vector <int> goodJetIndex=GoodJetIndices(btagIndex,noBtag,branchJet,branchGenParticle);
 
+    // get the sorted jets; 
+    vector<pair<int,double>> btagScores=JetBtagScoreIndex(goodJetIndex,branchJet,branchGenParticle);
+    
+    //consider as b-jets the ones with the highest scrore
+    btagIndex.clear();
+
+    for(int i=0; i<(int)btagScores.size(); i++){
+      if(  i > 1) break;
+      btagIndex.push_back( btagScores[i].first);
+      
+    }
+    
     
     if(enableCutReco["1 btag reco"]){
       if(switchVal_reco == 0 && btagIndex.size() > 1)
@@ -1073,9 +1085,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     pair<int,int> b12pos;
     
     if(switchVal_reco == 0 && goodJetIndex.size()>1 )
-      bJetPairsComb= combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
-    //  vector<vector <int>> bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
-   
+      //bJetPairsComb= combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
+      bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
+    
     // This is a cut !!
     if( switchVal_reco == 0  && bJetPairsComb.size() >= 1) { ////continue; // need at least two good jets;x
       increaseCount(cutFlowMap_reco,"2 b-like jet pairs reco",weight);
@@ -1084,9 +1096,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     else switchVal_reco = 1;
 
     bool foundBjet=false;
-    pair <int,int> higgsbbcandidate=Gethiggsbbcandidate(bJetPairsComb,bJetPairs,b12pos,foundBjet,branchJet,branchGenParticle);
-    //b1=(Jet*)branchJet->At(b12pos.first);
-    //b2=(Jet*)branchJet->At(b12pos.second);
+    //pair <int,int> higgsbbcandidate=Gethiggsbbcandidate(bJetPairsComb,bJetPairs,b12pos,foundBjet,branchJet,branchGenParticle);
+    pair <int,int> higgsbbcandidate=GethiggsbbcandidateNoMass(bJetPairsComb,bJetPairs,b12pos,foundBjet,branchJet,branchGenParticle);
+
     if(foundBjet){
       b1=(Jet*)branchJet->At(higgsbbcandidate.first);
       b2=(Jet*)branchJet->At(higgsbbcandidate.second);

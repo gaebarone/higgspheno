@@ -51,6 +51,39 @@ void remove_overlaps(vector< pair<int,int>> muPairIndices){
   }
 }
 
+
+pair<int,int> GethiggsbbcandidateNoMass(vector<vector <int>>  &bJetPairsComb,
+				   vector<pair<int,int>> &bJetPairs,
+				   pair<int,int> &b12pos,
+				   bool & foundBjet, 
+				   TClonesArray *branchJet=nullptr,
+				   TClonesArray *branchGenParticle=nullptr){
+  
+  pair <int,int> higgsbbcandidate;
+ 
+  for(int i=0; i<(int)bJetPairsComb.size(); i++)
+    bJetPairs.push_back(make_pair(bJetPairsComb[i][0],bJetPairsComb[i][1]));
+
+  // sort the pairs of b-tags by pT;
+  if( bJetPairs.size() > 1){
+    sort(bJetPairs.begin(), bJetPairs.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
+      return ((Jet*)branchJet->At(lhs.first))->PT > ((Jet*)branchJet->At(rhs.first))->PT; 
+    });
+  }
+  
+  for(int i=0; i<(int) bJetPairs.size(); i++){
+    higgsbbcandidate=bJetPairs[i];
+    // Attention
+    Jet *b1=(Jet*)branchJet->At(b12pos.first);
+    Jet *b2=(Jet*)branchJet->At(b12pos.second);
+    foundBjet=true;
+    break; 
+  }
+  
+  return higgsbbcandidate;
+  
+}
+
 pair <int,int> Gethiggsbbcandidate(vector<vector <int>>  &bJetPairsComb,
 				   vector<pair<int,int>> &bJetPairs,
 				   pair<int,int> &b12pos,
@@ -86,6 +119,32 @@ pair <int,int> Gethiggsbbcandidate(vector<vector <int>>  &bJetPairsComb,
     }
   
     return higgsbbcandidate;
+}
+
+vector<pair <int,double>> JetBtagScoreIndex(vector <int> goodJetIndex,
+					    TClonesArray *branchJet=nullptr,
+					    TClonesArray *branchGenParticle=nullptr){
+  
+  
+  vector<pair <int,double>> scores;;
+  for( unsigned int i=0; i<goodJetIndex.size(); i++){
+    
+    scores.push_back( make_pair(goodJetIndex[i],
+					 ghost_btagPseudoRecoScoreSmeared(branchGenParticle,
+									  (Jet*)branchJet->At(i),
+									  0,
+									  0.4,
+									  0.9,
+									  0.01,
+									  0.01)));
+    
+  }
+  
+
+  sort( scores.begin(), scores.end(), [branchJet](const pair<int,double> lhs, const pair <int,double> rhs){
+      return lhs.second > rhs.second;
+  });
+  return scores; 
 }
 
 

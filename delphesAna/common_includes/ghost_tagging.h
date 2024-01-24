@@ -31,6 +31,10 @@ int get_bottom_number(int pid) {
   }
 }
 
+
+
+
+
 bool ghost_btag(TClonesArray *branchGenParticle, Jet *jet,double jet_radius = 0.4) {
 
   // loop through particles and check if in jet
@@ -102,4 +106,33 @@ bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle=nullptr,int seed=0,doub
   if( isB) return passEff;
   else return passFake; 
 }
+
+double ghost_btagPseudoRecoScore(TClonesArray *branchGenParticle, Jet *jet,double jet_radius = 0.4) {
+  
+  // loop through particles and check if in jet
+  int nEntries =((TClonesArray*)branchGenParticle)->GetEntries();
+  for(int i=0; i<nEntries; i++){
+    GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
+    if (jet->P4().DeltaR(particle->P4()) > jet_radius) continue;
+    
+    if (Rivet::PID::hasBottom(particle->PID)) {
+      double score = (1 - jet->P4().DeltaR(particle->P4())/jet_radius);
+    }
+  }
+  // no b, return false
+  return 0.0; 
+}
+
+double ghost_btagPseudoRecoScoreSmeared(TClonesArray *branchGenParticle, Jet *jet,int seed=0,double jet_radius = 0.4, double effWrk=0.9,double fake_eff=0.01, double smear=0.01){
+  TRandom3 randEff,randIneff,smearRand;
+  randEff.SetSeed(seed); 
+  randIneff.SetSeed(seed);
+  smearRand.SetSeed(seed);
+  double true_score=ghost_btagPseudoRecoScore(branchGenParticle,jet,jet_radius);
+  double smeared_score=smearRand.Gaus(true_score,true_score*smear);
+  return smeared_score;
+}
+
+
+
 #endif
