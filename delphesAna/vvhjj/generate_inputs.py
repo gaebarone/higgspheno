@@ -1,7 +1,20 @@
 import os
 
-process_list = ['zh_zll_hbb_012j', 'ttHbb', 'ttbar012j', 'wwjj_j', 'wz_wjj_123j', 'wzjj_j', 'zll_123j', 'zz_zjj_123j', 'zzjj_j']
-directory_list = ['/home/trussel1/MG2/Madgraph/MG5_aMC_v2_6_7/Delphes/data_delphes/']+['/isilon/data/common/smondal5/delphesouts_VVHjj/'] * 8
+process_list = ['ttHbb', 'ttbar012j', 'wwjj_j', 'wz_wjj_123j', 'wzjj_j', 'zll_123j', 'zz_zjj_123j', 'zzjj_j']
+directory_list = ['/isilon/data/common/smondal5/delphesouts_VVHjj/'] * 8
+selection_list = ['HZZJJ', 'ZZJJ']
+
+#process_list = ['hqqz0z0', 'hqqz0zT', 'hqqzTzT', 'hqqzz'] 
+#directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 4
+#selection_list = []
+
+#process_list = ['z0z0hqq', 'z0zThqq', 'zTzThqq', 'zzhqq']
+#directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 4
+#selection_list = ['HZZJJ']
+
+#process_list = ['z0z0qq', 'z0zTqq', 'zTzTqq', 'zzqq']
+#directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 4
+#selection_list = ['ZZJJ']
 
 def generate_file_list(directory_path, output_file):
         with open(output_file, 'w') as file:
@@ -36,8 +49,9 @@ def modify_input_list():
         for line in input_lines:
             parts = line.split("/")
             if len(parts) >= 3:
-                modified_line = "{} histograms/{}/{} {}".format(line, parts[-2], parts[-1], parts[-2])
-                output_lines.append(modified_line)
+                for selection in selection_list:
+                        modified_line = "{} /isilon/data/common/sellis9/zAnalyzerOutputs/histograms/{}/{}_{} {} {}".format(line, parts[-2], selection, parts[-1], parts[-2], selection)
+                        output_lines.append(modified_line)
         with open(output_file_path, "w") as output_file:
             for modified_line in output_lines:
                 output_file.write(modified_line + "\n")
