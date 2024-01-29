@@ -134,6 +134,7 @@ double ghost_btagPseudoRecoScoreSmeared(TClonesArray *branchGenParticle, Jet *je
   randIneff.SetSeed(seed);
   smearRand.SetSeed(seed);
   double true_score=ghost_btagPseudoRecoScore(branchGenParticle,jet,jet_radius);
+  //return true_score; 
   double smeared_score=smearRand.Gaus(true_score,true_score*smear);
   return smeared_score;
 }
