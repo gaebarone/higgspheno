@@ -2,6 +2,7 @@
 R__LOAD_LIBRARY("libDelphes")
 #endif
 
+
 #include "HepMC/GenParticle.h"
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
@@ -830,7 +831,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
   TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
   kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
-	
+
+    // b tag scores
+      TH1F *btagscorereco = new TH1F("btagscore_reco", "b-tag score reco", 5, 0, 1); listOfTH1.push_back(btagscorereco);
+      TH1F *btagscoreparticle = new TH1F("btagscore_particle", "b-tag score particle", 5, 0, 1); listOfTH1.push_back(btagscoreparticle);
+  
   double  nPassed=0;
   double Lumi=1;//3e3;
   double totWeightedEntries=0;
@@ -951,9 +956,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   double zzdeltaPhiparton=-9999;
   double zzdeltaEtaparton=-9999;
   double zzdeltaRparton=-9999;
-  
-  
-  /*
+
+  double btagscore_reco = -9999;
+  double btagscore_particle = -9999;
+														     
+   /*
     DelphesLHEFReader *reader = new DelphesLHEFReader;
     std::map<int,double> mapKappaLambda;
     mapKappaLambda[1]=+10.0;
@@ -1062,7 +1069,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       //cout<<"Jet index " <<btagScores[i].first<<" score "<<btagScores[i].second<<endl;
       //if( i==0) 
       btagIndex.push_back( btagScores[i].first);
+      btagscore_reco =  btagScores[i].second;
     }
+    
     //cout<<endl;
     
     if(enableCutReco["1 btag reco"]){
@@ -1544,6 +1553,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       //if( i==0) 
 
       btagIndexParticle.push_back( btagScoresParticle[i].first);
+      btagscore_particle =  btagScoresParticle[i].second;
     }
     //cout<<endl;
 
@@ -2212,6 +2222,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 	//hb1Rreco -> Fill(sqrt((b1_reco.Phi()*b1_reco.Phi())+(b1_reco.Eta()*b1_reco.Eta())),weight);
 	//hb2Rreco -> Fill(sqrt((b2_reco.Phi()*b2_reco.Phi())+(b2_reco.Eta()*b2_reco.Eta())),weight);
 	hbbdeltaRreco -> Fill(bbdeltaRreco,weight);
+
+	btagscorereco -> Fill(btagscore_reco, weight);
       }
     }
 
@@ -2240,6 +2252,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 	//hb1Rparticle -> Fill(sqrt((b1_particle.Phi()*b1_particle.Phi())+(b1_particle.Eta()*b1_particle.Eta())),weight);
 	//hb2Rparticle -> Fill(sqrt((b2_particle.Phi()*b2_particle.Phi())+(b2_particle.Eta()*b2_particle.Eta())),weight);
 	hbbdeltaRparticle -> Fill(bbdeltaRparticle,weight);
+	btagscoreparticle -> Fill(btagscore_particle, weight);
       }
     }
 
