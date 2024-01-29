@@ -3,6 +3,8 @@ R__LOAD_LIBRARY(libDelphes)
 #include "classes/DelphesClasses.h"
 #endif
 
+#ifndef INELLIPSE_H
+#define INELLIPSE_H
 const double pi = TMath::Pi();
 
 double deltaPhi(double phi1, double phi2) { return TVector2::Phi_mpi_pi(phi1 - phi2); }
@@ -84,3 +86,4 @@ bool inEllipse(const Jet *jet1, const Jet *jet2, T const *p, float semimajoradd 
   else return false;
 
 }
+#endif

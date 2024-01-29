@@ -9,6 +9,7 @@ R__LOAD_LIBRARY("libDelphes")
 #include "../common_includes/ghost_tagging.h"
 #include "../common_includes/combinations.h"
 #include "../common_includes/get_cross_section.h"
+#include "../common_includes/make_paired.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -307,7 +308,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   TClonesArray *branchGenParticle = treeReader->UseBranch("Particle");
   TClonesArray *branchGenJet = treeReader->UseBranch("GenJet");
   TClonesArray *branchWeight   = treeReader->UseBranch("Weight");
-
+  TClonesArray *branchPFCand = treeReader->UseBranch("ParticleFlowCandidate");
+    
+  
   bool fill_1D = true;
   bool fill_2D = true;
 
@@ -1058,7 +1061,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     btagIndex.clear();
 
     for(int i=0; i<(int)btagScores.size(); i++){
-      if(  i > 1) break;
+      if( btagIndex.size() > 1) break;
+      if( btagScores[i].second < 0.4) continue; 
+      //if(  i > 1) break;
       //cout<<"Jet index " <<btagScores[i].first<<" score "<<btagScores[i].second<<endl;
       //if( i==0) 
       btagIndex.push_back( btagScores[i].first);
@@ -1084,6 +1089,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     vector<vector <int>> bJetPairsComb;
     vector<pair<int,int>> bJetPairs;
     pair<int,int> b12pos;
+
+
+    //std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,false,1.0,false);
+    //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
+
     
     //if(switchVal_reco == 0 && goodJetIndex.size()>1 )
     if(switchVal_reco == 0 && btagIndex.size()>1 )
@@ -2171,15 +2181,15 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     }
     // Print cutflow intermideiate
 
-    //if( entry % 1000 == 0 ){
-    //  cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
-    //  cout<<" Reco CutF Flow "<<endl;
-    //  PrintCutFlow(cutFlowMap_reco,cutList_reco,"Reco");
-    //  cout<<" Particle  CutF Flow "<<endl;
-    //  PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
-    // cout<<" Parton  CutF Flow "<<endl;
-    //  PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
-    //}
+    if( entry % 1000 == 0 ){
+      cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
+      cout<<" Reco CutF Flow "<<endl;
+      PrintCutFlow(cutFlowMap_reco,cutList_reco,"Reco");
+      cout<<" Particle  CutF Flow "<<endl;
+      PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
+      cout<<" Parton  CutF Flow "<<endl;
+      PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
+    }
 
 
     
