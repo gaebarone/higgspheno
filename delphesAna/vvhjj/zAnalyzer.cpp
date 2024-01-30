@@ -836,9 +836,15 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
 
     // b tag scores
-      TH1F *btagscorereco = new TH1F("btagscore_reco", "b-tag score reco", 5, 0, 1); listOfTH1.push_back(btagscorereco);
-      TH1F *btagscoreparticle = new TH1F("btagscore_particle", "b-tag score particle", 5, 0, 1); listOfTH1.push_back(btagscoreparticle);
-  
+      TH1F *leadbscorereco = new TH1F("lead_bscore_reco", "leading b score reco", 100, 0, 1); listOfTH1.push_back(leadbscorereco);
+      TH1F *leadbscoreparticle = new TH1F("lead_bscore_particle", "leading b score particle", 100, 0, 1); listOfTH1.push_back(leadbscoreparticle);
+
+      TH1F *subleadbscorereco = new TH1F("sublead_bscore_reco", "sub-leading b score reco", 100, 0, 1); listOfTH1.push_back(subleadbscorereco);
+      TH1F *subleadbscoreparticle = new TH1F("sublead_bscore_particle", "sub-leading b score particle", 100, 0, 1); listOfTH1.push_back(subleadbscoreparticle); 
+
+      TH2F*leadbscore23 = new TH2F("lead_bscore_comp_23", "leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(leadbscore23);
+      TH2F*subleadbscore23 = new TH2F("sublead_bscore_comp_23", "sub-leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(subleadbscore23);
+
   double  nPassed=0;
   double Lumi=1;//3e3;
   double totWeightedEntries=0;
@@ -960,8 +966,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   double zzdeltaEtaparton=-9999;
   double zzdeltaRparton=-9999;
 
-  double btagscore_reco = -9999;
-  double btagscore_particle = -9999;
+  double leadbscore_reco = -9999;
+  double leadbscore_particle = -9999;
+  double subleadbscore_reco = -9999;
+  double subleadbscore_particle = -9999;
+
 														     
    /*
     DelphesLHEFReader *reader = new DelphesLHEFReader;
@@ -1067,16 +1076,28 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     //consider as b-jets the ones with the highest scrore
     btagIndex.clear();
 
+/*
+   // if(btagScores.size() > 0){
+      leadbscore_reco =  btagScores[0].second;
+      btagIndex.push_back(btagScores[0].first);
+    //}
+    //if(btagScores.size() > 1){
+      subleadbscore_reco =  btagScores[1].second;
+   // }
+  */
+
     for(int i=0; i<(int)btagScores.size(); i++){
       if( btagIndex.size() > 1) break;
-      if( btagScores[i].second < 0.4) continue; 
+        leadbscore_reco =  btagScores[0].second;
+        subleadbscore_reco =  btagScores[1].second;
+      //if( btagScores[i].second < 0.4) continue; 
       //if(  i > 1) break;
       //cout<<"Jet index " <<btagScores[i].first<<" score "<<btagScores[i].second<<endl;
       //if( i==0) 
       btagIndex.push_back( btagScores[i].first);
-      btagscore_reco =  btagScores[i].second;
     }
-    
+
+
     //cout<<endl;
     
     if(enableCutReco["1 btag reco"]){
@@ -1558,12 +1579,12 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
     // Take only the first two 
     for(int i=0; i<(int)btagScoresParticle.size(); i++){
+      leadbscore_particle =  btagScoresParticle[0].second;
+      subleadbscore_particle =  btagScoresParticle[1].second;
       if(  i > 1) break;
       //cout<<"Jet index " <<btagScoresParticle[i].first<<" score "<<btagScoresParticle[i].second<<endl;
       //if( i==0) 
-
       btagIndexParticle.push_back( btagScoresParticle[i].first);
-      btagscore_particle =  btagScoresParticle[i].second;
     }
     //cout<<endl;
 
@@ -2233,7 +2254,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 	//hb2Rreco -> Fill(sqrt((b2_reco.Phi()*b2_reco.Phi())+(b2_reco.Eta()*b2_reco.Eta())),weight);
 	hbbdeltaRreco -> Fill(bbdeltaRreco,weight);
 
-	btagscorereco -> Fill(btagscore_reco, weight);
+	leadbscorereco -> Fill(leadbscore_reco, weight);
+  subleadbscorereco -> Fill(subleadbscore_reco, weight);
+
       }
     }
 
@@ -2262,7 +2285,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 	//hb1Rparticle -> Fill(sqrt((b1_particle.Phi()*b1_particle.Phi())+(b1_particle.Eta()*b1_particle.Eta())),weight);
 	//hb2Rparticle -> Fill(sqrt((b2_particle.Phi()*b2_particle.Phi())+(b2_particle.Eta()*b2_particle.Eta())),weight);
 	hbbdeltaRparticle -> Fill(bbdeltaRparticle,weight);
-	btagscoreparticle -> Fill(btagscore_particle, weight);
+
+	leadbscoreparticle -> Fill(leadbscore_particle, weight);
+  subleadbscoreparticle -> Fill(subleadbscore_particle, weight);
       }
     }
 
@@ -2578,6 +2603,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       hz1m23Comp->Fill(z1_particle.M(), z1_reco.M(), weight);
       hz2pT23Comp->Fill(z2_particle.Pt(), z2_reco.Pt(), weight);
       hz2m23Comp->Fill(z2_particle.M(), z2_reco.M(), weight);
+
+      leadbscore23->Fill(leadbscore_particle,leadbscore_reco,weight);
+      subleadbscore23->Fill(subleadbscore_particle,subleadbscore_reco,weight);
     }
     if(switchVal_parton==0  && switchVal_reco==0 ){
       hHpT13Comp -> Fill(h_parton.Pt(), h_reco.Pt(), weight);
