@@ -842,8 +842,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       TH1F *subleadbscorereco = new TH1F("sublead_bscore_reco", "sub-leading b score reco", 100, 0, 1); listOfTH1.push_back(subleadbscorereco);
       TH1F *subleadbscoreparticle = new TH1F("sublead_bscore_particle", "sub-leading b score particle", 100, 0, 1); listOfTH1.push_back(subleadbscoreparticle); 
 
-      TH2F*leadbscore23 = new TH2F("lead_bscore_comp_23", "leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(leadbscore23);
-      TH2F*subleadbscore23 = new TH2F("sublead_bscore_comp_23", "sub-leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(subleadbscore23);
+      TH2F *leadbscore23 = new TH2F("lead_bscore_comp_23", "leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(leadbscore23);
+      TH2F *subleadbscore23 = new TH2F("sublead_bscore_comp_23", "sub-leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(subleadbscore23);
 
   double  nPassed=0;
   double Lumi=1;//3e3;
@@ -1084,19 +1084,17 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     //if(btagScores.size() > 1){
       subleadbscore_reco =  btagScores[1].second;
    // }
-  */
+*/
 
+
+    // Take only the first two 
     for(int i=0; i<(int)btagScores.size(); i++){
-      if( btagIndex.size() > 1) break;
-        leadbscore_reco =  btagScores[0].second;
-        subleadbscore_reco =  btagScores[1].second;
-      //if( btagScores[i].second < 0.4) continue; 
-      //if(  i > 1) break;
-      //cout<<"Jet index " <<btagScores[i].first<<" score "<<btagScores[i].second<<endl;
+      leadbscore_reco = btagScores[0].second;
+      subleadbscore_reco = btagScores[1].second;
+      if( i > 1) break;
       //if( i==0) 
       btagIndex.push_back( btagScores[i].first);
     }
-
 
     //cout<<endl;
     
