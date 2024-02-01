@@ -3,12 +3,10 @@ R__LOAD_LIBRARY("libDelphes")
 #endif
 
 
-<<<<<<< HEAD
+
 //#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
 //#include "core/session/onnxruntime_cxx_api.h"
-#include <onnxruntime_cxx_api.h>
-=======
->>>>>>> a47df2a3485546338623886c4f357846f1da2351
+//#include <onnxruntime_cxx_api.h>
 #include "HepMC/GenParticle.h"
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
@@ -1032,9 +1030,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     totalWeight += event->Weight;
   }
 
-  //<<<<<<< HEAD
-  cout<<"TOTAL WEIGHT: "<<totalWeight<<endl;
-  //=======
+
   cout<<" Total weight is "<<totalWeight<<endl;
 
   //std::map<string, Selection*> selections;
@@ -1106,35 +1102,15 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     vector<pair<int,double>> btagScores=JetBtagScoreIndex(goodJetIndex,branchJet,branchGenParticle);
     //consider as b-jets the ones with the highest scrore
     btagIndex.clear();
-<<<<<<< HEAD
+
     for(int i=0; i<(int)btagScores.size(); i++){
-      if( btagIndex.size() > 1) break;
+      if( btagIndex.size() > 2) break;
       if( btagScores[i].second < 0.1) continue; 
-      //if(  i > 1) break;
-      //cout<<"Jet index " <<btagScores[i].first<<" score "<<btagScores[i].second<<endl;
-=======
-
-/*
-    if(btagScores.size() > 0){
-      leadbscore_reco =  btagScores[0].second;
-      btagIndex.push_back(btagScores[0].first);
-    }
-    if(btagScores.size() > 1){
-      subleadbscore_reco =  btagScores[1].second;
-    }
-*/
-
-
-    // Take only the first two 
-    for(int i=0; i<(int)btagScores.size(); i++){
-      if( i==0 )
-        leadbscore_reco = btagScores[0].second;
-      if( i == 1)
-        subleadbscore_reco = btagScores[1].second;
-      if( i > 1) break;
->>>>>>> a47df2a3485546338623886c4f357846f1da2351
-      //if( i==0) 
       btagIndex.push_back( btagScores[i].first);
+      if(btagIndex.size()== 1) 
+	leadbscore_reco = btagScores[i].second;
+      else if (btagIndex.size()== 2)
+	subleadbscore_reco = btagScores[i].second;
     }
 
     // fill b scores                                                                                                                                                                                                          
