@@ -3,9 +3,12 @@ R__LOAD_LIBRARY("libDelphes")
 #endif
 
 
+<<<<<<< HEAD
 //#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
 //#include "core/session/onnxruntime_cxx_api.h"
 #include <onnxruntime_cxx_api.h>
+=======
+>>>>>>> a47df2a3485546338623886c4f357846f1da2351
 #include "HepMC/GenParticle.h"
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
@@ -863,7 +866,17 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
   TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
   kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
-	
+
+    // b tag scores
+      TH1F *leadbscorereco = new TH1F("lead_bscore_reco", "leading b score reco", 100, 0, 1); listOfTH1.push_back(leadbscorereco);
+      TH1F *leadbscoreparticle = new TH1F("lead_bscore_particle", "leading b score particle", 100, 0, 1); listOfTH1.push_back(leadbscoreparticle);
+
+      TH1F *subleadbscorereco = new TH1F("sublead_bscore_reco", "sub-leading b score reco", 100, 0, 1); listOfTH1.push_back(subleadbscorereco);
+      TH1F *subleadbscoreparticle = new TH1F("sublead_bscore_particle", "sub-leading b score particle", 100, 0, 1); listOfTH1.push_back(subleadbscoreparticle); 
+
+      //TH2F *leadbscore23 = new TH2F("lead_bscore_comp_23", "leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(leadbscore23);
+      //TH2F *subleadbscore23 = new TH2F("sublead_bscore_comp_23", "sub-leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(subleadbscore23);
+
   double  nPassed=0;
   double Lumi=3e3;//1;//3e3;
   double totWeightedEntries=0;
@@ -984,9 +997,14 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   double zzdeltaPhiparton=-9999;
   double zzdeltaEtaparton=-9999;
   double zzdeltaRparton=-9999;
-  
-  
-  /*
+
+  double leadbscore_reco = -9999;
+  double leadbscore_particle = -9999;
+  double subleadbscore_reco = -9999;
+  double subleadbscore_particle = -9999;
+
+														     
+   /*
     DelphesLHEFReader *reader = new DelphesLHEFReader;
     std::map<int,double> mapKappaLambda;
     mapKappaLambda[1]=+10.0;
@@ -1088,14 +1106,41 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     vector<pair<int,double>> btagScores=JetBtagScoreIndex(goodJetIndex,branchJet,branchGenParticle);
     //consider as b-jets the ones with the highest scrore
     btagIndex.clear();
+<<<<<<< HEAD
     for(int i=0; i<(int)btagScores.size(); i++){
       if( btagIndex.size() > 1) break;
       if( btagScores[i].second < 0.1) continue; 
       //if(  i > 1) break;
       //cout<<"Jet index " <<btagScores[i].first<<" score "<<btagScores[i].second<<endl;
+=======
+
+/*
+    if(btagScores.size() > 0){
+      leadbscore_reco =  btagScores[0].second;
+      btagIndex.push_back(btagScores[0].first);
+    }
+    if(btagScores.size() > 1){
+      subleadbscore_reco =  btagScores[1].second;
+    }
+*/
+
+
+    // Take only the first two 
+    for(int i=0; i<(int)btagScores.size(); i++){
+      if( i==0 )
+        leadbscore_reco = btagScores[0].second;
+      if( i == 1)
+        subleadbscore_reco = btagScores[1].second;
+      if( i > 1) break;
+>>>>>>> a47df2a3485546338623886c4f357846f1da2351
       //if( i==0) 
       btagIndex.push_back( btagScores[i].first);
     }
+
+    // fill b scores                                                                                                                                                                                                          
+    leadbscorereco -> Fill(leadbscore_reco, weight);
+    subleadbscorereco -> Fill(subleadbscore_reco, weight);
+    
     //cout<<endl;
 
     /*
@@ -1792,16 +1837,33 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     //consider as b-jets the ones with the highest scrore
     btagIndexParticle.clear();
 
+    /*    
     // Take only the first two 
     for(int i=0; i<(int)btagScoresParticle.size(); i++){
+      leadbscore_particle =  btagScoresParticle[0].second;
+      subleadbscore_particle =  btagScoresParticle[1].second;
       if(  i > 1) break;
       //cout<<"Jet index " <<btagScoresParticle[i].first<<" score "<<btagScoresParticle[i].second<<endl;
       //if( i==0) 
-
       btagIndexParticle.push_back( btagScoresParticle[i].first);
     }
     //cout<<endl;
+    */
 
+    // Take only the first two                                                                                                                                                                                                 
+    for(int i=0; i<(int)btagScoresParticle.size(); i++){
+      if( i==0 )
+        leadbscore_particle = btagScoresParticle[0].second;
+      if( i == 1)
+        subleadbscore_particle = btagScoresParticle[1].second;
+      if( i > 1) break;
+      //if( i==0)                                                                                                                                                                                                              
+      btagIndexParticle.push_back( btagScoresParticle[i].first);
+    }
+    
+    // fill b scores
+    leadbscoreparticle -> Fill(leadbscore_particle, weight);
+    subleadbscoreparticle -> Fill(subleadbscore_particle, weight);
     
     Jet *b1Particle=nullptr;
     Jet *b2Particle=nullptr;
@@ -2810,6 +2872,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       hz1m23Comp->Fill(z1_particle.M(), z1_reco.M(), weight);
       hz2pT23Comp->Fill(z2_particle.Pt(), z2_reco.Pt(), weight);
       hz2m23Comp->Fill(z2_particle.M(), z2_reco.M(), weight);
+
+      //leadbscore23->Fill(leadbscore_particle,leadbscore_reco,weight);
+      //subleadbscore23->Fill(subleadbscore_particle,subleadbscore_reco,weight);
     }
     if(switchVal_parton==0  && switchVal_reco==0 ){
       hHpT13Comp -> Fill(h_parton.Pt(), h_reco.Pt(), weight);
