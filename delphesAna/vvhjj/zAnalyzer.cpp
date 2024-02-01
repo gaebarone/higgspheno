@@ -2,6 +2,10 @@
 R__LOAD_LIBRARY("libDelphes")
 #endif
 
+
+//#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
+//#include "core/session/onnxruntime_cxx_api.h"
+#include <onnxruntime_cxx_api.h>
 #include "HepMC/GenParticle.h"
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
@@ -39,12 +43,13 @@ R__LOAD_LIBRARY("libDelphes")
 #include "selections.h"
 #include "parton_selections.h"
 #include <iomanip>
+#include  <string.h>
 
 
 typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
 
 using namespace std;
-
+using namespace ::Ort;
 
 // test
 
@@ -60,6 +65,29 @@ std::vector <string> cutList_parton;//{"initial parton", "Higgs Candidate", "ZZ 
 std::map<std::string, std::vector<string> > cutSelectionProcessReco;
 std::map<std::string, std::vector<string> > cutSelectionProcessParticle;
 std::map<std::string, std::vector<string> > cutSelectionProcessParton;
+
+template <typename T>
+	T VectorProduct(const std::vector<T>& v)
+	{
+		return std::accumulate(v.begin(), v.end(), 1, std::multiplies<T>());
+	};
+
+// pretty prints a shape dimension vector
+std::string print_shape(const std::vector<int64_t>& v) {
+  std::stringstream ss("");
+  for (size_t i = 0; i < v.size() - 1; i++)
+    ss << v[i] << "x";
+  ss << v[v.size() - 1];
+  return ss.str();
+}
+
+int calculate_product(const std::vector<int64_t>& v) {
+  int total = 1;
+  for (auto& i : v) total *= i;
+  return total;
+}
+
+
 
 void DefineSelections(){
   // Cut selections to consider
@@ -111,11 +139,12 @@ void PrintCutFlow(std::map<std::string, std::pair<int, double>> cutFlowMap, std:
     std::cout << std::setw(nameWidth + valueWidth * 3 + 7) << std::setfill('-') << "" << std::setfill(' ') << std::endl;
   };
 
-  auto printRow = [&](const std::string& name, int passed, double relEff, double efficiency) {
+  auto printRow = [&](const std::string& name, int passed, double relEff, double efficiency, double normpassed) {
     std::cout << "| " << std::setw(nameWidth) << std::left << name << "|";
     std::cout << std::setw(valueWidth) << std::left << passed << "|";
     std::cout << std::setw(valueWidth) << std::left << relEff << "|";
-    std::cout << std::setw(valueWidth) << std::left << efficiency << "|" << std::endl;
+    std::cout << std::setw(valueWidth) << std::left << efficiency << "|";
+    std::cout << std::setw(20) << std::left << normpassed << "|" << std::endl;
   };
 
   // Table header
@@ -123,7 +152,8 @@ void PrintCutFlow(std::map<std::string, std::pair<int, double>> cutFlowMap, std:
   std::cout << "| " << std::setw(nameWidth) << std::left << label + " Cut" << "|";
   std::cout << std::setw(valueWidth) << std::left << label + " Passed" << "|";
   std::cout << std::setw(valueWidth) << std::left << " Rel Eff " << "|";
-  std::cout << std::setw(valueWidth) << std::left << label + " Efficiency" << "|" << std::endl;
+  std::cout << std::setw(valueWidth) << std::left << label + " Efficiency" << "|" ;
+  std::cout << std::setw(valueWidth) << std::left << label + " Norm Count" << "|" << std::endl;
   printLine();
 
   // Table rows
@@ -131,8 +161,8 @@ void PrintCutFlow(std::map<std::string, std::pair<int, double>> cutFlowMap, std:
     double passed_reco = cutFlowMap[cutName].first;
     double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
     double relEff = (cutList.size() > 1 && &cutName != &cutList[0]) ? 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList.at(&cutName - &cutList[1])].second : 100;
-
-    printRow(cutName, passed_reco, relEff, efficiency_reco);
+    double passedNorm=cutFlowMap[cutName].second;
+    printRow(cutName, passed_reco, relEff, efficiency_reco,passedNorm);
   }
   printLine();
 }
@@ -835,7 +865,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
 	
   double  nPassed=0;
-  double Lumi=1;//3e3;
+  double Lumi=3e3;//1;//3e3;
   double totWeightedEntries=0;
   int  nPassedRaw=0;
   int nQuads=0;
@@ -1056,19 +1086,46 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
     // get the sorted jets; 
     vector<pair<int,double>> btagScores=JetBtagScoreIndex(goodJetIndex,branchJet,branchGenParticle);
-    
     //consider as b-jets the ones with the highest scrore
     btagIndex.clear();
-
     for(int i=0; i<(int)btagScores.size(); i++){
       if( btagIndex.size() > 1) break;
-      if( btagScores[i].second < 0.4) continue; 
+      if( btagScores[i].second < 0.1) continue; 
       //if(  i > 1) break;
       //cout<<"Jet index " <<btagScores[i].first<<" score "<<btagScores[i].second<<endl;
       //if( i==0) 
       btagIndex.push_back( btagScores[i].first);
     }
     //cout<<endl;
+
+    /*
+    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,false,1.0,false);
+    //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
+    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetB;
+    
+    for(int i=0; i<(int)pairedJet.size(); i++){
+      std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> thisPaired=pairedJet.at(i);
+      if( thisPaired.first["label_bb"] > 0) pairedJetB.push_back(thisPaired);
+      
+    std::map<TString, float> paired_floats=thisPaired.first;
+    std::map<TString, std::vector<float>> paired_vectors=thisPaired.second;
+    //cout<<"Paired jet "<<i<<endl;
+    //cout<<"Input floats"<<endl;
+    //for(std::map<TString,float>::iterator it=paired_floats.begin(); it!=paired_floats.end(); it++){
+    //cout<<"Name "<<(*it).first<<" value "<<(*it).second<<endl;
+    //}
+    //cout<<"Input vectors"<<endl;
+    //for(std::map<TString,vector<float>>::iterator it=paired_vectors.begin(); it!=paired_vectors.end(); it++){
+    //cout<<"Name "<<(*it).first<<" values "<<(*it).second<<endl;
+    //}
+    }
+
+    btagIndex.clear();
+    if( pairedJetB.size()>0){
+      btagIndex.push_back(pairedJetB.at(0).first["jet1_index"]);
+      btagIndex.push_back(pairedJetB.at(0).first["jet2_index"]);
+    }
+    */
     
     if(enableCutReco["1 btag reco"]){
       if(switchVal_reco == 0 && btagIndex.size() > 1)
@@ -1091,10 +1148,198 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     pair<int,int> b12pos;
 
 
-    //std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,false,1.0,false);
-    //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
+    
+    
+    // Work in progress 
+    bool doONNX=false;
+    if(doONNX){
+      // onnxruntime setup
+    //string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/delphesModel.onnx";
+    string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/delphesModel_changed.onnx";
+    //string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/examples_sv_Jan.onnx";
+    
+
+    auto providers = Ort::GetAvailableProviders();
+    for (auto provider : providers) {
+      std::cout << provider << std::endl;
+    }
+    cout<<endl;
+    
+    Ort::Env env = Ort::Env(OrtLoggingLevel::ORT_LOGGING_LEVEL_VERBOSE, "Default");
+    Ort::SessionOptions sessionOptions;
+    sessionOptions.SetIntraOpNumThreads(1);
+    sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+    // Optimization will take time and memory during startup
+    //sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+    
+    Ort::Session session = Ort::Session(env, model_file.c_str(), sessionOptions);
+    Ort::AllocatorWithDefaultOptions allocator;
+    
+    // Demonstration of getting input node info by code
+    size_t num_input_nodes = 0;
+    std::vector<const char*>* input_node_names = nullptr; // Input node names
+    //std::vector<const char*>* output_node_names = new std::vector<const char*>();
+    std::vector<const char*> output_node_names;
+    std::vector<std::vector<int64_t>> input_node_dims;    // Input node dimension.
+    ONNXTensorElementDataType type;                       // Used to print input info
+    Ort::TypeInfo* type_info;
+    
+    num_input_nodes = session.GetInputCount();
+    input_node_names = new std::vector<const char*>;
+    for (int i = 0; i < num_input_nodes; i++) {
+      
+      char* tempstring = new char[strlen(session.GetInputNameAllocated(i, allocator).get()) + 1];
+      snprintf(tempstring, strlen(session.GetInputNameAllocated(i, allocator).get()) + 1, session.GetInputNameAllocated(i, allocator).get());
+      input_node_names->push_back(tempstring);
+      type_info = new Ort::TypeInfo(session.GetInputTypeInfo(i));
+      auto tensor_info = type_info->GetTensorTypeAndShapeInfo();
+      cout<<"tensor info "<< tensor_info<<endl;
+      cout<<"tensor size "<<VectorProduct(tensor_info.GetShape())<<endl;
+      cout<<"tensor shape "<<tensor_info.GetShape()<<endl;
+      ///cout<<"tensor element count "<<tensor_info.GetElementCount()<<endl;
+      //cout<<"tensor dimensions count "<<tensor_info.GetDimensionsCount()<<endl;
+      //star:vector<int64_t> input_dims
+      
+      
+      
+      type = tensor_info.GetElementType();
+      input_node_dims.push_back(tensor_info.GetShape());
+
+      //for (int j = 0; j < input_node_dims.size(); j++) {
+      //if (input_node_dims[j] == -1)
+      //{
+      //  input_node_dims[j] = 1;
+      //}
+      //printf("Input %d : dim %d=%jd\n", i, j, input_node_dims[j]);
+      //}
+
+      // print input shapes/dims
+      printf("Input %d : name=%s\n", i, input_node_names->back());
+      printf("Input %d : num_dims=%zu\n", i, input_node_dims.back().size());
+      for (int j = 0; j < input_node_dims.back().size(); j++)
+	printf("Input %d : dim %d=%jd\n", i, j, input_node_dims.back()[j]);
+      printf("Input %d : type=%d\n", i, type);
+      
+      delete(type_info);
+    }
+    
+    
+    
+    // Set output node name explicitly
+    output_node_names.push_back("output");
+
+    cout<<"------"<<endl;
+    size_t inputCount = session.GetInputCount();
+    for (int i = 0; i < inputCount; ++i) {
+        auto name = session.GetInputNameAllocated(i, allocator);
+        auto shape = session.GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
+
+        std::cout << "Input Number: " << i << std::endl;
+        std::cout << " Input Name: " << name.get() << std::endl;
+        std::cout << " Input Shape: " << shape << std::endl;
+    }
+
+    size_t outputCount = session.GetOutputCount();
+    for (int i = 0; i < outputCount; ++i) {
+        auto name = session.GetOutputNameAllocated(i, allocator);
+        auto shape = session.GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
+
+        std::cout << "Output Number: " << i << std::endl;
+        std::cout << " Output Name: " << name.get() << std::endl;
+        std::cout << " Output Shape: " << shape << std::endl;
+    }
 
     
+
+
+    /*
+    std::vector<float>* input_tensor_values;    // Raw input
+    std::vector<Ort::Value> inputTensor;        // Onnxruntime allowed input
+    
+    // this will make the input into 1,3,640,640
+    cv::Mat blob = cv::dnn::blobFromImage(image, 1 / 255.0, cv::Size(640, 640), (0, 0, 0), false, false);
+    size_t input_tensor_size = blob.total();
+    input_tensor_values = new std::vector<float>((float*)blob.data, (float*)blob.data + input_tensor_size);
+    
+    try {
+      inputTensor.emplace_back(Ort::Value::CreateTensor<float>(memory_info, input_tensor_values->data(), input_tensor_size, input_node_dims[0].data(), input_node_dims[0].size()));
+    }
+    catch (Ort::Exception oe) {
+      std::cout << "ONNX exception caught: " << oe.what() << ". Code: " << oe.GetOrtErrorCode() << ".\n";
+      return -1;
+      }*/
+    
+    
+    
+    cout<<"HERE"<<endl;
+   
+   
+    cout << "KABOOM "<<endl;
+    
+    auto memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtDeviceAllocator, OrtMemType::OrtMemTypeCPUOutput);
+    
+
+    
+      std::cout << "Start warming up" << endl;
+     
+     
+     
+      std::vector<Ort::Value> input_tensors;
+      std::vector<Ort::Value> output_tensors;
+      std::cout << "################### befor run:##############" << endl;
+      //std::cout << "input node name:" << inputNodeNames[0] << endl;
+      //std::cout << "output0 node name:" << outputNodeNames[0] << endl;
+      for (int i = 0; i < num_input_nodes; i++) {
+
+	auto name = session.GetInputNameAllocated(i, allocator);
+        auto shape = session.GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
+	size_t input_tensor_length = VectorProduct(shape);
+	cout<<"Tensor size "<<input_tensor_length<<endl;
+	float temp[input_tensor_length];
+	
+	type_info = new Ort::TypeInfo(session.GetInputTypeInfo(i));
+	auto tensor_info = type_info->GetTensorTypeAndShapeInfo();
+	cout<<"tensor info "<< tensor_info<<endl;
+	cout<<"tensor size "<<VectorProduct(tensor_info.GetShape())<<endl;
+	cout<<"tensor shape "<<tensor_info.GetShape()<<endl;
+
+	input_tensors.push_back(Ort::Value::CreateTensor<float>(
+							      memoryInfo, temp, input_tensor_length, tensor_info.GetShape().data(),
+							      tensor_info.GetShape().size()));
+      	
+    }
+
+      
+      
+      //input_tensors.push_back(Ort::Value::CreateTensor<float>(
+      //						      memoryInfo, temp, input_tensor_length, input_tensor_info.GetShape().data(),
+      //						      input_tensor_info.GetShape().size()));
+
+      cout<<" Loop "<<endl;
+
+      //const int64_t shape=3; //inputTensorShape.data()
+      //input_tensors.push_back(Ort::Value::CreateTensor<float>(
+      //						       memoryInfo, temp, 1,&shape,
+      //						      1));
+      
+      //for (int i = 0; i < 1; i++) {
+      //output_tensors = session.Run(Ort::RunOptions{ nullptr },
+      //			     inputNodeNames.data(),
+      //			     input_tensors.data(),
+      //			     inputNodeNames.size(),
+      //			     outputNodeNames.data(),
+      //			     outputNodeNames.size());
+      //}
+      //std::cout << "################### after run:##############" << endl;
+      //std::cout << "input node name:" << inputNodeNames[0] << endl;
+      //std::cout << "output0 node name:" << outputNodeNames[0] << endl;
+      //std::cout << "output1 node name:" << outputNodeNames[1] << endl;
+    
+    
+      std::cout << "*********************************** test onnx ok  ***************************************" << endl;
+    }
+      
+   
     //if(switchVal_reco == 0 && goodJetIndex.size()>1 )
     if(switchVal_reco == 0 && btagIndex.size()>1 )
       //bJetPairsComb= combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);

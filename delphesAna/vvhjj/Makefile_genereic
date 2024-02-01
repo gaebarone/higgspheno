@@ -11,9 +11,17 @@ RIVET_LIBS = `rivet-config --libs`
 RIVET_LDFALGS=`rivet-config --ldflags`
 RIVET_CXXFLAGS=`rivet-config --cppflags`
 
+#ONNX
+#ONNX_DIR=-I/Users/gaetano/programs/onnxruntime/include/
+ONNX_DIR=-I/opt/homebrew/include/onnxruntime/
+ONNX_LIBS=-L/opt/homebrew/lib/ -lonnxruntime
+#ONNX_LIBS=-L/Users/gaetano/programs/onnxruntime/build/MacOS/RelWithDebInfo/lib -lonnxruntime 
+#ONNX_INC=
+
 CXXFLAGS = -g -fsanitize=address `root-config --cflags`
 CXXFLAGS += -I$(DELPHES_DIR) -I$(DELPHES_DIR)/external
 CXXFLAGS += $(RIVET_CXXFLAGS)
+CXXFLAGS +=$(ONNX_DIR)
 
 #LDFLAGS  = -ld_classic  -L$(shell $(ROOT_DIR)/bin/root-config --libs) -lRooFit -lRooStats  -lRooFitCore
 ROOTLIBS = `root-config --libs` -lRooFit -lRooStats  -lRooFitCore
@@ -21,7 +29,7 @@ ROOTLIBS = `root-config --libs` -lRooFit -lRooStats  -lRooFitCore
 LDFLAGS = -L$(DELPHES_DIR) -lDelphes -rpath $(DELPHES_DIR)
 LDFLAGS  += $(ROOTLIBS)
 LDFLAGS  += $(RIVET_LDFALGS)
-
+LDFLAGS +=$(ONNX_LIBS)
 
 
 all: zAnalyzer

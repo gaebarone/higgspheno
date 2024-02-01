@@ -465,7 +465,7 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
 }
 
 
- std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>
+ std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>
 
    PAIReDjointEvent( TClonesArray *branchParticle = nullptr,
 					  TClonesArray *branchPFCand = nullptr,
@@ -553,7 +553,7 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
   //TClonesArray *branchJet = treeReader->UseBranch(jetBranch);
   
 
-  std::pair<std::map<TString, float>, std::map<TString, std::vector<float>>> jetbrid;
+ 
 
   auto eventVect = paired::getEventInfo(branchParticle);
   higgspt = eventVect.at(0);
@@ -561,8 +561,8 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
   genflav = eventVect.at(2);
   dRqq = eventVect.at(3);
   hmass = eventVect.at(4);
-
-
+  
+  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  output;//
   int n_c = 0;
     for (Int_t i = 0; i < branchJet->GetEntriesFast(); ++i) {
       const Jet *jet = (Jet *)branchJet->At(i);
@@ -603,9 +603,11 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
         for (auto &v : arrayVars) {
           v.second.clear();
         }
+	std::pair<std::map<TString, float>, std::map<TString, std::vector<float>>> jetbrid = paired::processBridge(jet, jet2, branchPFCand, branchParticle, jetR, bridge, ellipse, semimajoradd);
+	floatVars["jet1_index"] = i;
+	floatVars["jet2_index"] = j;
 
-        jetbrid = paired::processBridge(jet, jet2, branchPFCand, branchParticle, jetR, bridge, ellipse, semimajoradd);
-        floats = jetbrid.first;
+	floats = jetbrid.first;
         arrays = jetbrid.second;
 
         for (auto &p : arrays) {
@@ -630,10 +632,11 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
 
         ++jetno;
         ++num_processed;
+	output.push_back(make_pair(floatVars,arrayVars));
       }
     }
 
-    std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>  output=make_pair(floatVars,arrayVars);
+    
     
     return output;
 }
