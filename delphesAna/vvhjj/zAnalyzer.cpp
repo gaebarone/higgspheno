@@ -1,12 +1,15 @@
-#ifdef __CLING__
-R__LOAD_LIBRARY("libDelphes")
-#endif
+// Not neded 
+//#ifdef __CLING__
+//R__LOAD_LIBRARY("libDelphes")
+//#endif
 
-
-
+//#define ONNXRUN
+#ifdef ONNXRUN
 //#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
 //#include "core/session/onnxruntime_cxx_api.h"
-//#include <onnxruntime_cxx_api.h>
+#include <onnxruntime_cxx_api.h>
+#endif
+
 #include "HepMC/GenParticle.h"
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
@@ -50,7 +53,9 @@ R__LOAD_LIBRARY("libDelphes")
 typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
 
 using namespace std;
+#ifdef ONNXRUN
 using namespace ::Ort;
+#endif
 
 // test
 
@@ -1173,6 +1178,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     
     // Work in progress 
     bool doONNX=false;
+    #ifdef ONNXRUN
     if(doONNX){
       // onnxruntime setup
     //string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/delphesModel.onnx";
@@ -1359,7 +1365,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     
       std::cout << "*********************************** test onnx ok  ***************************************" << endl;
     }
-      
+
+    #endif
    
     //if(switchVal_reco == 0 && goodJetIndex.size()>1 )
     if(switchVal_reco == 0 && btagIndex.size()>1 )
