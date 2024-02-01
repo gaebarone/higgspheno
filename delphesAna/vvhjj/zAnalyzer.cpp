@@ -1110,7 +1110,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
     for(int i=0; i<(int)btagScores.size(); i++){
       if( btagIndex.size() > 2) break;
-      if( btagScores[i].second < 0.1) continue; 
+      //if( btagScores[i].second < 0.1) continue; 
       btagIndex.push_back( btagScores[i].first);
       if(btagIndex.size()== 1) 
 	leadbscore_reco = btagScores[i].second;
