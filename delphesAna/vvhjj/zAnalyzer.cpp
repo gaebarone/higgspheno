@@ -3,7 +3,7 @@
 //R__LOAD_LIBRARY("libDelphes")
 //#endif
 
-//#define ONNXRUN
+#define ONNXRUN
 #ifdef ONNXRUN
 //#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
 //#include "core/session/onnxruntime_cxx_api.h"
@@ -1186,7 +1186,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     
     
     // Work in progress 
-    bool doONNX=false;
+    bool doONNX=true;
     #ifdef ONNXRUN
     if(doONNX){
       // onnxruntime setup
