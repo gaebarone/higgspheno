@@ -3,13 +3,14 @@
 //R__LOAD_LIBRARY("libDelphes")
 //#endif
 
-//#define ONNXRUN
+#define ONNXRUN
 #ifdef ONNXRUN
 //#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
 //#include "core/session/onnxruntime_cxx_api.h"
 #include <onnxruntime_cxx_api.h>
 #endif
-
+#include "../common_includes/trasnform_inputs.h"
+#include <unordered_map>
 #include "HepMC/GenParticle.h"
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
@@ -1124,7 +1125,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     
     //cout<<endl;
 
-    /*
+    
     std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,false,1.0,false);
     //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
     std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetB;
@@ -1133,25 +1134,33 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> thisPaired=pairedJet.at(i);
       if( thisPaired.first["label_bb"] > 0) pairedJetB.push_back(thisPaired);
       
-    std::map<TString, float> paired_floats=thisPaired.first;
-    std::map<TString, std::vector<float>> paired_vectors=thisPaired.second;
-    //cout<<"Paired jet "<<i<<endl;
-    //cout<<"Input floats"<<endl;
-    //for(std::map<TString,float>::iterator it=paired_floats.begin(); it!=paired_floats.end(); it++){
-    //cout<<"Name "<<(*it).first<<" value "<<(*it).second<<endl;
-    //}
-    //cout<<"Input vectors"<<endl;
-    //for(std::map<TString,vector<float>>::iterator it=paired_vectors.begin(); it!=paired_vectors.end(); it++){
-    //cout<<"Name "<<(*it).first<<" values "<<(*it).second<<endl;
-    //}
+      std::map<TString, float> paired_floats=thisPaired.first;
+      std::map<TString, std::vector<float>> paired_vectors=thisPaired.second;
+      
+      std::unordered_map<std::string, std::vector<std::string>> ParsedMap=parseVectorizedMap(jsonString);
+      for(std::unordered_map<std::string, std::vector<std::string>>::iterator it=ParsedMap.begin(); it!=ParsedMap.end(); it++){
+	cout<<"Name "<<(*it).first<<" second "<<(*it).second<<endl;
+	
+    }
+      
+      
+      cout<<"Paired jet "<<i<<endl;
+      cout<<"Input floats"<<endl;
+      for(std::map<TString,float>::iterator it=paired_floats.begin(); it!=paired_floats.end(); it++){
+	cout<<"Name "<<(*it).first<<" value "<<(*it).second<<endl;
+      }
+      cout<<"Input vectors"<<endl;
+      for(std::map<TString,vector<float>>::iterator it=paired_vectors.begin(); it!=paired_vectors.end(); it++){
+	cout<<"Name "<<(*it).first<<" values "<<(*it).second<<endl;
+      }
     }
 
-    btagIndex.clear();
-    if( pairedJetB.size()>0){
-      btagIndex.push_back(pairedJetB.at(0).first["jet1_index"]);
-      btagIndex.push_back(pairedJetB.at(0).first["jet2_index"]);
-    }
-    */
+    //btagIndex.clear();
+    //if( pairedJetB.size()>0){
+    //btagIndex.push_back(pairedJetB.at(0).first["jet1_index"]);
+    //btagIndex.push_back(pairedJetB.at(0).first["jet2_index"]);
+    //}
+    
     
     if(enableCutReco["1 btag reco"]){
       if(switchVal_reco == 0 && btagIndex.size() > 1)
@@ -1177,7 +1186,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     
     
     // Work in progress 
-    bool doONNX=false;
+    bool doONNX=true;
     #ifdef ONNXRUN
     if(doONNX){
       // onnxruntime setup
