@@ -882,8 +882,9 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       //TH2F *leadbscore23 = new TH2F("lead_bscore_comp_23", "leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(leadbscore23);
       //TH2F *subleadbscore23 = new TH2F("sublead_bscore_comp_23", "sub-leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(subleadbscore23);
 
-      TH1F *pairedJetsize = new TH1F("pairedJet_size", "pairedJet size", 10, 0, 1000); listOfTH1.push_back(pairedJetsize);
-
+      TH1F *pairedJetsize = new TH1F("pairedJet_size", "pairedJet size", 10, 0, 5); listOfTH1.push_back(pairedJetsize);
+      TH1F *pairedJetBsize = new TH1F("pairedJetB_size", "pairedJetB size", 10, 0, 5); listOfTH1.push_back(pairedJetBsize);
+ 
   double  nPassed=0;
   double Lumi=3e3;//1;//3e3;
   double totWeightedEntries=0;
@@ -1157,25 +1158,27 @@ pairedJetsize -> Fill(pairedJet.size(), weight);
       
       std::unordered_map<std::string, std::vector<std::string>> ParsedMap=parseVectorizedMap(jsonString);
       for(std::unordered_map<std::string, std::vector<std::string>>::iterator it=ParsedMap.begin(); it!=ParsedMap.end(); it++){
-	cout<<"Name "<<(*it).first<<" second "<<(*it).second<<endl;
+	//cout<<"Name "<<(*it).first<<" second "<<(*it).second<<endl;
 	
     }
+
+pairedJetBsize -> Fill(pairedJetB.size(), weight);
       
-      cout<<"Paired jet "<<i<<endl;
-      cout<<"Input floats"<<endl;
+      // cout<<"Paired jet "<<i<<endl;
+      // cout<<"Input floats"<<endl;
       for(std::map<TString,float>::iterator it=paired_floats.begin(); it!=paired_floats.end(); it++){
-	cout<<"Name "<<(*it).first<<" value "<<(*it).second<<endl;
+	// cout<<"Name "<<(*it).first<<" value "<<(*it).second<<endl;
       }
-      cout<<"Input vectors"<<endl;
+      // cout<<"Input vectors"<<endl;
       for(std::map<TString,vector<float>>::iterator it=paired_vectors.begin(); it!=paired_vectors.end(); it++){
-	cout<<"Name "<<(*it).first<<" values "<<(*it).second<<endl;
+	// cout<<"Name "<<(*it).first<<" values "<<(*it).second<<endl;
       }
     }
 
     btagIndex.clear();
     if( pairedJetB.size()>0){
     btagIndex.push_back(pairedJetB.at(0).first["jet1_index"]);
-    btagIndex.push_back(pairedJetB.at(0).first["jet2_index"]);
+    // btagIndex.push_back(pairedJetB.at(0).first["jet2_index"]);
     }
     
     if(enableCutReco["1 btag reco"]){
@@ -1215,7 +1218,7 @@ pairedJetsize -> Fill(pairedJet.size(), weight);
     for (auto provider : providers) {
       std::cout << provider << std::endl;
     }
-    cout<<endl;
+    // cout<<endl;
     
     Ort::Env env = Ort::Env(OrtLoggingLevel::ORT_LOGGING_LEVEL_VERBOSE, "Default");
     Ort::SessionOptions sessionOptions;
