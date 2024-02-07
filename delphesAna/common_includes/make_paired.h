@@ -16,6 +16,8 @@
 #include <iostream>
 #include <functional>
 #include <time.h>
+#include "TRandom.h"
+#include "TRandom3.h"
 #include <Math/GenVector/PtEtaPhiM4D.h>
 #include <Math/Vector4D.h>
 #include <Math/GenVector/LorentzVector.h>
@@ -24,6 +26,18 @@
 namespace paired
 
 {
+
+bool isMyPAIReDBTag(bool label_bb, bool label_cc, bool label_ll, int seed = 0, double effWrk=0.9,double fake_eff=0.15) {
+ 
+  TRandom3 rand; 
+  rand.SetSeed(seed); 
+
+  if (label_bb){
+    return rand.Uniform(0,1) < effWrk;
+  } else { 
+    return rand.Uniform(0,1) < fake_eff;
+  }
+}
 
 const double pi = TMath::Pi();
 
@@ -408,6 +422,8 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   if (_floatVars["label_bb"] == 0 && _floatVars["label_cc"] == 0)
     _floatVars["label_ll"] = 1;
 
+  _floatVars["isbtagged"] = isMyPAIReDBTag(_floatVars["label_bb"] > 0, _floatVars["label_cc"] > 0, _floatVars["label_ll"] > 0, 0, 0.6, 0.02) ? 1.0 : 0.0;
+
   return std::make_pair(_floatVars,_arrayVars);  
 }
 
@@ -458,6 +474,7 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
         hmass = dipart.M();
     }
   }
+
 
   std::vector<float> ret{hpt,zpt,gen_flav,dRqq,hmass};
   return ret;

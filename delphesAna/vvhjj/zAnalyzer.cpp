@@ -3,12 +3,13 @@
 //R__LOAD_LIBRARY("libDelphes")
 //#endif
 
-#define ONNXRUN
-#ifdef ONNXRUN
+//#define ONNXRUN
+//#ifdef ONNXRUN
 //#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
 //#include "core/session/onnxruntime_cxx_api.h"
-#include <onnxruntime_cxx_api.h>
-#endif
+//#include <onnxruntime_cxx_api.h>
+//#endif
+
 #include "../common_includes/trasnform_inputs.h"
 #include <unordered_map>
 #include "HepMC/GenParticle.h"
@@ -871,7 +872,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
   kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
 
-    // b tag scores
+    // b tag
       TH1F *leadbscorereco = new TH1F("lead_bscore_reco", "leading b score reco", 100, 0, 1); listOfTH1.push_back(leadbscorereco);
       TH1F *leadbscoreparticle = new TH1F("lead_bscore_particle", "leading b score particle", 100, 0, 1); listOfTH1.push_back(leadbscoreparticle);
 
@@ -880,6 +881,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
       //TH2F *leadbscore23 = new TH2F("lead_bscore_comp_23", "leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(leadbscore23);
       //TH2F *subleadbscore23 = new TH2F("sublead_bscore_comp_23", "sub-leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(subleadbscore23);
+
+      TH1F *pairedJetsize = new TH1F("pairedJet_size", "pairedJet size", 10, 0, 1000); listOfTH1.push_back(pairedJetsize);
 
   double  nPassed=0;
   double Lumi=3e3;//1;//3e3;
@@ -1125,14 +1128,29 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     
     //cout<<endl;
 
+/*
+   PAIReDjointEvent( TClonesArray *branchParticle = nullptr,
+					  TClonesArray *branchPFCand = nullptr,
+					  TClonesArray *branchJet = nullptr,
+					  float jetR = 0.4,
+					  bool forwardjet = false, bool bridge=false,
+					  bool ellipse = false, float semimajoradd = 1.0, 
+					  bool sigonly=false){
+              */
+
     
-    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,false,1.0,false);
+    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,true,1.0,false);
     //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
     std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetB;
-    
+
+//////////
+pairedJetsize -> Fill(pairedJet.size(), weight);
+/////////
+
+
     for(int i=0; i<(int)pairedJet.size(); i++){
       std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> thisPaired=pairedJet.at(i);
-      if( thisPaired.first["label_bb"] > 0) pairedJetB.push_back(thisPaired);
+      if( thisPaired.first["isbtagged"] > 0) pairedJetB.push_back(thisPaired);
       
       std::map<TString, float> paired_floats=thisPaired.first;
       std::map<TString, std::vector<float>> paired_vectors=thisPaired.second;
@@ -1142,7 +1160,6 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 	cout<<"Name "<<(*it).first<<" second "<<(*it).second<<endl;
 	
     }
-      
       
       cout<<"Paired jet "<<i<<endl;
       cout<<"Input floats"<<endl;
@@ -1155,12 +1172,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       }
     }
 
-    //btagIndex.clear();
-    //if( pairedJetB.size()>0){
-    //btagIndex.push_back(pairedJetB.at(0).first["jet1_index"]);
-    //btagIndex.push_back(pairedJetB.at(0).first["jet2_index"]);
-    //}
-    
+    btagIndex.clear();
+    if( pairedJetB.size()>0){
+    btagIndex.push_back(pairedJetB.at(0).first["jet1_index"]);
+    btagIndex.push_back(pairedJetB.at(0).first["jet2_index"]);
+    }
     
     if(enableCutReco["1 btag reco"]){
       if(switchVal_reco == 0 && btagIndex.size() > 1)
