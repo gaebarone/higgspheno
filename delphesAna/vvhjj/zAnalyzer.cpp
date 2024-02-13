@@ -50,6 +50,7 @@
 #include "parton_selections.h"
 #include <iomanip>
 #include  <string.h>
+#include <cmath>
 
 
 typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
@@ -883,8 +884,10 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       //TH2F *subleadbscore23 = new TH2F("sublead_bscore_comp_23", "sub-leading b score", 5, 0, 1, 5, 0, 1); listOfTH2.push_back(subleadbscore23);
 
       TH1F *pairedJetsize = new TH1F("pairedJet_size", "pairedJet size", 10, 0, 5); listOfTH1.push_back(pairedJetsize);
-      TH1F *pairedJetBsize = new TH1F("pairedJetB_size", "pairedJetB size", 10, 0, 5); listOfTH1.push_back(pairedJetBsize);
- 
+      TH1F *pairedJetBsize = new TH1F("pairedJetB_size", "pairedJetB size", 5, 0, 5); listOfTH1.push_back(pairedJetBsize);
+      TH2F *pairedJetbbsizemass = new TH2F("pairedJetbb_size_mass", "pairedJetbb_size_mass", 5, 0, 5, 5, hmmin, hmmax); listOfTH2.push_back(pairedJetbbsizemass);
+  
+  
   double  nPassed=0;
   double Lumi=3e3;//1;//3e3;
   double totWeightedEntries=0;
@@ -919,6 +922,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   TLorentzVector z2_reco, z2_particle,  z2_parton;
 
   TLorentzVector fourl_reco, fourl_particle, fourl_parton; 
+
+  TLorentzVector jet1p4, jet2p4, dijet;
 
   int q1_reco=0;
   int q2_reco=0;
@@ -1011,6 +1016,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   double subleadbscore_reco = -9999;
   double subleadbscore_particle = -9999;
 
+  double jet1_pt = -9999;
+  double jet2_pt = -9999;
+  double jet1_energy = -9999;
+  double jet2_energy = -9999;
+  double pairedbbmass = -9999;
 														     
    /*
     DelphesLHEFReader *reader = new DelphesLHEFReader;
@@ -1110,13 +1120,13 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
     // get the sorted jets; 
     vector<pair<int,double>> btagScores=JetBtagScoreIndex(goodJetIndex,branchJet,branchGenParticle);
-    //consider as b-jets the ones with the highest scrore
-    btagIndex.clear();
-
+   
+    // consider as b-jets the ones with the highest scrore
+    // btagIndex.clear();
     for(int i=0; i<(int)btagScores.size(); i++){
       if( btagIndex.size() > 2) break;
-      //if( btagScores[i].second < 0.1) continue; 
-      btagIndex.push_back( btagScores[i].first);
+      // if( btagScores[i].second < 0.1) continue; 
+      // btagIndex.push_back( btagScores[i].first);
       if(btagIndex.size()== 1) 
 	leadbscore_reco = btagScores[i].second;
       else if (btagIndex.size()== 2)
@@ -1157,23 +1167,37 @@ pairedJetsize -> Fill(pairedJet.size(), weight);
       std::map<TString, std::vector<float>> paired_vectors=thisPaired.second;
       
       std::unordered_map<std::string, std::vector<std::string>> ParsedMap=parseVectorizedMap(jsonString);
-      for(std::unordered_map<std::string, std::vector<std::string>>::iterator it=ParsedMap.begin(); it!=ParsedMap.end(); it++){
-	//cout<<"Name "<<(*it).first<<" second "<<(*it).second<<endl;
-	
-    }
 
-pairedJetBsize -> Fill(pairedJetB.size(), weight);
-      
-      // cout<<"Paired jet "<<i<<endl;
-      // cout<<"Input floats"<<endl;
-      for(std::map<TString,float>::iterator it=paired_floats.begin(); it!=paired_floats.end(); it++){
-	// cout<<"Name "<<(*it).first<<" value "<<(*it).second<<endl;
-      }
-      // cout<<"Input vectors"<<endl;
-      for(std::map<TString,vector<float>>::iterator it=paired_vectors.begin(); it!=paired_vectors.end(); it++){
-	// cout<<"Name "<<(*it).first<<" values "<<(*it).second<<endl;
-      }
+      //for(std::unordered_map<std::string, std::vector<std::string>>::iterator it=ParsedMap.begin(); it!=ParsedMap.end(); it++){
+	    //cout<<"Name "<<(*it).first<<" second "<<(*it).second<<endl;
+      //}
+
+    //cout<<"Paired jet "<< i <<endl;
+    //cout<<"Input floats"<<endl;
+    //for(std::map<TString,float>::iterator it=paired_floats.begin(); it!=paired_floats.end(); it++){
+	  //    cout<<"Name "<<(*it).first<<" value "<<(*it).second<<endl;
+    //  }
+    
+    //cout<<"Input vectors"<<endl;
+    //for(std::map<TString,vector<float>>::iterator it=paired_vectors.begin(); it!=paired_vectors.end(); it++){
+	  //    cout<<"Name "<<(*it).first<<" values "<<(*it).second<<endl;
+    //  }
     }
+    
+    pairedJetBsize -> Fill(pairedJetB.size(), weight);
+
+if (pairedJetB.size()>0){
+    std::map<TString, float> paired_jet = pairedJetB.at(0).first;
+  
+    jet1p4.SetPtEtaPhiM(paired_jet["jet1_pt"],paired_jet["jet1_eta"],paired_jet["jet1_phi"],paired_jet["jet1_mass"]);
+    jet2p4.SetPtEtaPhiM(paired_jet["jet2_pt"],paired_jet["jet2_eta"],paired_jet["jet2_phi"],paired_jet["jet2_mass"]);
+
+    dijet = jet1p4 + jet2p4;
+    float dijetmass = dijet.M();
+
+    pairedJetbbsizemass -> Fill(pairedJetB.size(), dijetmass, weight);
+    // pairedJetbbsizemass -> Scale(1/numEntries);
+  }
 
     btagIndex.clear();
     if( pairedJetB.size()>0){
@@ -1200,8 +1224,6 @@ pairedJetBsize -> Fill(pairedJetB.size(), weight);
     vector<vector <int>> bJetPairsComb;
     vector<pair<int,int>> bJetPairs;
     pair<int,int> b12pos;
-
-
     
     
     // Work in progress 
@@ -2955,7 +2977,8 @@ pairedJetBsize -> Fill(pairedJetB.size(), weight);
     cutVal_parton++; cutValW_parton+=weight;
   }
   
-
+  pairedJetbbsizemass -> Scale(1/numEntries);
+    
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // write histos
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
