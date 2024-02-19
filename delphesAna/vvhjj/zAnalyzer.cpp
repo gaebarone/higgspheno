@@ -4,11 +4,11 @@
 //#endif
 
 //#define ONNXRUN
-//#ifdef ONNXRUN
+#ifdef ONNXRUN
 //#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
 //#include "core/session/onnxruntime_cxx_api.h"
-//#include <onnxruntime_cxx_api.h>
-//#endif
+#include <onnxruntime_cxx_api.h>
+#endif
 
 #include "../common_includes/trasnform_inputs.h"
 #include <unordered_map>
@@ -18,7 +18,7 @@
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
 #include "../common_includes/ghost_tagging.h"
 #include "../common_includes/combinations.h"
-#include "../common_includes/get_cross_section.h"
+//#include "../common_includes/get_cross_section.h"
 #include "../common_includes/make_paired.h"
 #include <iostream>
 #include <fstream>
@@ -46,34 +46,28 @@
 #include "TCanvas.h"
 #include "TProfile.h"
 #include <vector>
-#include "selections.h"
-#include "parton_selections.h"
+//#include "selections.h"
+//#include "parton_selections.h"
 #include <iomanip>
 #include  <string.h>
 #include <cmath>
 
-
-typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
+#include "includes/cutflow_include.h"
+#include "includes/crossx_include.h"
+#include "includes/hist_include.h"
+#include "includes/weights_include.h"
+#include "includes/selections_include.h"
 
 using namespace std;
 #ifdef ONNXRUN
 using namespace ::Ort;
 #endif
 
-// test
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// initialize combinations
+// misc
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-vector <string> types={"4mu","4e", "2mu2e", "2e2mu"};
-std::vector <string> cutList_reco;//{"initial reco", "1 btag reco", "2 good j reco", "2 b-like jet pairs reco", "found bb reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"};
-std::vector <string> cutList_particle;//{"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-std::vector <string> cutList_parton;//{"initial parton", "Higgs Candidate", "ZZ parton"};
-
-std::map<std::string, std::vector<string> > cutSelectionProcessReco;
-std::map<std::string, std::vector<string> > cutSelectionProcessParticle;
-std::map<std::string, std::vector<string> > cutSelectionProcessParton;
+// vector <string> types = {"4mu","4e", "2mu2e", "2e2mu"};
 
 template <typename T>
 	T VectorProduct(const std::vector<T>& v)
@@ -81,7 +75,6 @@ template <typename T>
 		return std::accumulate(v.begin(), v.end(), 1, std::multiplies<T>());
 	};
 
-// pretty prints a shape dimension vector
 std::string print_shape(const std::vector<int64_t>& v) {
   std::stringstream ss("");
   for (size_t i = 0; i < v.size() - 1; i++)
@@ -96,126 +89,10 @@ int calculate_product(const std::vector<int64_t>& v) {
   return total;
 }
 
-
-
-void DefineSelections(){
-  // Cut selections to consider
-  // ghost seleciton
-  cutSelectionProcessReco["all"]={"initial reco", "1 btag reco", "2 good j reco", "2 b-like jet pairs reco", "found bb reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"}; 
-  cutSelectionProcessParticle["all"]={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-  cutSelectionProcessParton["all"]={"initial parton", "Higgs Candidate", "ZZ parton"};
-  
-  cutSelectionProcessReco["HZZJJ"]={"initial reco", "1 btag reco", "2 good j reco", "2 b-like jet pairs reco", "found bb reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"}; 
-  cutSelectionProcessParticle["HZZJJ"]={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-  cutSelectionProcessParton["HZZJJ"]={"initial parton", "Higgs Candidate", "ZZ parton"};
-  
-  cutSelectionProcessReco["ZZJJ"]={"initial reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"}; 
-  cutSelectionProcessParticle["ZZJJ"]={"initial particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-  cutSelectionProcessParton["ZZJJ"]={"initial parton","ZZ parton"};
-}
-
-bool hasCut(vector<string> cutList,string cut){
-  for(int i=0; i<(int)cutList.size(); i++){
-    if( cut.compare(cutList.at(i))==0 ) return true; 
-  }
-  return false; 
-}
-
-void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList, string label){
-  //  cout<<" Filling cutflow "<<label<<endl;
-    
-  for(int i=0; i<(int) cutList.size(); i++) {
-
-    const std::string cutName = cutList[i];
-    double passed_reco =  cutFlowMap[cutName].second;
-    double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
-    //cout<<"Bin "<<i+1<<" passed "<<passed_reco<<" eff "<<efficiency_reco<<endl;
-    hSel->GetXaxis()->SetBinLabel(i+1,cutName.c_str());
-    hEff->GetXaxis()->SetBinLabel(i+1,cutName.c_str());
-  
-    
-    hSel->SetBinContent(i+1,passed_reco);
-    hEff->Fill(i+1.0,efficiency_reco);
-  } 
-} 
-
-
-void PrintCutFlow(std::map<std::string, std::pair<int, double>> cutFlowMap, std::vector<std::string> cutList, std::string label) {
-  int nameWidth = 30;
-  int valueWidth = 10;
-
-  auto printLine = [&]() {
-    std::cout << std::setw(nameWidth + valueWidth * 3 + 7) << std::setfill('-') << "" << std::setfill(' ') << std::endl;
-  };
-
-  auto printRow = [&](const std::string& name, int passed, double relEff, double efficiency, double normpassed) {
-    std::cout << "| " << std::setw(nameWidth) << std::left << name << "|";
-    std::cout << std::setw(valueWidth) << std::left << passed << "|";
-    std::cout << std::setw(valueWidth) << std::left << relEff << "|";
-    std::cout << std::setw(valueWidth) << std::left << efficiency << "|";
-    std::cout << std::setw(20) << std::left << normpassed << "|" << std::endl;
-  };
-
-  // Table header
-  printLine();
-  std::cout << "| " << std::setw(nameWidth) << std::left << label + " Cut" << "|";
-  std::cout << std::setw(valueWidth) << std::left << label + " Passed" << "|";
-  std::cout << std::setw(valueWidth) << std::left << " Rel Eff " << "|";
-  std::cout << std::setw(valueWidth) << std::left << label + " Efficiency" << "|" ;
-  std::cout << std::setw(valueWidth) << std::left << label + " Norm Count" << "|" << std::endl;
-  printLine();
-
-  // Table rows
-  for (const std::string& cutName : cutList) {
-    double passed_reco = cutFlowMap[cutName].first;
-    double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
-    double relEff = (cutList.size() > 1 && &cutName != &cutList[0]) ? 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList.at(&cutName - &cutList[1])].second : 100;
-    double passedNorm=cutFlowMap[cutName].second;
-    printRow(cutName, passed_reco, relEff, efficiency_reco,passedNorm);
-  }
-  printLine();
-}
-
-
-/*
-void PrintCutFlow(std::map<string, std::pair<int,double>> cutFlowMap, std::vector <string> cutList, string label){
-
-  std::cout<<std::left<<std::setw(25)<<label<<" Cut"<<std::setw(10)<<label<<" Passed"<<std::setw(15)<<" Rel Eff "<< std::setw(15)<<label <<" Efficiency"<< std::endl;
-  for(int i=0; i<(int) cutList.size(); i++) {
-    const std::string cutName = cutList[i];
-    double passed_reco =  cutFlowMap[cutName].first; // switch to second if one wants to use weighted events!
-    double efficiency_reco = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList[0]].second;
-
-    double relEff= 100;;
-    if(i>0)
-      relEff = 100.00 * cutFlowMap[cutName].second / cutFlowMap[cutList.at(i-1)].second; 
-    std::cout<<std::left<<std::setw(25)<<cutName<<std::setw(25)<<passed_reco<< std::setw(25)<<relEff <<std::setw(25)<<efficiency_reco<< std::endl;
-  }
-
-  cout<<endl;
-}
-*/
-
-void increaseCount(std::map<string, std::pair<int,double>> & cutFlowMap, string cutName, double weight){
-  cutFlowMap[cutName]=make_pair(cutFlowMap[cutName].first+1,cutFlowMap[cutName].second+weight);
-}
-
-/*
-void increaseAllCounts(std::vector<string,std::map<string, std::pair<int,double>>> & allCutFlows,std::map<string,vector<string>> &cutSelectionProcessReco_){
-  for(std::map<string,vector<string>>::iterator it=cutSelectionProcessReco_.begin(); it!=cutSelectionProcessReco_.end(); it++){
-  }
-}
-*/
-
-
-
-
-
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // histogram settings
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+/*
 void PrintCanvas(TCanvas *c=nullptr,string name="default"){
   std::vector <string> types={"jpg"}; 
   for(std::vector<string>::iterator it=types.begin(); it!=types.end(); it++) {
@@ -241,14 +118,13 @@ void draw_hist2(TH2F*histo, const char *name, const char *title, const char *xax
   histo->Draw("COLZ");
   PrintCanvas(c, name);
 }
-
-
-
+*/
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // num_entries
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+/*
 Long64_t get_num_entries(const char *inputName) {
   TChain chain("Delphes");
   chain.Add(inputName);
@@ -290,14 +166,14 @@ Long64_t get_total_events(const char *process_name) {
   delete treeReader;
   return numEntries;
 }
-
+*/
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // z analyzer
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // void zAnalyzer(const char *inputFile,const char *outputFile, int kappaVal = 8) {
-void zAnalyzer(const char *inputFile,const char *outputFile, const char *process_name, string analysis="HZZJJ") {
+void zAnalyzer(const char *inputFile, const char *outputFile, const char *process_name, string analysis="HZZJJ") {
 
   
   
@@ -310,7 +186,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   cutList_reco=cutSelectionProcessReco[analysis];
   cutList_particle=cutSelectionProcessParticle[analysis];
   cutList_parton=cutSelectionProcessParton[analysis];
-  
+
   std::map<string, bool> enableCutReco;
   std::map<string, bool> enableCutParticle;
   std::map<string, bool> enableCutParton;
@@ -347,9 +223,19 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   TClonesArray *branchGenParticle = treeReader->UseBranch("Particle");
   TClonesArray *branchGenJet = treeReader->UseBranch("GenJet");
   TClonesArray *branchWeight   = treeReader->UseBranch("Weight");
-  TClonesArray *branchPFCand = treeReader->UseBranch("ParticleFlowCandidate");
-    
-  
+
+  TClonesArray *branchPFCand = nullptr;
+  TClonesArray *branchPFCandParticle = nullptr; // defined to be branchPFCand - leps
+
+  bool hasBranchPFCand = false;
+  TObjArray *branches = chain.GetListOfBranches();
+
+  for (int i = 0; i < branches->GetEntries(); ++i) {
+    TBranch *branch = dynamic_cast<TBranch*>(branches->At(i));
+    //if (!branch) continue;
+    if (strcmp(branch->GetName(), "ParticleFlowCandidate") == 0) bool hasBranchPFCand = true;
+}
+
   bool fill_1D = true;
   bool fill_2D = true;
 
@@ -394,9 +280,11 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   const double zRmax = 5;
   const double lRmax = 5;
 
+
   vector <TH1F*> listOfTH1;
   vector <TH2F*> listOfTH2;
   vector <TProfile*> listOfTPorifles;
+
   // cutflows
   int cutVal_reco = 0;
   double cutValW_reco = 0;
@@ -434,6 +322,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   std::map<string,TH1F*> cutFlowHists;
   std::map<string,TProfile*> cutFlowEffs;
 
+  typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
   std::map<string, cutFlowMapDef* > cutFlowMapAll;
   cutFlowMapAll["reco"] =  & cutFlowMap_reco;
   cutFlowMapAll["particle"] = & cutFlowMap_particle;
@@ -456,7 +345,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // book histograms
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  
+
 // 1D
 
   // higgs - reco
@@ -886,15 +775,15 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
       TH1F *pairedJetsize = new TH1F("pairedJet_size", "pairedJet size", 10, 0, 5); listOfTH1.push_back(pairedJetsize);
       TH1F *pairedJetBsize = new TH1F("pairedJetB_size", "pairedJetB size", 5, 0, 5); listOfTH1.push_back(pairedJetBsize);
       TH2F *pairedJetbbsizemass = new TH2F("pairedJetbb_size_mass", "pairedJetbb_size_mass", 5, 0, 5, 5, hmmin, hmmax); listOfTH2.push_back(pairedJetbbsizemass);
-  
-  
+
+
   double  nPassed=0;
   double Lumi=3e3;//1;//3e3;
   double totWeightedEntries=0;
   int  nPassedRaw=0;
   int nQuads=0;
 
-  
+
   TLorentzVector j1_reco, j1_particle,  j1_parton;
   TLorentzVector j2_reco, j2_particle,  j2_parton;
 
@@ -902,6 +791,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   TLorentzVector b2_reco, b2_particle,  b2_parton;
 
   TLorentzVector h_reco, h_parton, h_particle;
+
 
   TLorentzVector e1_reco, e1_particle,  e1_parton;
   TLorentzVector e2_reco, e2_particle,  e2_parton;
@@ -923,7 +813,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
 
   TLorentzVector fourl_reco, fourl_particle, fourl_parton; 
 
-  TLorentzVector jet1p4, jet2p4, dijet;
+  // TLorentzVector jet1p4, jet2p4, dijet;
 
   int q1_reco=0;
   int q2_reco=0;
@@ -967,11 +857,48 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   double zzdeltaEtareco= -99999;
   double zzdeltaRreco=-99999;
 
+
   double bbdeltaPhireco = 9999;
   double bbdeltaEtareco = 9999;
   double bbdeltaRreco = -9999;
 
+  double jjdeltaPhireco =  -9999;
+  double jjdeltaEtareco= -9999;
+  double jjdeltaRreco = -9999;
 
+  double bbdeltaPhiparticle = -9999;
+  double bbdeltaEtaparticle = -9999;
+  double bbdeltaRparticle= -9999;
+
+  double jjdeltaPhiparticle =  -9999;
+  double jjdeltaEtaparticle =   -9999;
+  double jjdeltaRparticle   =  -9999;
+
+  double l1l2deltaPhiparticle=-9999;
+  double l3l4deltaPhiparticle=-9999;
+
+  double l1l2deltaEtaparticle=-9999;
+  double l3l4deltaEtaparticle=-9999;
+
+  double l1l2deltaRparticle=-9999;
+  double l3l4deltaRparticle=-9999;
+
+  double l1cosThetaparticle=-9999;
+  double l2cosThetaparticle=-9999;
+  double l3cosThetaparticle=-9999;
+  double l4cosThetaparticle=-9999;
+  double fourlcosThetaparticle=-9999;
+  double l1cosThetaBoostparticle=-9999;
+  double l2cosThetaBoostparticle=-9999;
+  double l3cosThetaBoostparticle=-9999;
+  double l4cosThetaBoostparticle=-9999;
+  double fourlcosThetaBoostparticle=-9999;
+  double l1l2CScosThetaparticle=-9999;
+  double l3l4CScosThetaparticle=-9999;
+
+  double zzdeltaPhiparticle=-9999;
+  double zzdeltaEtaparticle=-9999;
+  double zzdeltaRparticle=-9999;
 
   double l1cosThetaBoostparton=-9999;
   double l2cosThetaBoostparton=-9999;
@@ -998,11 +925,13 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   int q3_parton = -9999;
   int q4_parton = -9999;
 
+
   double bbdeltaRparton=-9999;
   double jjdeltaPhiparton = -9999;
   double jjdeltaEtaparton = -9999;
   double bbdeltaPhiparton = -9999;
   double bbdeltaEtaparton = -9999;
+
 
   double l1l2CScosThetaparton=-9999;
   double l3l4CScosThetaparton=-9999;
@@ -1010,6 +939,7 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   double zzdeltaPhiparton=-9999;
   double zzdeltaEtaparton=-9999;
   double zzdeltaRparton=-9999;
+
 
   double leadbscore_reco = -9999;
   double leadbscore_particle = -9999;
@@ -1021,7 +951,8 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
   double jet1_energy = -9999;
   double jet2_energy = -9999;
   double pairedbbmass = -9999;
-														     
+
+
    /*
     DelphesLHEFReader *reader = new DelphesLHEFReader;
     std::map<int,double> mapKappaLambda;
@@ -1101,132 +1032,113 @@ void zAnalyzer(const char *inputFile,const char *outputFile, const char *process
     }
     */
 
+
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // reco
+    // RECO - HIGGS
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     // higgs
 
     int switchVal_reco = 0;
+    bool foundBjet = false;
 
-    // cout<<"Start reco analysis "<<endl;
-    if(enableCutReco["initial reco"]){
-      increaseCount(cutFlowMap_reco,"initial reco",weight);
+    if(enableCutReco["initial - reco"]){
+      increaseCount(cutFlowMap_reco,"initial - reco",weight);
     }
     
     vector <int> btagIndex;
     vector <int> noBtag;
     vector <int> goodJetIndex=GoodJetIndices(btagIndex,noBtag,branchJet,branchGenParticle);
 
-    // get the sorted jets; 
+    // OLD BTAG DELTA R SCORING //
+
     vector<pair<int,double>> btagScores=JetBtagScoreIndex(goodJetIndex,branchJet,branchGenParticle);
-   
-    // consider as b-jets the ones with the highest scrore
+ 
     // btagIndex.clear();
     for(int i=0; i<(int)btagScores.size(); i++){
       if( btagIndex.size() > 2) break;
       // if( btagScores[i].second < 0.1) continue; 
       // btagIndex.push_back( btagScores[i].first);
       if(btagIndex.size()== 1) 
-	leadbscore_reco = btagScores[i].second;
+	      leadbscore_reco = btagScores[i].second;
       else if (btagIndex.size()== 2)
-	subleadbscore_reco = btagScores[i].second;
+	      subleadbscore_reco = btagScores[i].second;
     }
-
-    // fill b scores                                                                                                                                                                                                          
+                                                                                                                                                                                                         
     leadbscorereco -> Fill(leadbscore_reco, weight);
     subleadbscorereco -> Fill(subleadbscore_reco, weight);
-    
-    //cout<<endl;
-
-/*
-   PAIReDjointEvent( TClonesArray *branchParticle = nullptr,
-					  TClonesArray *branchPFCand = nullptr,
-					  TClonesArray *branchJet = nullptr,
-					  float jetR = 0.4,
-					  bool forwardjet = false, bool bridge=false,
-					  bool ellipse = false, float semimajoradd = 1.0, 
-					  bool sigonly=false){
-              */
 
     
-    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,true,1.0,false);
-    //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
-    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetB;
+  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,true,1.0,false);
+  //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
+  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetB;
 
-//////////
-pairedJetsize -> Fill(pairedJet.size(), weight);
-/////////
+  pairedJetsize -> Fill(pairedJet.size(), weight);
 
 
-    for(int i=0; i<(int)pairedJet.size(); i++){
-      std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> thisPaired=pairedJet.at(i);
-      if( thisPaired.first["isbtagged"] > 0) pairedJetB.push_back(thisPaired);
-      
-      std::map<TString, float> paired_floats=thisPaired.first;
-      std::map<TString, std::vector<float>> paired_vectors=thisPaired.second;
-      
-      std::unordered_map<std::string, std::vector<std::string>> ParsedMap=parseVectorizedMap(jsonString);
-
-      //for(std::unordered_map<std::string, std::vector<std::string>>::iterator it=ParsedMap.begin(); it!=ParsedMap.end(); it++){
-	    //cout<<"Name "<<(*it).first<<" second "<<(*it).second<<endl;
-      //}
-
-    //cout<<"Paired jet "<< i <<endl;
-    //cout<<"Input floats"<<endl;
-    //for(std::map<TString,float>::iterator it=paired_floats.begin(); it!=paired_floats.end(); it++){
-	  //    cout<<"Name "<<(*it).first<<" value "<<(*it).second<<endl;
-    //  }
-    
-    //cout<<"Input vectors"<<endl;
-    //for(std::map<TString,vector<float>>::iterator it=paired_vectors.begin(); it!=paired_vectors.end(); it++){
-	  //    cout<<"Name "<<(*it).first<<" values "<<(*it).second<<endl;
-    //  }
-    }
-    
-    pairedJetBsize -> Fill(pairedJetB.size(), weight);
-
-if (pairedJetB.size()>0){
-    std::map<TString, float> paired_jet = pairedJetB.at(0).first;
-  
-    jet1p4.SetPtEtaPhiM(paired_jet["jet1_pt"],paired_jet["jet1_eta"],paired_jet["jet1_phi"],paired_jet["jet1_mass"]);
-    jet2p4.SetPtEtaPhiM(paired_jet["jet2_pt"],paired_jet["jet2_eta"],paired_jet["jet2_phi"],paired_jet["jet2_mass"]);
-
-    dijet = jet1p4 + jet2p4;
-    float dijetmass = dijet.M();
-
-    pairedJetbbsizemass -> Fill(pairedJetB.size(), dijetmass, weight);
-    // pairedJetbbsizemass -> Scale(1/numEntries);
-  }
-
-    btagIndex.clear();
-    if( pairedJetB.size()>0){
-    btagIndex.push_back(pairedJetB.at(0).first["jet1_index"]);
-    // btagIndex.push_back(pairedJetB.at(0).first["jet2_index"]);
-    }
-    
-    if(enableCutReco["1 btag reco"]){
-      if(switchVal_reco == 0 && btagIndex.size() > 1)
-	increaseCount(cutFlowMap_reco,"1 btag reco",weight);
-      else switchVal_reco = 1;
-    }
-
-    if(enableCutReco["2 good j reco"]){
-      if(switchVal_reco == 0 && goodJetIndex.size() > 2) 
-	increaseCount(cutFlowMap_reco,"2 good j reco",weight);
+    if(enableCutReco["1 PAIReD jet - reco"]) {
+      if(switchVal_reco == 0 && pairedJet.size() > 0) increaseCount(cutFlowMap_reco,"1 PAIReD jet - reco",weight);
       else  switchVal_reco = 1;
     }
+
+  for(int i=0; i<(int)pairedJet.size(); i++){
     
-    Jet *b1=nullptr;
-    Jet *b2=nullptr;
-   
+    std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> thisPaired=pairedJet.at(i);
     
-    vector<vector <int>> bJetPairsComb;
-    vector<pair<int,int>> bJetPairs;
-    pair<int,int> b12pos;
+    if( thisPaired.first["isbtagged"] > 0) {
+      pairedJetB.push_back(thisPaired);
+    }
+  }
     
-    
-    // Work in progress 
+  pairedJetBsize -> Fill(pairedJetB.size(), weight);
+
+  btagIndex.clear();
+
+  if(enableCutReco["1 bb PAIReD jet - reco"]) {
+      if(switchVal_reco == 0 && pairedJetB.size()>0){
+        increaseCount(cutFlowMap_reco,"1 bb PAIReD jet - reco",weight);
+        foundBjet = true;
+      } else switchVal_reco = 1;
+  }
+
+  std::map<TString, float> paired_jet;
+
+
+  if (switchVal_reco == 0 && pairedJetB.size()>0){
+
+    foundBjet = true;
+    paired_jet = pairedJetB.at(0).first;
+
+    btagIndex.push_back(paired_jet["jet1_index"]);
+    btagIndex.push_back(paired_jet["jet2_index"]);
+
+    b1_reco.SetPtEtaPhiM(paired_jet["jet1_pt"],paired_jet["jet1_eta"],paired_jet["jet1_phi"],paired_jet["jet1_mass"]);
+    b2_reco.SetPtEtaPhiM(paired_jet["jet2_pt"],paired_jet["jet2_eta"],paired_jet["jet2_phi"],paired_jet["jet2_mass"]);
+
+    h_reco = b1_reco + b2_reco; // dijet
+
+
+    if (b1_reco.Eta() > b2_reco.Eta()) {
+	    bbdeltaPhireco = remainder( b1_reco.Phi() - b2_reco.Phi(), 2*M_PI );
+	    bbdeltaEtareco = b1_reco.Eta() - b2_reco.Eta();
+      } else {
+	    bbdeltaPhireco = remainder( b2_reco.Phi() - b1_reco.Phi(), 2*M_PI );
+	    bbdeltaEtareco = b2_reco.Eta() - b1_reco.Eta();
+    }
+
+    bbdeltaRreco=sqrt((bbdeltaPhireco*bbdeltaPhireco)+(bbdeltaEtareco*bbdeltaEtareco));
+
+    //Double_t bbdeltaPhireco = b1_reco.DeltaPhi(b2_reco);
+    //Double_t bbdeltaEtareco = b1_reco.DeltaEta(b2_reco);
+    //Double_t bbdeltaRreco = b1_reco.DeltaR(b2_reco, kFALSE);
+
+  }
+
+
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // ONNX - WORK IN PROGRESS
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
     bool doONNX=true;
     #ifdef ONNXRUN
     if(doONNX){
@@ -1417,17 +1329,18 @@ if (pairedJetB.size()>0){
     }
 
     #endif
-   
+
+/*   
     //if(switchVal_reco == 0 && goodJetIndex.size()>1 )
     if(switchVal_reco == 0 && btagIndex.size()>1 )
       //bJetPairsComb= combinationsNoRepetitionAndOrderDoesNotMatter(2,goodJetIndex);
-      bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
+     bJetPairsComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,btagIndex);
     
     // This is a cut !!
-    if( switchVal_reco == 0  && bJetPairsComb.size() >= 1) { ////continue; // need at least two good jets;x
+    //if( switchVal_reco == 0  && bJetPairsComb.size() >= 1) { ////continue; // need at least two good jets;x
+    if( switchVal_reco == 0  && btagIndex.size() >= 0)  // TEMPORARY
       increaseCount(cutFlowMap_reco,"2 b-like jet pairs reco",weight);
       //cutFlowMap_reco["2 b-like jet pairs reco"] = {cutVal_reco,cutValW_reco};
-    }
     else switchVal_reco = 1;
 
     bool foundBjet=false;
@@ -1464,87 +1377,71 @@ if (pairedJetB.size()>0){
       // double bbdeltaEtareco= (b1_reco.Eta() - b2_reco.Eta());
       bbdeltaRreco=sqrt((bbdeltaPhireco*bbdeltaPhireco)+(bbdeltaEtareco*bbdeltaEtareco));
     }
-    
-    // VBF jets
+*/
+
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // RECO - VBF JETS
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
     vector <int> nonHiggsJet;
-
-    for(int i=0; i<(int)goodJetIndex.size(); i++){
-      if( goodJetIndex[i] == higgsbbcandidate.first  || goodJetIndex[i] == higgsbbcandidate.second) continue;
-      nonHiggsJet.push_back(i);
-    }
-
-    SortByPtIndices(nonHiggsJet,branchJet);
-    //if(nonHiggsJet.size() > 1) {
-    //sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchJet](const int& lhs, const int& rhs) {
-    //return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
-    //});}
-    
-    if(enableCutReco["2 vbfj reco"]){
-      if(switchVal_reco == 0 && nonHiggsJet.size() > 1) increaseCount(cutFlowMap_reco,"2 vbfj reco",weight);
-      else  switchVal_reco = 1;
-    }
-  
     vector<pair<int,int>> vbfJetIndex;
     vector<vector <int>> vbfJetIndexComb;
+    vector<pair<int,int>> vbfJetIndex_dEta;
+    int vbfJetIndexCandidate = -1;
 
-    if(enableCutReco["vbfj pairs"]){
+    // check that they do not belong to higgs + sort by pT
+    for(int i=0; i<(int)goodJetIndex.size(); i++) {
+      if( goodJetIndex[i] == paired_jet["jet1_index"] || goodJetIndex[i] == paired_jet["jet2_index"] ) continue;
+    nonHiggsJet.push_back(goodJetIndex[i]);
+    SortByPtIndices(nonHiggsJet,branchJet);
+    }
+
+    // check that there are at least two + make combinations
+    if(enableCutReco["2 VBF jet - reco"]) {
       if(switchVal_reco==0 && nonHiggsJet.size() > 1 ) {
-	increaseCount(cutFlowMap_reco,"vbfj pairs",weight);
-	vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
+	      increaseCount(cutFlowMap_reco,"2 VBF jet - reco",weight);
+	      vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
       }
       else switchVal_reco=1;
     }
 
-    //if(switchVal_reco==0)
+    // convert vector of vector of ints to vector of pairs of ints
     vbfJetIndex=GetvbfJetIndex(vbfJetIndexComb);
-    //for(int i=0; i<(int)vbfJetIndexComb.size(); i++)
-    //vbfJetIndex.push_back(make_pair(vbfJetIndexComb[i][0],vbfJetIndexComb[i][1]));
-    
-    int vbfJetsIndexCandidate = -1;
-    vector<pair<int,int>> vbfJetIndex2;
-    // loop and take first w eta > 2.5
+
+    // loop and take those w dEta > 2.5
     for (int i=0; i<(int)vbfJetIndex.size(); i++) {
       if( fabs((((Jet*)branchJet->At(vbfJetIndex[i].first))->Eta - ((Jet*)branchJet->At(vbfJetIndex[i].second))->Eta)) <= 2.5 ) {
-	continue; 
-      }
-      else {
-	vbfJetIndex2.push_back(vbfJetIndex.at(i));
-	vbfJetsIndexCandidate = i;
+	      continue; 
+      } else { 
+	      vbfJetIndex_dEta.push_back(vbfJetIndex.at(i));
+	      vbfJetIndexCandidate = i;
       }
     }
 
-    vbfJetIndex=vbfJetIndex2;
-    if(enableCutReco["2.5 deltaEta vbf reco"]) {
-      if(switchVal_reco==0 && vbfJetIndex.size()>0)  increaseCount(cutFlowMap_reco,"2.5 deltaEta vbf reco",weight);
+    if(enableCutReco["2.5 deltaEta VBF jet - reco"]) {
+      if(switchVal_reco==0 && vbfJetIndex_dEta.size()>0) increaseCount(cutFlowMap_reco,"2.5 deltaEta VBF jet - reco",weight);
       else switchVal_reco=1;
     }
-    
-    // re sort by eta 
-    if( switchVal_reco==0 && vbfJetIndex.size() > 1) 
-      sort(vbfJetIndex.begin(), vbfJetIndex.end(), [branchJet](const pair<int,int> lhs, const pair<int,int> rhs) {
-	  return fabs((((Jet*)branchJet->At(lhs.first))->Eta - ((Jet*)branchJet->At(lhs.second))->Eta) ) >
-	    fabs((((Jet*)branchJet->At(rhs.first))->Eta - ((Jet*)branchJet->At(rhs.second))->Eta) ) ; 
-	});
-    
+
+    // sort them again by eta for leading/subleading
+    SortByEtaIndices(vbfJetIndex_dEta,branchJet);
+
     Jet *jet1 =nullptr;
     Jet *jet2 =nullptr;
-    double jjdeltaPhireco =  -9999;
-    double jjdeltaEtareco= -9999;
-    double jjdeltaRreco = -9999; 
-    
   
-    if(switchVal_reco==0 && vbfJetIndex.size()>0){
+    if(switchVal_reco==0 && vbfJetIndex.size()>0) {
       jet1 = (Jet*) branchJet->At(vbfJetIndex[0].first);
       jet2 = (Jet*) branchJet->At(vbfJetIndex[0].second);
       j1_reco=jet1->P4();
       j2_reco=jet2->P4();
     
       if (j1_reco.Eta() > j2_reco.Eta()) {
-	jjdeltaPhireco = remainder( j1_reco.Phi() - j2_reco.Phi(), 2*M_PI );
+	      jjdeltaPhireco = remainder( j1_reco.Phi() - j2_reco.Phi(), 2*M_PI );
+      } else {
+	      jjdeltaPhireco = remainder( j2_reco.Phi() - j1_reco.Phi(), 2*M_PI );
       }
-      else{
-	jjdeltaPhireco = remainder( j2_reco.Phi() - j1_reco.Phi(), 2*M_PI );
-      }
+
       // double jjdeltaPhireco=(j1_reco.Phi() > j2_reco.Phi() ? -1:+1)*TMath::Abs(j2_reco.Phi() - j1_reco.Phi());
       // double jjdeltaEtareco=(j1_reco.Eta() > j2_reco.Eta() ? -1:+1)*TMath::Abs(j2_reco.Eta() - j1_reco.Eta());
       // double jjdeltaPhireco= (j1_reco.Phi() - j2_reco.Phi());
@@ -1552,11 +1449,13 @@ if (pairedJetB.size()>0){
       jjdeltaRreco=sqrt((jjdeltaPhireco*jjdeltaPhireco)+(jjdeltaEtareco*jjdeltaEtareco));
     }
 
-  
-    //---------------------------------------------------------------------------------------------
-    //---------------------------------------------------------------------------------------------
-  
-    // leptons + z
+
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // RECO - LEPTONS
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    vector <string> types = {"4mu","4e", "2mu2e", "2e2mu"};
 
     vector <int> goodE_reco_indices  = GoodElectronIndices(branchElectron);
     vector <int> goodMu_reco_indices = GoodMuonIndices(branchMuon);
@@ -1729,11 +1628,176 @@ if (pairedJetB.size()>0){
       zzdeltaRreco=sqrt((zzdeltaPhireco*zzdeltaPhireco)+(zzdeltaEtareco*zzdeltaEtareco));
     }
   
-    //cout<<"Done reco analysis  Event passed up to cut "<<switchVal_reco<<endl;
-  
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // PARTICLE - HIGGS
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    // higgs
+
+    int switchVal_particle = 0;
+    bool foundBjetParticle = false;
+
+    if(enableCutParticle["initial - particle"]){
+      increaseCount(cutFlowMap_particle,"initial - particle",weight);
+    }
+    
+    vector <int> btagIndexParticle;
+    vector <int> noBtagParticle;
+    vector <int> goodJetIndexParticle=GoodJetIndices(btagIndexParticle,noBtagParticle,branchGenJet,branchGenParticle);
+
+if (hasBranchPFCand) {
+
+    vector <int> branchPFCandParticleIndex;
+
+    for(int i=0; i<(int)branchPFCand->GetEntries(); i++) {
+      ParticleFlowCandidate* pfparticle = (ParticleFlowCandidate*)branchPFCand->At(i);
+      if (pfparticle->PID != 11 || pfparticle->PID != 13) branchPFCandParticleIndex.push_back(i);
+    }
+
+    for (int i = 0; i < branchPFCandParticleIndex.size(); ++i) {
+      new ((*branchPFCandParticle)[i]) Int_t(branchPFCandParticleIndex[i]);
+    }
+
+}
+
+  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetParticle=paired::PAIReDjointEvent(branchGenParticle,branchPFCandParticle,branchGenJet,0.4,false,false,true,1.0,false);
+  //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
+  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetBParticle;
+
+  //pairedJetParticlesize -> Fill(pairedJetParticle.size(), weight);
+
+
+    if(enableCutParticle["1 PAIReD jet - particle"]) {
+      if(switchVal_particle == 0 && pairedJetParticle.size() > 0) increaseCount(cutFlowMap_particle,"1 PAIReD jet - particle",weight);
+      else  switchVal_particle = 1;
+    }
+
+  for(int i=0; i<(int)pairedJetParticle.size(); i++){
+    
+    std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> thisPairedParticle=pairedJetParticle.at(i);
+    
+    if( thisPairedParticle.first["isbtagged"] > 0) {
+      pairedJetBParticle.push_back(thisPairedParticle);
+    }
+  }
+    
+  // pairedJetBParticlesize -> Fill(pairedJetB.size(), weight);
+
+  btagIndexParticle.clear();
+
+  if(enableCutParticle["1 bb PAIReD jet - particle"]) {
+      if(switchVal_particle == 0 && pairedJetBParticle.size()>0){
+        increaseCount(cutFlowMap_particle,"1 bb PAIReD jet - particle",weight);
+        foundBjetParticle = true;
+      } else switchVal_particle = 1;
+  }
+
+  std::map<TString, float> paired_jet_particle;
+
+  if (switchVal_particle == 0 && pairedJetBParticle.size()>0){
+
+    foundBjetParticle = true;
+    paired_jet_particle = pairedJetBParticle.at(0).first;
+
+    btagIndexParticle.push_back(paired_jet_particle["jet1_index"]);
+    btagIndexParticle.push_back(paired_jet_particle["jet2_index"]);
+
+    b1_particle.SetPtEtaPhiM(paired_jet_particle["jet1_pt"],paired_jet_particle["jet1_eta"],paired_jet_particle["jet1_phi"],paired_jet_particle["jet1_mass"]);
+    b2_particle.SetPtEtaPhiM(paired_jet_particle["jet2_pt"],paired_jet_particle["jet2_eta"],paired_jet_particle["jet2_phi"],paired_jet_particle["jet2_mass"]);
+
+    h_particle = b1_particle + b2_particle; // dijet
+
+
+    if (b1_particle.Eta() > b2_particle.Eta()) {
+
+	    bbdeltaPhiparticle = remainder( b1_particle.Phi() - b2_particle.Phi(), 2*M_PI );
+	    bbdeltaEtaparticle = b1_particle.Eta() - b2_particle.Eta();
+      } else {
+	    bbdeltaPhiparticle = remainder( b2_particle.Phi() - b1_particle.Phi(), 2*M_PI );
+	    bbdeltaEtaparticle = b2_particle.Eta() - b1_particle.Eta();
+    }
+
+    bbdeltaRparticle=sqrt((bbdeltaPhiparticle*bbdeltaPhiparticle)+(bbdeltaEtaparticle*bbdeltaEtaparticle));
+
+    //Double_t bbdeltaPhireco = b1_reco.DeltaPhi(b2_reco);
+    //Double_t bbdeltaEtareco = b1_reco.DeltaEta(b2_reco);
+    //Double_t bbdeltaRreco = b1_reco.DeltaR(b2_reco, kFALSE);
+
+  }
   
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // particle
+    // PARTICLE - VBF JETS
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    vector <int> nonHiggsJetParticle;
+    vector<pair<int,int>> vbfJetIndexParticle;
+    vector<vector <int>> vbfJetIndexParticleComb;
+    vector<pair<int,int>> vbfJetIndexParticle_dEta;
+    int vbfJetIndexParticleCandidate = -1;
+
+    // check that they do not belong to higgs + sort by pT
+    for(int i=0; i<(int)goodJetIndexParticle.size(); i++) {
+      if( goodJetIndexParticle[i] == paired_jet_particle["jet1_index"] || goodJetIndexParticle[i] == paired_jet_particle["jet2_index"] ) continue;
+    nonHiggsJetParticle.push_back(goodJetIndexParticle[i]);
+    SortByPtIndices(nonHiggsJetParticle,branchGenJet);
+    }
+
+    // check that there are at least two + make combinations
+    if(enableCutParticle["2 VBF jet - particle"]) {
+      if(switchVal_particle==0 && nonHiggsJetParticle.size() > 1 ) {
+	      increaseCount(cutFlowMap_particle,"2 VBF jet - particle",weight);
+	      vbfJetIndexParticleComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJetParticle);
+      }
+      else switchVal_particle=1;
+    }
+
+    // convert vector of vector of ints to vector of pairs of ints
+    vbfJetIndexParticle=GetvbfJetIndex(vbfJetIndexParticleComb);
+
+    // loop and take those w dEta > 2.5
+    for (int i=0; i<(int)vbfJetIndexParticle.size(); i++) {
+      if( fabs((((Jet*)branchGenJet->At(vbfJetIndexParticle[i].first))->Eta - ((Jet*)branchGenJet->At(vbfJetIndexParticle[i].second))->Eta)) <= 2.5 ) {
+	      continue; 
+      } else { 
+	      vbfJetIndexParticle_dEta.push_back(vbfJetIndexParticle.at(i));
+	      vbfJetIndexParticleCandidate = i;
+      }
+    }
+
+    if(enableCutParticle["2.5 deltaEta VBF jet - particle"]) {
+      if(switchVal_particle==0 && vbfJetIndexParticle_dEta.size()>0) increaseCount(cutFlowMap_particle,"2.5 deltaEta VBF jet - particle",weight);
+      else switchVal_particle=1;
+    }
+
+    // sort them again by eta for leading/subleading
+    SortByEtaIndices(vbfJetIndexParticle_dEta,branchGenJet);
+
+    Jet *jet1_particle =nullptr;
+    Jet *jet2_particle =nullptr;
+  
+    if(switchVal_particle==0 && vbfJetIndexParticle.size()>0) {
+      jet1_particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].first);
+      jet2_particle = (Jet*) branchGenJet->At(vbfJetIndexParticle[0].second);
+      j1_particle=jet1_particle->P4();
+      j2_particle=jet2_particle->P4();
+    
+      if (j1_particle.Eta() > j2_particle.Eta()) {
+	      jjdeltaPhiparticle = remainder( j1_particle.Phi() - j2_particle.Phi(), 2*M_PI );
+      } else {
+	      jjdeltaPhiparticle = remainder( j2_particle.Phi() - j1_particle.Phi(), 2*M_PI );
+      }
+
+      // double jjdeltaPhireco=(j1_reco.Phi() > j2_reco.Phi() ? -1:+1)*TMath::Abs(j2_reco.Phi() - j1_reco.Phi());
+      // double jjdeltaEtareco=(j1_reco.Eta() > j2_reco.Eta() ? -1:+1)*TMath::Abs(j2_reco.Eta() - j1_reco.Eta());
+      // double jjdeltaPhireco= (j1_reco.Phi() - j2_reco.Phi());
+      jjdeltaEtaparticle= (j1_particle.Eta() - j2_particle.Eta());
+      jjdeltaRparticle=sqrt((jjdeltaPhiparticle*jjdeltaPhiparticle)+(jjdeltaEtaparticle*jjdeltaEtaparticle));
+    }
+
+  
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // OLD PARTICLE JET STUFF 
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
   
     // higgs + jets
@@ -1777,46 +1841,8 @@ if (pairedJetB.size()>0){
       double jjdeltaPhiparticle=(j1_particle.Phi() > j2_particle.Phi() ? -1:+1)*TMath::Abs(j2_particle.Phi() - j1_particle.Phi());
       double jjdeltaEtaparticle=(j1_particle.Eta() > j2_particle.Eta() ? -1:+1)*TMath::Abs(j2_particle.Eta() - j1_particle.Eta());
       double jjdeltaRparticle=sqrt((jjdeltaPhiparticle*jjdeltaPhiparticle)+(jjdeltaEtaparticle*jjdeltaEtaparticle));
-    */
-
-    //---------------------------------------------------------------------------------------------
-    //---------------------------------------------------------------------------------------------
-
+    
     // higgs
-    double bbdeltaPhiparticle = -9999;
-    double bbdeltaEtaparticle = -9999;
-    double bbdeltaRparticle= -9999;
-    Jet *jet1_particle = nullptr;
-    Jet *jet2_particle = nullptr;
-    double jjdeltaPhiparticle =  -9999;
-    double jjdeltaEtaparticle =   -9999;
-    double jjdeltaRparticle   =  -9999;
-  
-    double l1l2deltaPhiparticle=-9999;
-    double l3l4deltaPhiparticle=-9999;
-  
-    double l1l2deltaEtaparticle=-9999;
-    double l3l4deltaEtaparticle=-9999;
-
-    double l1l2deltaRparticle=-9999;
-    double l3l4deltaRparticle=-9999;
-
-    double l1cosThetaparticle=-9999;
-    double l2cosThetaparticle=-9999;
-    double l3cosThetaparticle=-9999;
-    double l4cosThetaparticle=-9999;
-    double fourlcosThetaparticle=-9999;
-    double l1cosThetaBoostparticle=-9999;
-    double l2cosThetaBoostparticle=-9999;
-    double l3cosThetaBoostparticle=-9999;
-    double l4cosThetaBoostparticle=-9999;
-    double fourlcosThetaBoostparticle=-9999;
-    double l1l2CScosThetaparticle=-9999;
-    double l3l4CScosThetaparticle=-9999;
-
-    double zzdeltaPhiparticle=-9999;
-    double zzdeltaEtaparticle=-9999;
-    double zzdeltaRparticle=-9999;
   
     int switchVal_particle = 0;
   
@@ -1870,7 +1896,7 @@ if (pairedJetB.size()>0){
     //consider as b-jets the ones with the highest scrore
     btagIndexParticle.clear();
 
-    /*    
+        
     // Take only the first two 
     for(int i=0; i<(int)btagScoresParticle.size(); i++){
       leadbscore_particle =  btagScoresParticle[0].second;
@@ -1881,7 +1907,7 @@ if (pairedJetB.size()>0){
       btagIndexParticle.push_back( btagScoresParticle[i].first);
     }
     //cout<<endl;
-    */
+  
 
     // Take only the first two                                                                                                                                                                                                 
     for(int i=0; i<(int)btagScoresParticle.size(); i++){
@@ -1969,7 +1995,9 @@ if (pairedJetB.size()>0){
    
     // jets
     vector <int> nonHiggsJetParticle;
-    
+    Jet *jet1_particle = nullptr;
+    Jet *jet2_particle = nullptr;
+
     for(int i=0; i<(int)goodJetIndexParticle.size(); i++){
       if( goodJetIndexParticle[i] == higgsbbcandidateParticle.first  || goodJetIndexParticle[i] == higgsbbcandidateParticle.second) continue;
       nonHiggsJetParticle.push_back(i);
@@ -2075,8 +2103,14 @@ if (pairedJetB.size()>0){
       jjdeltaEtaparticle= (j1_particle.Eta() - j2_particle.Eta());
       jjdeltaRparticle=sqrt((jjdeltaPhiparticle*jjdeltaPhiparticle)+(jjdeltaEtaparticle*jjdeltaEtaparticle));
     }
+
     //---------------------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------
+*/
+
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // PARTICLE - LEPTONS
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     // z + leptons
     vector <int> goodE_particle_indices; 
@@ -2562,6 +2596,8 @@ if (pairedJetB.size()>0){
 	//hb1Rreco -> Fill(sqrt((b1_reco.Phi()*b1_reco.Phi())+(b1_reco.Eta()*b1_reco.Eta())),weight);
 	//hb2Rreco -> Fill(sqrt((b2_reco.Phi()*b2_reco.Phi())+(b2_reco.Eta()*b2_reco.Eta())),weight);
 	hbbdeltaRreco -> Fill(bbdeltaRreco,weight);
+
+  pairedJetbbsizemass -> Fill(pairedJetB.size(), h_reco.M(), weight);
       }
     }
 
@@ -2976,8 +3012,6 @@ if (pairedJetB.size()>0){
     cutVal_particle++; cutValW_particle+=weight;
     cutVal_parton++; cutValW_parton+=weight;
   }
-  
-  pairedJetbbsizemass -> Scale(1/numEntries);
     
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // write histos
