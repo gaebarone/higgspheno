@@ -230,12 +230,22 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   // Reco PF particles 
   std::vector<paired::ParticleInfo> particles;
   ParticleFlowCandidate *p;
-  int ncands = branchPF->GetEntriesFast();
+  int ncands;
+
+  if (branchPF == nullptr) {
+    ncands = 0;
+  } else {
+     ncands = branchPF->GetEntriesFast();
+  }
+
   bool isparticle1 = true;
   TLorentzVector jetp4, genjetp4;
 
   for (Int_t i = 0; i < ncands; ++i) {
     p = (ParticleFlowCandidate *)branchPF->At(i);
+
+    if (abs(p->PID) != 11 || abs(p->PID) != 13) continue;
+
     auto retpair = paired::isInJet(jet1,jet2,p,jetR,bridge,ellipse,semimajoradd);
     if (retpair.first) {
       particles.push_back(paired::ParticleInfo(p,retpair.second));
@@ -269,6 +279,8 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   _floatVars["z_pt"] = 0;
   _floatVars["gen_flav"] = 0;
 
+
+ if (ncands != 0) {
   _floatVars["dijet_mass"] = jetp4.M();
   _floatVars["dijet_pt"] = jetp4.Pt();
   _floatVars["dijet_eta"] = jetp4.Eta();
@@ -301,7 +313,7 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
     _arrayVars["part_dzerr"].push_back(p.dzerr);  
     _arrayVars["part_source"].push_back(p.source);  
   }
-
+}
 
   // Gen Particles
   std::vector<const GenParticle *> genParticles_;
@@ -570,7 +582,6 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
   //TClonesArray *branchJet = treeReader->UseBranch(jetBranch);
   
 
- 
 
   auto eventVect = paired::getEventInfo(branchParticle);
   higgspt = eventVect.at(0);
@@ -657,9 +668,6 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
     
     return output;
 }
-
-
-
 
 }
 //------------------------------------------------------------------------------
