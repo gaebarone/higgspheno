@@ -228,12 +228,13 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TClonesArray *branchPFCandParticle = nullptr; // defined to be branchPFCand - leps
 
   bool hasBranchPFCand = false;
-  TObjArray *branches = chain.GetListOfBranches();
+  // TObjArray *branches = chain.GetListOfBranches();
 
-  for (int i = 0; i < branches->GetEntries(); ++i) {
-    TBranch *branch = dynamic_cast<TBranch*>(branches->At(i));
+TBranch *branch = nullptr;
+  for (int i = 0; i < chain.GetListOfBranches()->GetEntries(); ++i) {
+    branch = dynamic_cast<TBranch*>(chain.GetListOfBranches()->At(i));
     //if (!branch) continue;
-    if (strcmp(branch->GetName(), "ParticleFlowCandidate") == 0) bool hasBranchPFCand = true;
+    if (strcmp(branch->GetName(), "ParticleFlowCandidate") == 0) hasBranchPFCand = true;
 }
 
   bool fill_1D = true;
@@ -1032,7 +1033,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     }
     */
 
-
+cout << "flag 1" << endl;
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
     // RECO - HIGGS
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1379,6 +1380,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     }
 */
 
+cout << "flag 2" << endl;
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
     // RECO - VBF JETS
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1449,7 +1451,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       jjdeltaRreco=sqrt((jjdeltaPhireco*jjdeltaPhireco)+(jjdeltaEtareco*jjdeltaEtareco));
     }
 
-
+cout << "flag 3" << endl;
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
     // RECO - LEPTONS
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1627,7 +1629,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       zzdeltaEtareco=(z1_reco.Eta() > z2_reco.Eta() ? -1:+1)*TMath::Abs(z2_reco.Eta() - z1_reco.Eta());
       zzdeltaRreco=sqrt((zzdeltaPhireco*zzdeltaPhireco)+(zzdeltaEtareco*zzdeltaEtareco));
     }
-  
+
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
     // PARTICLE - HIGGS
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1644,19 +1646,21 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     vector <int> btagIndexParticle;
     vector <int> noBtagParticle;
     vector <int> goodJetIndexParticle=GoodJetIndices(btagIndexParticle,noBtagParticle,branchGenJet,branchGenParticle);
-
-if (hasBranchPFCand) {
-
     vector <int> branchPFCandParticleIndex;
 
+if (hasBranchPFCand) {
+/*
     for(int i=0; i<(int)branchPFCand->GetEntries(); i++) {
       ParticleFlowCandidate* pfparticle = (ParticleFlowCandidate*)branchPFCand->At(i);
-      if (pfparticle->PID != 11 || pfparticle->PID != 13) branchPFCandParticleIndex.push_back(i);
+      if (abs(pfparticle->PID) != 11 || abs(pfparticle->PID) != 13) branchPFCandParticleIndex.push_back(i);
     }
 
     for (int i = 0; i < branchPFCandParticleIndex.size(); ++i) {
       new ((*branchPFCandParticle)[i]) Int_t(branchPFCandParticleIndex[i]);
     }
+*/
+    
+    branchPFCandParticle = branchPFCand;
 
 }
 
