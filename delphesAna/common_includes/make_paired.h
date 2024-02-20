@@ -222,6 +222,7 @@ std::pair<bool,int> isInJet(const Jet *jet1, const Jet *jet2, T const *p, float 
 }
 
 //------------------------------------------------------------------------------
+
 std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > processBridge(const Jet *jet1, const Jet *jet2, const TClonesArray *branchPF, const TClonesArray *branchParticle, float jetR,  bool bridge=true, bool ellipse = true, float semimajoradd = 1.0) {
   
   std::map<TString, float> _floatVars;
@@ -244,7 +245,10 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   for (Int_t i = 0; i < ncands; ++i) {
     p = (ParticleFlowCandidate *)branchPF->At(i);
 
-    if (abs(p->PID) != 11 || abs(p->PID) != 13) continue;
+    // if gen particle only + no pf cand -> filter out non canditates 
+
+    if(p->D0) continue; // trick to only take gen particles
+    if (abs(p->PID) == 11 || abs(p->PID) == 13) continue; // add status flag 1 for gen particles that are stable
 
     auto retpair = paired::isInJet(jet1,jet2,p,jetR,bridge,ellipse,semimajoradd);
     if (retpair.first) {
@@ -439,6 +443,8 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   return std::make_pair(_floatVars,_arrayVars);  
 }
 
+//------------------------------------------------------------------------------
+
 std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
   bool isHiggs = false;
   float hpt=0, zpt=0, gen_flav=0,dRqq=0, hmass=0;
@@ -494,6 +500,9 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
 }
 
 
+//------------------------------------------------------------------------------
+
+
  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>
 
    PAIReDjointEvent( TClonesArray *branchParticle = nullptr,
@@ -503,6 +512,7 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
 					  bool forwardjet = false, bool bridge=false,
 					  bool ellipse = false, float semimajoradd = 1.0, 
 					  bool sigonly=false){
+  
   // define branches
   std::map<TString, float> floatVars;
   floatVars["label_bb"] = 0;

@@ -228,7 +228,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TClonesArray *branchPFCandParticle = nullptr; // defined to be branchPFCand - leps
 
   bool hasBranchPFCand = false;
-  // TObjArray *branches = chain.GetListOfBranches();
 
 TBranch *branch = nullptr;
   for (int i = 0; i < chain.GetListOfBranches()->GetEntries(); ++i) {
@@ -1002,7 +1001,6 @@ TBranch *branch = nullptr;
     Float_t test_weight = event->Weight*cross_section*numberOfEntries/(numEntries*totalWeight);
     hWeight -> Fill(event->Weight, test_weight);
 
-
     //for( h in selections)
     // CutMap[h]=passSelection=selections[h].PasSelection(event); 
     
@@ -1051,7 +1049,7 @@ TBranch *branch = nullptr;
     vector <int> goodJetIndex=GoodJetIndices(btagIndex,noBtag,branchJet,branchGenParticle);
 
     // OLD BTAG DELTA R SCORING //
-
+/*
     vector<pair<int,double>> btagScores=JetBtagScoreIndex(goodJetIndex,branchJet,branchGenParticle);
  
     // btagIndex.clear();
@@ -1064,7 +1062,7 @@ TBranch *branch = nullptr;
       else if (btagIndex.size()== 2)
 	      subleadbscore_reco = btagScores[i].second;
     }
-                                                                                                                                                                                                         
+*/                                                                                                                                                                                                         
     leadbscorereco -> Fill(leadbscore_reco, weight);
     subleadbscorereco -> Fill(subleadbscore_reco, weight);
 
@@ -1645,23 +1643,8 @@ TBranch *branch = nullptr;
     vector <int> goodJetIndexParticle=GoodJetIndices(btagIndexParticle,noBtagParticle,branchGenJet,branchGenParticle);
     vector <int> branchPFCandParticleIndex;
 
-if (hasBranchPFCand) {
-/*
-    for(int i=0; i<(int)branchPFCand->GetEntries(); i++) {
-      ParticleFlowCandidate* pfparticle = (ParticleFlowCandidate*)branchPFCand->At(i);
-      if (abs(pfparticle->PID) != 11 || abs(pfparticle->PID) != 13) branchPFCandParticleIndex.push_back(i);
-    }
 
-    for (int i = 0; i < branchPFCandParticleIndex.size(); ++i) {
-      new ((*branchPFCandParticle)[i]) Int_t(branchPFCandParticleIndex[i]);
-    }
-*/
-    
-    branchPFCandParticle = branchPFCand;
-
-}
-
-  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetParticle=paired::PAIReDjointEvent(branchGenParticle,branchPFCandParticle,branchGenJet,0.4,false,false,true,1.0,false);
+  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetParticle=paired::PAIReDjointEvent(branchGenParticle,branchGenParticle,branchGenJet,0.4,false,false,true,1.0,false);
   //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
   std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetBParticle;
 
