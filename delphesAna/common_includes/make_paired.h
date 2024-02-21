@@ -223,46 +223,71 @@ std::pair<bool,int> isInJet(const Jet *jet1, const Jet *jet2, T const *p, float 
 
 //------------------------------------------------------------------------------
 
-std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > processBridge(const Jet *jet1, const Jet *jet2, const TClonesArray *branchPF, const TClonesArray *branchParticle, float jetR,  bool bridge=true, bool ellipse = true, float semimajoradd = 1.0) {
+template<typename T>
+std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > processBridge(const Jet *jet1, const Jet *jet2, const T *branchPassed, const TClonesArray *branchParticle, float jetR,  bool bridge=true, bool ellipse = true, float semimajoradd = 1.0) {
   
   std::map<TString, float> _floatVars;
   std::map<TString, std::vector<float>> _arrayVars;
   
   // Reco PF particles 
   std::vector<paired::ParticleInfo> particles;
-  ParticleFlowCandidate *p;
+  ParticleFlowCandidate *p_pf;
+  GenParticle *p_gen;
+
+  bool hasBranchPFCand = false;
+  if (strcmp(branchPassed->GetName(), "ParticleFlowCandidate") == 0) hasBranchPFCand = true;
+
   int ncands;
 
-  if (branchPF == nullptr) {
+  if (branchPassed == nullptr) {
     ncands = 0;
   } else {
-     ncands = branchPF->GetEntriesFast();
+    ncands = branchPassed->GetEntriesFast();
   }
 
   bool isparticle1 = true;
   TLorentzVector jetp4, genjetp4;
 
-  for (Int_t i = 0; i < ncands; ++i) {
-    p = (ParticleFlowCandidate *)branchPF->At(i);
+  if (hasBranchPFCand){
 
-    // if gen particle only + no pf cand -> filter out non canditates 
+    for (Int_t i = 0; i < ncands; ++i) {
 
-    if(p->D0) continue; // trick to only take gen particles
-    if (abs(p->PID) == 11 || abs(p->PID) == 13) continue; // add status flag 1 for gen particles that are stable
+      p_pf = (ParticleFlowCandidate *)branchPassed->At(i);
 
-    auto retpair = paired::isInJet(jet1,jet2,p,jetR,bridge,ellipse,semimajoradd);
-    if (retpair.first) {
-      particles.push_back(paired::ParticleInfo(p,retpair.second));
-      if (isparticle1) {
-        isparticle1 = false;
-        jetp4 = p->P4();
+      auto retpair = paired::isInJet(jet1,jet2,p_pf,jetR,bridge,ellipse,semimajoradd);
+      if (retpair.first) {
+        particles.push_back(paired::ParticleInfo(p_pf,retpair.second));
+        if (isparticle1) {
+          isparticle1 = false;
+          jetp4 = p_pf->P4();
+        }
+        else {
+          jetp4 += p_pf->P4();
+        }
       }
-      else {
-        jetp4 += p->P4();
+    }
+
+  } else {
+
+    for (Int_t i = 0; i < ncands; ++i) {
+
+      p_gen = (GenParticle *)branchPassed->At(i);
+      if(p_gen->Status != 1 || abs(p_gen->PID) == 11 || abs(p_gen->PID) == 13) continue;
+
+      auto retpair = paired::isInJet(jet1,jet2,p_gen,jetR,bridge,ellipse,semimajoradd);
+      if (retpair.first) {
+        particles.push_back(paired::ParticleInfo(p_gen,retpair.second));
+        if (isparticle1) {
+          isparticle1 = false;
+          jetp4 = p_gen->P4();
+        }
+        else {
+          jetp4 += p_gen->P4();
+        }
       }
-    //  cout << "(" << jet1->Eta << ","<< jet1->Phi << ") ("<< jet2->Eta << ","<< jet2->Phi << ") ("<< p->Eta << ","<< p->Phi << ") "<< retpair.second << endl;
     }
   }
+  
   _floatVars["jet1_pt"] = jet1->PT;
   _floatVars["jet1_eta"] = jet1->Eta;
   _floatVars["jet1_phi"] = jet1->Phi;

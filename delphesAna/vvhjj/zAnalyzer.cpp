@@ -225,15 +225,18 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TClonesArray *branchWeight   = treeReader->UseBranch("Weight");
 
   TClonesArray *branchPFCand = nullptr;
-  TClonesArray *branchPFCandParticle = nullptr; // defined to be branchPFCand - leps
 
-  bool hasBranchPFCand = false;
+  TBranch *branch = nullptr;
 
-TBranch *branch = nullptr;
   for (int i = 0; i < chain.GetListOfBranches()->GetEntries(); ++i) {
+
     branch = dynamic_cast<TBranch*>(chain.GetListOfBranches()->At(i));
-    //if (!branch) continue;
-    if (strcmp(branch->GetName(), "ParticleFlowCandidate") == 0) hasBranchPFCand = true;
+
+    if (strcmp(branch->GetName(), "ParticleFlowCandidate") == 0){
+
+      TClonesArray *branchPFCand = treeReader->UseBranch("ParticleFlowCandidate");
+
+    }
 }
 
   bool fill_1D = true;
