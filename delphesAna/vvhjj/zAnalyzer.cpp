@@ -234,7 +234,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
     if (strcmp(branch->GetName(), "ParticleFlowCandidate") == 0){
 
-      TClonesArray *branchPFCand = treeReader->UseBranch("ParticleFlowCandidate");
+      branchPFCand = treeReader->UseBranch("ParticleFlowCandidate");
 
     }
 }

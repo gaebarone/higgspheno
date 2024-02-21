@@ -225,17 +225,14 @@ std::pair<bool,int> isInJet(const Jet *jet1, const Jet *jet2, T const *p, float 
 
 template<typename T>
 std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > processBridge(const Jet *jet1, const Jet *jet2, const T *branchPassed, const TClonesArray *branchParticle, float jetR,  bool bridge=true, bool ellipse = true, float semimajoradd = 1.0) {
-  
+
   std::map<TString, float> _floatVars;
   std::map<TString, std::vector<float>> _arrayVars;
-  
+
   // Reco PF particles 
   std::vector<paired::ParticleInfo> particles;
   ParticleFlowCandidate *p_pf;
   GenParticle *p_gen;
-
-  bool hasBranchPFCand = false;
-  if (strcmp(branchPassed->GetName(), "ParticleFlowCandidate") == 0) hasBranchPFCand = true;
 
   int ncands;
 
@@ -244,6 +241,9 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   } else {
     ncands = branchPassed->GetEntriesFast();
   }
+
+  bool hasBranchPFCand = false;
+  if (branchPassed != nullptr && strcmp(branchPassed->GetName(), "ParticleFlowCandidate") == 0) hasBranchPFCand = true;
 
   bool isparticle1 = true;
   TLorentzVector jetp4, genjetp4;
@@ -287,7 +287,7 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
       }
     }
   }
-  
+
   _floatVars["jet1_pt"] = jet1->PT;
   _floatVars["jet1_eta"] = jet1->Eta;
   _floatVars["jet1_phi"] = jet1->Phi;
@@ -527,11 +527,11 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
 
 //------------------------------------------------------------------------------
 
-
+template<typename T>
  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>
 
    PAIReDjointEvent( TClonesArray *branchParticle = nullptr,
-					  TClonesArray *branchPFCand = nullptr,
+					  const T *branchPassed = nullptr,
 					  TClonesArray *branchJet = nullptr,
 					  float jetR = 0.4,
 					  bool forwardjet = false, bool bridge=false,
@@ -666,7 +666,7 @@ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
         for (auto &v : arrayVars) {
           v.second.clear();
         }
-	std::pair<std::map<TString, float>, std::map<TString, std::vector<float>>> jetbrid = paired::processBridge(jet, jet2, branchPFCand, branchParticle, jetR, bridge, ellipse, semimajoradd);
+	std::pair<std::map<TString, float>, std::map<TString, std::vector<float>>> jetbrid = paired::processBridge(jet, jet2, branchPassed, branchParticle, jetR, bridge, ellipse, semimajoradd);
 	floatVars["jet1_index"] = i;
 	floatVars["jet2_index"] = j;
 
