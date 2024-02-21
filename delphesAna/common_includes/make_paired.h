@@ -25,7 +25,10 @@
 //class ExRootTreeReader;
 namespace paired
 
+
 {
+
+bool FOUND_Z = false;
 
 bool isMyPAIReDBTag(bool label_bb, bool label_cc, bool label_ll, int seed = 0, double effWrk=0.9,double fake_eff=0.15) {
  
@@ -248,6 +251,7 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   bool isparticle1 = true;
   TLorentzVector jetp4, genjetp4;
 
+
   if (hasBranchPFCand){
 
     for (Int_t i = 0; i < ncands; ++i) {
@@ -272,7 +276,11 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
     for (Int_t i = 0; i < ncands; ++i) {
 
       p_gen = (GenParticle *)branchPassed->At(i);
-      if(p_gen->Status != 1 || abs(p_gen->PID) == 11 || abs(p_gen->PID) == 13) continue;
+
+      if(p_gen->Status != 1 || abs(p_gen->PID) == 11 || abs(p_gen->PID) == 13){
+        FOUND_Z = true;
+        continue;
+      }
 
       auto retpair = paired::isInJet(jet1,jet2,p_gen,jetR,bridge,ellipse,semimajoradd);
       if (retpair.first) {
@@ -695,11 +703,12 @@ template<typename T>
 
         ++jetno;
         ++num_processed;
+
+  if(FOUND_Z) continue;
+
 	output.push_back(make_pair(floatVars,arrayVars));
       }
     }
-
-    
     
     return output;
 }
