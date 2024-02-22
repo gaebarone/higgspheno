@@ -1426,7 +1426,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     }
 
     // sort them again by eta for leading/subleading
-    SortByEtaIndices(vbfJetIndex_dEta,branchJet);
+    SortByEtaIndices(vbfJetIndex_dEta,branchJet); 
 
     Jet *jet1 =nullptr;
     Jet *jet2 =nullptr;
@@ -1619,7 +1619,8 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       l3_reco.Boost(z2_reco.BoostVector());
       l4_reco.Boost(z2_reco.BoostVector());
   
-      // collins soper frame
+      // collins soper frame 
+
       l1l2CScosThetareco=(q1_reco > q2_reco ? -1:+1)*TMath::Abs(2*(l2_reco.Pz()*l1_reco.E()-l1_reco.Pz()*l2_reco.E())/(z1_reco.M()*sqrt(z1_reco.M()*z1_reco.M()+z1_reco.Pt()*z1_reco.Pt())));
       l3l4CScosThetareco=(q3_reco > q4_reco ? -1:+1)*TMath::Abs(2*(l4_reco.Pz()*l3_reco.E()-l3_reco.Pz()*l4_reco.E())/(z2_reco.M()*sqrt(z2_reco.M()*z2_reco.M()+z2_reco.Pt()*z2_reco.Pt())));
   
@@ -1651,7 +1652,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
   std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetBParticle;
 
-  //pairedJetParticlesize -> Fill(pairedJetParticle.size(), weight);
+  //pairedJetParticlesize -> Fill(pairedJetParticle.size(), weight); 
 
 
     if(enableCutParticle["1 PAIReD jet - particle"]) {
@@ -1682,7 +1683,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   std::map<TString, float> paired_jet_particle;
 
   if (switchVal_particle == 0 && pairedJetBParticle.size()>0){
-    
+
     foundBjetParticle = true;
     paired_jet_particle = pairedJetBParticle.at(0).first;
 

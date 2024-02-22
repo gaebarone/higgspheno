@@ -28,8 +28,6 @@ namespace paired
 
 {
 
-bool FOUND_Z = false;
-
 bool isMyPAIReDBTag(bool label_bb, bool label_cc, bool label_ll, int seed = 0, double effWrk=0.9,double fake_eff=0.15) {
  
   TRandom3 rand; 
@@ -235,9 +233,12 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   // Reco PF particles 
   std::vector<paired::ParticleInfo> particles;
   ParticleFlowCandidate *p_pf;
+
   GenParticle *p_gen;
+  GenParticle *p_gen_mother;
 
   int ncands;
+  bool FOUND_Z = false;
 
   if (branchPassed == nullptr) {
     ncands = 0;
@@ -250,7 +251,6 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
 
   bool isparticle1 = true;
   TLorentzVector jetp4, genjetp4;
-
 
   if (hasBranchPFCand){
 
@@ -276,14 +276,17 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
     for (Int_t i = 0; i < ncands; ++i) {
 
       p_gen = (GenParticle *)branchPassed->At(i);
-
-      if(p_gen->Status != 1 || abs(p_gen->PID) == 11 || abs(p_gen->PID) == 13){
-        FOUND_Z = true;
-        continue;
-      }
-
+      
       auto retpair = paired::isInJet(jet1,jet2,p_gen,jetR,bridge,ellipse,semimajoradd);
       if (retpair.first) {
+
+        if (p_gen->M1 >= 0) {
+          p_gen_mother = (GenParticle *)branchPassed->At(p_gen->M1);
+          if(p_gen_mother->PID == 23 && (abs(p_gen->PID) == 11 || abs(p_gen->PID) == 13)){
+          FOUND_Z = true;
+          }
+        }
+
         particles.push_back(paired::ParticleInfo(p_gen,retpair.second));
         if (isparticle1) {
           isparticle1 = false;
@@ -294,6 +297,18 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
         }
       }
     }
+  }
+
+  if(FOUND_Z) {
+    _floatVars["FOUND_Z"] = 1;
+  } else {
+    _floatVars["FOUND_Z"] = 0;
+  }
+
+  if(hasBranchPFCand) {
+    _floatVars["hasBranchPFCand"] = 1;
+  } else {
+    _floatVars["hasBranchPFCand"] = 0;
   }
 
   _floatVars["jet1_pt"] = jet1->PT;
@@ -635,80 +650,83 @@ template<typename T>
   
   std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  output;//
   int n_c = 0;
-    for (Int_t i = 0; i < branchJet->GetEntriesFast(); ++i) {
-      const Jet *jet = (Jet *)branchJet->At(i);
+
+  for (Int_t i = 0; i < branchJet->GetEntriesFast(); ++i) {
+    const Jet *jet = (Jet *)branchJet->At(i);
+    if (!forwardjet) {
+      if (jet->PT < 20 || std::abs(jet->Eta) > 2.5)  continue;
+    }
+    if (jet->Flavor==4) n_c++;
+  }        
+
+  // Loop over all jets in event
+  for (Int_t i = 0; i < branchJet->GetEntriesFast(); ++i) {
+    const Jet *jet = (Jet *)branchJet->At(i);
+    if (!forwardjet) {
+      if (jet->PT < 20 || std::abs(jet->Eta) > 2.5)  continue;
+    }
+    else {
+      if (jet->PT < 20)  continue;
+    }
+
+    std::map<TString, float> floats;
+    std::map<TString, std::vector<float>> arrays;
+    Int_t j;
+
+    for (j = i+1; j < branchJet->GetEntriesFast(); ++j) {
+      const Jet *jet2 = (Jet *)branchJet->At(j);
       if (!forwardjet) {
-        if (jet->PT < 20 || std::abs(jet->Eta) > 2.5)  continue;
-      }
-      if (jet->Flavor==4) n_c++;
-    }           
-    // Loop over all jets in event
-    for (Int_t i = 0; i < branchJet->GetEntriesFast(); ++i) {
-      const Jet *jet = (Jet *)branchJet->At(i);
-      if (!forwardjet) {
-        if (jet->PT < 20 || std::abs(jet->Eta) > 2.5)  continue;
+        if (jet2->PT < 20 || std::abs(jet2->Eta) > 2.5)  continue;
       }
       else {
-        if (jet->PT < 20)  continue;
+        if (jet2->PT < 20) continue;
+        if (std::abs(jet->Eta) > 2.5 && std::abs(jet2->Eta) > 2.5)  continue;
+        // if (std::abs(jet->Eta) > 2.5 || std::abs(jet2->Eta) > 2.5)  
+        //     cout << "Recovered a forward jet." << endl;
       }
 
-      std::map<TString, float> floats;
-      std::map<TString, std::vector<float>> arrays;
-      Int_t j;
-
-      for (j = i+1; j < branchJet->GetEntriesFast(); ++j) {
-        const Jet *jet2 = (Jet *)branchJet->At(j);
-        if (!forwardjet) {
-          if (jet2->PT < 20 || std::abs(jet2->Eta) > 2.5)  continue;
-        }
-        else {
-          if (jet2->PT < 20) continue;
-          if (std::abs(jet->Eta) > 2.5 && std::abs(jet2->Eta) > 2.5)  continue;
-          // if (std::abs(jet->Eta) > 2.5 || std::abs(jet2->Eta) > 2.5)  
-          //     cout << "Recovered a forward jet." << endl;
-        }
-
-        for (auto &v : floatVars) {
-          v.second = 0;
-        }
-        for (auto &v : arrayVars) {
-          v.second.clear();
-        }
-	std::pair<std::map<TString, float>, std::map<TString, std::vector<float>>> jetbrid = paired::processBridge(jet, jet2, branchPassed, branchParticle, jetR, bridge, ellipse, semimajoradd);
-	floatVars["jet1_index"] = i;
-	floatVars["jet2_index"] = j;
-
-	floats = jetbrid.first;
-        arrays = jetbrid.second;
-
-        for (auto &p : arrays) {
-          arrayVars[p.first] = p.second;
-        }
-        for (auto &p : floats) {
-          floatVars[p.first] = p.second;
-        }
-        ///floatVars["event"] = entry;
-        floatVars["n_c"] = n_c;
-
-        if (sigonly) {
-          if (floatVars["label_ll"]==1) continue;
-        }
-
-        auto dijet = jet->P4() + jet2->P4();
-        floatVars["dijet_mass_nobridge"] = dijet.M();
-        floatVars["dijet_pt_nobridge"] = dijet.Pt();
-        floatVars["dijet_eta_nobridge"] = dijet.Eta();
-        floatVars["dijet_phi_nobridge"] = dijet.Phi();
-        floatVars["jetno"] = jetno;
-
-        ++jetno;
-        ++num_processed;
-
-  if(FOUND_Z) continue;
-
-	output.push_back(make_pair(floatVars,arrayVars));
+      for (auto &v : floatVars) {
+        v.second = 0;
       }
+      for (auto &v : arrayVars) {
+        v.second.clear();
+      }
+
+      std::pair<std::map<TString, float>, std::map<TString, std::vector<float>>> jetbrid = paired::processBridge(jet, jet2, branchPassed, branchParticle, jetR, bridge, ellipse, semimajoradd);
+      floatVars["jet1_index"] = i;
+      floatVars["jet2_index"] = j;
+
+      floats = jetbrid.first;
+      arrays = jetbrid.second;
+
+      for (auto &p : arrays) {
+        arrayVars[p.first] = p.second;
+      }
+      for (auto &p : floats) {
+        floatVars[p.first] = p.second;
+      }
+      ///floatVars["event"] = entry;
+      floatVars["n_c"] = n_c;
+
+      if (sigonly) {
+        if (floatVars["label_ll"]==1) continue;
+      }
+
+      auto dijet = jet->P4() + jet2->P4();
+      floatVars["dijet_mass_nobridge"] = dijet.M();
+      floatVars["dijet_pt_nobridge"] = dijet.Pt();
+      floatVars["dijet_eta_nobridge"] = dijet.Eta();
+      floatVars["dijet_phi_nobridge"] = dijet.Phi();
+      floatVars["jetno"] = jetno;
+
+      ++jetno;
+      ++num_processed;
+
+      if(floatVars["FOUND_Z"] == 1 && floatVars["hasBranchPFCand"] == 0) continue;
+
+      output.push_back(make_pair(floatVars,arrayVars));
     }
+  }
     
     return output;
 }
