@@ -41,7 +41,7 @@ using namespace std;
 double btagEff=0.85;
 double fakeEff=0.01;
 
-
+/*
 void remove_overlaps(vector< pair<int,int>> muPairIndices){
   for( vector< pair<int,int>>::iterator it=muPairIndices.begin(); it!=muPairIndices.end(); it++){
     pair<int,int> one=(*it);
@@ -51,6 +51,7 @@ void remove_overlaps(vector< pair<int,int>> muPairIndices){
     }
   }
 }
+*/
 
 
 pair<int,int> GethiggsbbcandidateNoMass(vector<vector <int>>  &bJetPairsComb,
@@ -208,7 +209,7 @@ vector <int> GoodJetIndices( vector <int> & btagIndex,
 
 
 
-
+/*
 vector <int> GoodElectronIndices(TClonesArray *branchElectron=nullptr){
   vector <int> goodE_reco_indices;
   if( branchElectron==nullptr) return goodE_reco_indices;
@@ -322,6 +323,46 @@ vector< pair<int,int>> GetmuRecoPairIndices(TClonesArray *branchMuon=nullptr, ve
 }
 
 
+vector< pair<int,int>> GetelecmuRecoPairIndices(TClonesArray *branchMuon=nullptr, vector<int> goodMu_reco_indices=vector<int>(0)){
+    vector< pair<int,int>> elecmuRecoPairIndices;
+    vector< pair<int,int>> elecmuRecoPairIndicesIn;
+    vector <vector<int>> elecmuRecoPairIndices_;
+    if(goodE_reco_indices.size() > 0 && goodMu_reco_indices.size() > 0) 
+      elecmuRecoPairIndices_=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodMu_reco_indices);
+    
+      // remove all combinations not satifing criteria 
+    for(int i=0; i<(int)muRecoPairIndices_.size(); i++){
+      int elecRecoIndex=muRecoPairIndices_[i].at(0);
+      int elecRecoIndex2=muRecoPairIndices_[i].at(1);
+      
+      Muon *el1_reco= (Muon*) branchMuon->At(elecRecoIndex);
+      Muon *el2_reco=(Muon*) branchMuon->At(elecRecoIndex2);
+      if( el1_reco->Charge ==  el2_reco->Charge ) continue;
+      muRecoPairIndicesIn.push_back(make_pair(elecRecoIndex,elecRecoIndex2));
+    }
+
+    muRecoPairIndices=muRecoPairIndicesIn;
+
+    sort(muRecoPairIndices.begin(), muRecoPairIndices.end(), [branchMuon](const pair<int,int> lhs, const pair<int,int> rhs) {
+    	return fabs(((((Muon*)branchMuon->At(lhs.first))->P4() + ((Muon*)branchMuon->At(lhs.second))->P4())).M() -91 ) <
+	  fabs( ((((Muon*)branchMuon->At(rhs.first))->P4() + ((Muon*)branchMuon->At(rhs.second))->P4()).M()) -91 ) ; 
+      });
+    
+    //sort(muRecoPairIndices.begin(),muRecoPairIndices.end(), [branchMuon]( pair<int,int>   & lhs,  pair<int,int>   & rhs) {
+    //	    int index11_reco=(lhs).first;
+    //	    int index12_reco=(lhs).second;
+    //	    int index21_reco=(rhs).first;
+    //	int index22_reco=(rhs).second;
+    //	    return fabs(((((Muon*)branchMuon->At(index11_reco))->P4() + ((Muon*)branchMuon->At(index12_reco))->P4())).M() - 91) <
+    //	  fabs( ((((Muon*)branchMuon->At(index21_reco))->P4() + ((Muon*)branchMuon->At(index22_reco))->P4()).M()) -91);
+    //});
+    
+    remove_overlaps(muRecoPairIndices);
+
+    return muRecoPairIndices;
+}
+
+
 vector<pair<int,pair<int,int>>> GetRecoPairIndices(vector< pair<int,int>> elecRecoPairIndices, vector< pair<int,int>> muRecoPairIndices,int &thisRecoEventType,TClonesArray *branchElectron=nullptr,TClonesArray *branchMuon=nullptr){
 
   vector<pair<int,pair<int,int>>> RecoPairIndices;
@@ -336,7 +377,7 @@ for(int i=0; i<(int) elecRecoPairIndices.size(); i++)
     sort(RecoPairIndices.begin(), RecoPairIndices.end(), [branchMuon,branchElectron]  ( const pair<int,pair<int,int>>  lhs , const pair<int,pair<int,int>>   rhs ){
 
 	double mass1_reco=0 ;
-    	double mass2_reco=0;
+  double mass2_reco=0;
 	
 	if( lhs.first==0 ) mass1_reco = (((Electron*)branchElectron->At(lhs.second.first))->P4() + ((Electron*)branchElectron->At(lhs.second.second))->P4()).M();
 	else mass1_reco = (((Muon*)branchMuon->At(lhs.second.first))->P4() + ((Muon*)branchMuon->At(lhs.second.second))->P4()).M();
@@ -362,6 +403,9 @@ for(int i=0; i<(int) elecRecoPairIndices.size(); i++)
 
 
 }
+
+*/
+
 void SortByPtIndices(vector <int> nonHiggsJet, TClonesArray *branchJet){
   if( nonHiggsJet.size() > 1 ){
     sort(nonHiggsJet.begin(), nonHiggsJet.end(), [branchJet](const int& lhs, const int& rhs) {
