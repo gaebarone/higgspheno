@@ -12,4 +12,4 @@ Error      = condor/log_$(Cluster)_$(Process).err
 Log        = condor/log_$(Cluster)_$(Process).log
 arguments = $(IN) $(OUT) $(PNAME) $(SEL)
 
-queue IN, OUT, PNAME SEL, from modified_sig_inputs.txt
+queue IN, OUT, PNAME, SEL, from modified_sig_inputs.txt

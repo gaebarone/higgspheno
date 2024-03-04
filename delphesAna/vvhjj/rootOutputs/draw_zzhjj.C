@@ -4,6 +4,7 @@ R__LOAD_LIBRARY(libDelphes)
 #include <fstream>
 #include <cmath>
 #endif
+
 /*
 // be able to calculate total number of events in a process
 Long64_t get_file_num_events(const char *inputName) {
@@ -79,7 +80,7 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   TH1F *diboson_hist = (TH1F*)diboson_file->Get(name);
   TH1F *drellyan_hist = (TH1F*)drellyan_file->Get(name);
 
-  sig_hist->SetFillColor(kCyan);
+  // sig_hist->SetFillColor(kCyan);
   ttbar_hist->SetFillColor(kOrange);
   ttHbb_hist->SetFillColor(kViolet);
   diboson_hist->SetFillColor(kRed);
@@ -87,14 +88,13 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
 
   // rebin
   
-  sig_hist->Rebin(1);
-  ttbar_hist->Rebin(1);
-  ttHbb_hist->Rebin(1);
-  diboson_hist->Rebin(1);
-  drellyan_hist->Rebin(1);
+  sig_hist->Rebin(2);
+  ttbar_hist->Rebin(2);
+  ttHbb_hist->Rebin(2);
+  diboson_hist->Rebin(2);
+  drellyan_hist->Rebin(2);
   
-  /*
-  sig_hist->Scale(sig_scale);
+  /*  
   ttbar_hist->Scale(ttbar_scale);
   ttHbb_hist->Scale(ttHbb_scale);
   drellyan_hist->Scale(drellyan_scale);
@@ -107,10 +107,11 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   stack->Add(drellyan_hist);
   stack->Add(diboson_hist);
   stack->Add(ttHbb_hist);
-  stack->Add(sig_hist);
+  //stack->Add(sig_hist);
+
   // make a legend
   TLegend *legend = new TLegend(0.725, 0.725, 0.875, 0.875);
-  legend->AddEntry(sig_hist, "  signal", "f");
+  //legend->AddEntry(sig_hist, "  signal", "f");
   legend->AddEntry(drellyan_hist, "  drellyan", "f");
   legend->AddEntry(diboson_hist, "  diboson", "f");
   legend->AddEntry(ttbar_hist, "  ttbar", "f");
@@ -122,6 +123,18 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   stack->Draw("hist e");
   stack->GetXaxis()->SetTitle(axistitle);
   legend->Draw();
+
+  TH1F *summed_hist = (TH1F*)stack->GetHistogram()->Clone();
+  summed_hist->SetStats(kTRUE); // Enable stat box
+  c->Update(); // Update canvas to make stat box appear
+
+  // sig on top
+  sig_hist->Scale(10000);
+  sig_hist->SetLineColor(kBlack);
+  legend->AddEntry(sig_hist, "sig x 10000", "l");
+  sig_hist->SetLineWidth(2);
+  sig_hist->Draw("hist same");
+  
   PrintCanvas(c, name, outputFolder, "stacks");
   c->Close();
 }
