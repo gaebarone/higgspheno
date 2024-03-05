@@ -6,7 +6,7 @@
 #include "classes/DelphesLHEFReader.h"
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
 // #include "../../common_includes/ghost_tagging.h"
-// #include "../../common_includes/combinations.h"
+#include "../common_includes/combinations.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -334,24 +334,72 @@ void getRecoZLeps(int& thisRecoEventType,  const vector<pair<int,pair<int,int>>>
 // W
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-/*
-vector <int> GoodMETIndices(TClonesArray *branchMissingET=nullptr){
-  vector <int> goodMET_reco_indices; 
-  if( branchMissingET==nullptr) return goodMET_reco_indices; 
+   vector< pair<int,int>> GetLepRecoIndices(TClonesArray *branchElectron=nullptr, TClonesArray *branchMuon=nullptr, vector<int> goodE_reco_indices=vector<int>(0), vector<int> goodMu_reco_indices=vector<int>(0)){
+ 
+    vector< pair<int,int>> lepRecoIndices;
 
-  
-  for(int i=0; i<(int)branchMissingET->GetEntries(); i++){
-      MissingET *met_reco = (MissingET *) branchMissingET->At(i);
+    for(int i=0; i<(int) goodE_reco_indices.size(); i++) lepRecoIndices.push_back(make_pair(0,goodE_reco_indices.at(i)));
+    for(int i=0; i<(int) goodMu_reco_indices.size(); i++) lepRecoIndices.push_back(make_pair(1,goodMu_reco_indices.at(i)));
+
+    sort(lepRecoIndices.begin(), lepRecoIndices.end(), [branchElectron, branchMuon](const pair<int, int>& lhs, const pair<int, int>& rhs) {
+      if (lhs.first == 1 && rhs.first == 1) return ((Muon*)branchMuon->At(lhs.second))->PT > ((Muon*)branchMuon->At(rhs.second))->PT; // mu mu
+      else if (lhs.first == 0 && rhs.first == 0) return ((Electron*)branchElectron->At(lhs.second))->PT > ((Electron*)branchElectron->At(rhs.second))->PT; // e e
+      else if (lhs.first == 1 && rhs.first == 0) return ((Muon*)branchMuon->At(lhs.second))->PT > ((Electron*)branchElectron->At(rhs.second))->PT; // mu e
+      else if (lhs.first == 0 && rhs.first == 1) return ((Electron*)branchElectron->At(lhs.second))->PT > ((Muon*)branchMuon->At(rhs.second))->PT; // e mu
+    });
+
+    return  lepRecoIndices;
+
+  }
+
+void getRecoWLeps(int& thisRecoEventType,  const vector< pair<int,int>> WRecoIndices, TClonesArray *branchElectron, TClonesArray *branchMuon,  TLorentzVector &l1_reco,  TLorentzVector &l2_reco, int& q1_reco, int& q2_reco){
     
-      // eta cut
-      if(fabs(met_reco->Eta) < 2.5) goodMET_reco_indices.push_back(i);
+    if( thisRecoEventType==-1 ) return;
+
+    if( thisRecoEventType==0 ) { // case 2mu 
+      
+      Muon *muon1_reco = (Muon *) branchMuon->At( WRecoIndices[0].second);
+      Muon *muon2_reco = (Muon *) branchMuon->At( WRecoIndices[1].second);
+      
+      q1_reco = muon1_reco->Charge;
+      q2_reco = muon2_reco->Charge;
+      
+      l1_reco=muon1_reco->P4();
+      l2_reco=muon2_reco->P4();
+      
+    } else if( thisRecoEventType==1 ) { // case 2e
+    
+      Electron *muon1_reco = (Electron *) branchElectron->At( WRecoIndices[0].second);
+      Electron *muon2_reco = (Electron *) branchElectron->At( WRecoIndices[0].second);
+
+      q1_reco = muon1_reco->Charge;
+      q2_reco = muon2_reco->Charge;
+
+      l1_reco=muon1_reco->P4();
+      l2_reco=muon2_reco->P4();
+
+    } else if( thisRecoEventType==2 ) { // case 1mu1e 
+    
+      Muon *muon1_reco = (Muon *) branchMuon->At( WRecoIndices[0].second);
+      Electron *muon2_reco = (Electron *) branchElectron->At( WRecoIndices[0].second);
+
+      q1_reco = muon1_reco->Charge;
+      q2_reco = muon2_reco->Charge;
+
+      l1_reco=muon1_reco->P4();
+      l2_reco=muon2_reco->P4();
+
+    } else if( thisRecoEventType==3 ) { // case 1e1mu 
+    
+      Electron *muon1_reco = (Electron *) branchElectron->At( WRecoIndices[0].second);
+      Muon *muon2_reco = (Muon *) branchMuon->At( WRecoIndices[0].second);
+
+      q1_reco = muon1_reco->Charge;
+      q2_reco = muon2_reco->Charge;
+
+      l1_reco=muon1_reco->P4();
+      l2_reco=muon2_reco->P4();
 
     }
 
-    // sort the indices by pT ;
-    sort(goodMET_reco_indices.begin(), goodMET_reco_indices.end(), [branchMissingET](const int& lhs, const int& rhs) {
-	return ((MissingET*)branchMissingET->At(lhs))->PT > ((MissingET*)branchMissingET->At(rhs))->PT;
-      });
-    return goodMET_reco_indices; 
 }
-*/
