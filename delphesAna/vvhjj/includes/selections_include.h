@@ -35,6 +35,8 @@
 #include <vector>
 #include <iomanip>
 
+#include "../../common_includes/make_paired.h"
+
 using namespace std;
 
 
@@ -175,33 +177,36 @@ vector<pair <int,double>>  JetBtagScoreIndex(std::vector <int> goodJetIndex,
 }
 
 
-vector <int> GoodJetIndices( vector <int> & btagIndex, 
-			     vector <int> & noBtag,
-			     TClonesArray *branchJet=nullptr,
-			     TClonesArray *branchGenParticle=nullptr){
-  vector <int> goodJetIndex;
+vector <int> GoodJetIndices( // vector <int> & btagIndex,  
+                             //  vector <int> & noBtag,
+			                        TClonesArray *branchJet=nullptr
+			                        // TClonesArray *branchGenParticle=nullptr 
+                              ){
 
+  vector <int> goodJetIndex;
   
     for(int i=0; i<(int)branchJet->GetEntries(); i++){
       Jet *jet=(Jet*) branchJet->At(i);
-      //if( jet->PT < 20) continue;
-      //if (fabs(jet->Eta) > 4.4) continue; 
-      //  if( jet->BTag>0) btagIndex.push_back(i);
-      if( isMyBTag(jet, branchGenParticle,0,0.4,btagEff,fakeEff) && abs(jet->Eta) < 2.5 ) btagIndex.push_back(i); 
+      if( jet->PT < 20) continue;
+      // if (fabs(jet->Eta) > 4.4) continue; 
 
-      else noBtag.push_back(i);
+      // if( jet->BTag>0) btagIndex.push_back(i);
+      // if( isMyBTag(jet, branchGenParticle,0,0.4,btagEff,fakeEff) && abs(jet->Eta) < 2.5 ) btagIndex.push_back(i); 
+
+      else // noBtag.push_back(i);
       goodJetIndex.push_back(i);
     }
+/*
     sort(btagIndex.begin(), btagIndex.end(), [branchJet](const int& lhs, const int& rhs) {
 	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
       });
     sort(noBtag.begin(), noBtag.end(), [branchJet](const int& lhs, const int& rhs) {
 	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
       });
+*/
     sort(goodJetIndex.begin(), goodJetIndex.end(), [branchJet](const int& lhs, const int& rhs) {
 	return ((Jet*)branchJet->At(lhs))->PT > ((Jet*)branchJet->At(rhs))->PT;
       });
-    
     
   return goodJetIndex; 
 }
