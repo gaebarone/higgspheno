@@ -90,11 +90,11 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   drellyan_hist->Scale(lumiScaling);
 
   // rebin if desired
-  sig_hist->Rebin(5);
-  ttbar_hist->Rebin(5);
-  ttHbb_hist->Rebin(5);
-  diboson_hist->Rebin(5);
-  drellyan_hist->Rebin(5);
+  sig_hist->Rebin(1);
+  ttbar_hist->Rebin(1);
+  ttHbb_hist->Rebin(1);
+  diboson_hist->Rebin(1);
+  drellyan_hist->Rebin(1);
 
   // total hist 
   TH1F *total=(TH1F*)ttbar_hist->Clone("total");
@@ -125,10 +125,10 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   stack->Add(drellyan_hist);
   stack->Add(diboson_hist);
   stack->Add(ttHbb_hist);
-  // stack->Add(sig_hist);
+  stack->Add(sig_hist);
   
   // make a legend
-  TLegend *legend = new TLegend(0.8, 0.8, 0.9, 0.9);
+  TLegend *legend = new TLegend(0.775, 0.775, 0.875, 0.875);
   legend->AddEntry(sig_hist, "Signal", "f");
   legend->AddEntry(drellyan_hist, "drell-yan", "f");
   legend->AddEntry(ttbar_hist, "ttbar", "f");
@@ -144,13 +144,13 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   legend->Draw();
 
   // sig on top
-  TH1F *sigClone=(TH1F*)sig_hist->Clone("sigClone");
-  sigClone->Scale(1000);
-  sigClone->SetLineColor(kBlack);
-  sigClone->SetFillColor(kWhite);
-  legend->AddEntry(sigClone, "sig x 1000", "l");
-  sigClone->SetLineWidth(2);
-  sigClone->Draw("hist same");
+  //TH1F *sigClone=(TH1F*)sig_hist->Clone("sigClone");
+  //sigClone->Scale(1000);
+  //sigClone->SetLineColor(kBlack);
+  //sigClone->SetFillColor(kWhite);
+  //legend->AddEntry(sigClone, "sig x 1000", "l");
+  //sigClone->SetLineWidth(2);
+  //sigClone->Draw("hist same");
 
 
   PrintCanvas(c, name, outputFolder, "stacks");
@@ -209,7 +209,52 @@ void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filena
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "jj_#DeltaR_particle", "#DeltaR_{jj}_particle", "R", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "jj_#Delta#eta_particle", "#Delta#eta_{jj}_particle", "#eta", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "jj_#DeltaR_particle", "#DeltaR_{jj}_particle", "R", outputFolder);
-
+  // z - reco
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z1_pT_reco", "p^{T}_{z1}_reco", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z2_pT_reco", "p^{T}_{z2}_reco", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z1_m_reco", "m_{z1}_reco", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z2_m_reco", "m_{z2}_reco", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#Delta#phi_reco", "#Delta#phi_{zz}_reco", "#phi", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#Delta#eta_reco", "#Delta#eta_{zz}_reco", "#eta", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#DeltaR_reco", "#DeltaR_{zz}_reco", "R", outputFolder);
+  // z - particle
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z1_pT_particle", "p^{T}_{z1}_particle", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z2_pT_particle", "p^{T}_{z2}_particle", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z1_m_particle", "m_{z1}_particle", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z2_m_particle", "m_{z2}_particle", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#Delta#phi_particle", "#Delta#phi_{zz}_particle", "#phi", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#Delta#eta_particle", "#Delta#eta_{zz}_particle", "#eta", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#DeltaR_particle", "#DeltaR_{zz}_particle", "R", outputFolder);
+  // z - parton
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z1_pT_parton", "p^{T}_{z1}_parton", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z2_pT_parton", "p^{T}_{z2}_parton", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z1_m_parton", "m_{z1}_parton", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "z2_m_parton", "m_{z2}_parton", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#Delta#phi_parton", "#Delta#phi_{zz}_parton", "#phi", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#Delta#eta_parton", "#Delta#eta_{zz}_parton", "#eta", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#DeltaR_parton", "#DeltaR_{zz}_parton", "R", outputFolder);
+  // leps - reco
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta#phi_reco", "#Delta#phi_{l1l2}_reco", "#phi", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta#phi_reco", "#Delta#phi_{l3l4}_reco", "#phi", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta#eta_reco", "#Delta#eta_{l1l2}_reco", "#eta", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta#eta_reco", "#Delta#eta_{l3l4}_reco", "#eta", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta R_reco", "#Delta R_{l1l2}_reco", "R", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta R_reco", "#Delta R_{l3l4}_reco", "R", outputFolder);
+  // leps - particle
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta#phi_particle", "#Delta#phi_{l1l2}_particle", "#phi", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta#phi_particle", "#Delta#phi_{l3l4}_particle", "#phi", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta#eta_particle", "#Delta#eta_{l1l2}_particle", "#eta", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta#eta_particle", "#Delta#eta_{l3l4}_particle", "#eta", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta R_particle", "#Delta R_{l1l2}_particle", "R", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta R_particle", "#Delta R_{l3l4}_particle", "R", outputFolder);
+  // leps - parton
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta#phi_parton", "#Delta#phi_{l1l2}_parton", "#phi", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta#phi_parton", "#Delta#phi_{l3l4}_parton", "#phi", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta#eta_parton", "#Delta#eta_{l1l2}_parton", "#eta", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta#eta_parton", "#Delta#eta_{l3l4}_parton", "#eta", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta R_parton", "#Delta R_{l1l2}_parton", "R", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta R_parton", "#Delta R_{l3l4}_parton", "R", outputFolder);
+ 
   // higgs comps
   draw_hist2(sig_file, "H_pT_comp_12", "p_{T}^{hbb}", "Parton Level p_{T}", "Particle Level p_{T}", outputFolder, "signal2D");
   draw_hist2(sig_file, "H_pT_comp_23", "p_{T}^{hbb}", "Particle Level p_{T}", "Reco Level p_{T}", outputFolder, "signal2D");
@@ -236,12 +281,12 @@ void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filena
   
   std::cout<<"Reco Level Contributions:"<<std::endl;
   
-  TH1 *sig_mbb = dynamic_cast<TH1*>(sig_file->Get("mass_bb_reco"));
-  TH1 *bkg_mbb = dynamic_cast<TH1*>(bkg_file->Get("mass_bb_reco"));
-  TH1 *ttbar_mbb = dynamic_cast<TH1*>(ttbar_file->Get("mass_bb_reco"));
-  TH1 *ttHbb_mbb = dynamic_cast<TH1*>(ttHbb_file->Get("mass_bb_reco"));
-  TH1 *diboson_mbb = dynamic_cast<TH1*>(diboson_file->Get("mass_bb_reco"));
-  TH1 *drellyan_mbb = dynamic_cast<TH1*>(drellyan_file->Get("mass_bb_reco"));
+  TH1 *sig_mbb = dynamic_cast<TH1*>(sig_file->Get("hbb_m_reco"));
+  TH1 *bkg_mbb = dynamic_cast<TH1*>(bkg_file->Get("hbb_m_reco"));
+  TH1 *ttbar_mbb = dynamic_cast<TH1*>(ttbar_file->Get("hbb_m_reco"));
+  TH1 *ttHbb_mbb = dynamic_cast<TH1*>(ttHbb_file->Get("hbb_m_reco"));
+  TH1 *diboson_mbb = dynamic_cast<TH1*>(diboson_file->Get("hbb_m_reco"));
+  TH1 *drellyan_mbb = dynamic_cast<TH1*>(drellyan_file->Get("hbb_m_reco"));
 
   std::cout<<"ttbar: "<<ttbar_mbb->Integral()<<std::endl;
   std::cout<<"ttHbb: "<<ttHbb_mbb->Integral()<<std::endl;
@@ -254,12 +299,12 @@ void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filena
 
   std::cout<<"Particle Level Contributions:"<<std::endl;
   
-  TH1 *sig_mbb_p = dynamic_cast<TH1*>(sig_file->Get("mass_bb_particle"));
-  TH1 *bkg_mbb_p = dynamic_cast<TH1*>(bkg_file->Get("mass_bb_particle"));
-  TH1 *ttbar_mbb_p = dynamic_cast<TH1*>(ttbar_file->Get("mass_bb_particle"));
-  TH1 *ttHbb_mbb_p = dynamic_cast<TH1*>(ttHbb_file->Get("mass_bb_particle"));
-  TH1 *diboson_mbb_p = dynamic_cast<TH1*>(diboson_file->Get("mass_bb_particle"));
-  TH1 *drellyan_mbb_p = dynamic_cast<TH1*>(drellyan_file->Get("mass_bb_particle"));
+  TH1 *sig_mbb_p = dynamic_cast<TH1*>(sig_file->Get("hbb_m_particle"));
+  TH1 *bkg_mbb_p = dynamic_cast<TH1*>(bkg_file->Get("hbb_m_particle"));
+  TH1 *ttbar_mbb_p = dynamic_cast<TH1*>(ttbar_file->Get("hbb_m_particle"));
+  TH1 *ttHbb_mbb_p = dynamic_cast<TH1*>(ttHbb_file->Get("hbb_m_particle"));
+  TH1 *diboson_mbb_p = dynamic_cast<TH1*>(diboson_file->Get("hbb_m_particle"));
+  TH1 *drellyan_mbb_p = dynamic_cast<TH1*>(drellyan_file->Get("hbb_m_particle"));
 
   std::cout<<"ttbar: "<<ttbar_mbb_p->Integral()<<std::endl;
   std::cout<<"ttHbb: "<<ttHbb_mbb_p->Integral()<<std::endl;
@@ -270,7 +315,7 @@ void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filena
   double sig_sig_p = sig_mbb_p->Integral()/sqrt(bkg_mbb_p->Integral());
   std::cout<<"Signal Significance: "<<sig_sig_p<<std::endl;
 
-  std::cout<<"Integral before cuts with Lumi=3e3:"<<std::endl;
+  std::cout<<"Integral before cuts with Lumi=300:"<<std::endl;
   
   TH1 *sig_w = dynamic_cast<TH1*>(sig_file->Get("weights"));
   TH1 *bkg_w = dynamic_cast<TH1*>(bkg_file->Get("weights"));
