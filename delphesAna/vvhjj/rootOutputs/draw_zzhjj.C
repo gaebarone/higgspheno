@@ -181,6 +181,14 @@ void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filena
   // draw histograms
   gROOT->SetBatch(kTRUE);
 
+  // cft
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "hSel_reco", "", "", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "hSel_particle", "", "", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "hSel_parton", "", "", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "hEff_reco", "", "", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "hEff_particle", "", "", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "hEff_parton", "", "", outputFolder);
+
   // higgs - reco
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "hbb_pT_reco", "p^{T}_{hbb}_reco", "p_{T}", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "hbb_m_reco", "m_{hbb}_reco", "mass (GeV)", outputFolder);

@@ -7,9 +7,12 @@ hhvbf_directory = '/isilon/data/users/sellis9/mg_conda/MG5_aMC_v3_5_2/EVENTS/vvh
 output_file = '/isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/includes/crossx_include.h'
 
 #BRANCHING RATIOS
-z_ee_BR = 2 * 0.03
-z_mumu_BR = 2 * 0.03
+#z_ee_BR = 2 * 0.03
+#z_mumu_BR = 2 * 0.03
+z_ee_BR = 2 * 0.1
+z_mumu_BR = 2 * 0.1
 h_bb_BR = 0.50
+
 
 def extract_cross_section(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
