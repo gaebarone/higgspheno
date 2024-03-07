@@ -8,17 +8,17 @@ import os
 #directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 4
 #selection_list = []
 
-#process_list = ['z0z0hqq', 'z0zThqq', 'zTzThqq', 'zzhqq']
-#directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 4
-#selection_list = ['HZZJJ']
+process_list = ['z0z0hqq', 'z0zThqq', 'zTzThqq', 'zzhqq']
+directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 4
+selection_list = ['HZZJJ']
 
 #process_list = ['z0z0qq', 'z0zTqq', 'zTzTqq', 'zzqq']
 #directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 4
 #selection_list = ['ZZJJ']
 
-process_list = ['w+0w-0hqq', 'w+0w-Thqq', 'w+Tw-0hqq', 'w+Tw-Thqq', 'w+w-hqq']
-directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 5
-selection_list = ['HWWJJ']
+#process_list = ['w+0w-0hqq', 'w+0w-Thqq', 'w+Tw-0hqq', 'w+Tw-Thqq', 'w+w-hqq']
+#directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 5
+#selection_list = ['HWWJJ']
 
 def generate_file_list(directory_path, output_file):
         with open(output_file, 'w') as file:

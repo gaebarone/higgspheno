@@ -97,8 +97,7 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   drellyan_hist->Rebin(1);
 
   // total hist 
-  TH1F *total=(TH1F*)ttbar_hist->Clone("total");
-  total->Add(sig_hist);
+  TH1F *total=(TH1F*)sig_hist->Clone("total");
   total->Add(ttbar_hist);
   total->Add(ttHbb_hist);
   total->Add(drellyan_hist); 
@@ -151,7 +150,6 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   //legend->AddEntry(sigClone, "sig x 1000", "l");
   //sigClone->SetLineWidth(2);
   //sigClone->Draw("hist same");
-
 
   PrintCanvas(c, name, outputFolder, "stacks");
   c->Close();
