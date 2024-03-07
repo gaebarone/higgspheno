@@ -17,7 +17,6 @@ cd $here
 
 mkdir -p execute/job_$2
 cd execute/job_$2
-pwd
 #cp -r /isilon/data/users/sellis9/mg_cvmfs/MG5_aMC_v3_5_2/Delphes/* .
 
 ulimit -s unlimited

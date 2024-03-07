@@ -4,12 +4,15 @@ from bs4 import BeautifulSoup
 
 loopsm_directory = '/isilon/data/users/sellis9/mg_conda/MG5_aMC_v3_5_2/EVENTS/vvhjj/loopsm/qq'
 hhvbf_directory = '/isilon/data/users/sellis9/mg_conda/MG5_aMC_v3_5_2/EVENTS/vvhjj/hhvbf/qq'
-output_file = '/isilon/data/users/sellis9/higgsandmore/delphesAna/common_includes/get_cross_section.h'
+output_file = '/isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/includes/crossx_include.h'
 
 #BRANCHING RATIOS
-z_ee_BR = 2 * 0.03
-z_mumu_BR = 2 * 0.03
+#z_ee_BR = 2 * 0.03
+#z_mumu_BR = 2 * 0.03
+z_ee_BR = 2 * 0.1
+z_mumu_BR = 2 * 0.1
 h_bb_BR = 0.50
+
 
 def extract_cross_section(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
