@@ -7,11 +7,14 @@ hhvbf_directory = '/isilon/data/users/sellis9/mg_conda/MG5_aMC_v3_5_2/EVENTS/vvh
 output_file = '/isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/includes/crossx_include.h'
 
 #BRANCHING RATIOS
-#z_ee_BR = 2 * 0.03
-#z_mumu_BR = 2 * 0.03
-z_ee_BR = 2 * 0.1
-z_mumu_BR = 2 * 0.1
-h_bb_BR = 0.50
+
+z_ee_BR = 2 * 0.03
+z_mumu_BR = 2 * 0.03
+
+W_ev_BR = 2 * 0.1
+W_muv_BR = 2 * 0.1
+
+h_bb_BR = 0.58
 
 
 def extract_cross_section(html_content):
@@ -93,7 +96,8 @@ with open(output_file, 'w') as output:
                     cross_section = extract_value(cross_section)
                     if cross_section is not None:  # Check if cross_section is not None
                         cross_section_decimal = scientific_to_decimal(cross_section)
-                        final_cross_section = cross_section_decimal * z_ee_BR * z_mumu_BR * h_bb_BR
+                        if 'z' in subdir: final_cross_section = cross_section_decimal * z_ee_BR * z_mumu_BR * h_bb_BR
+                        if 'w' in subdir: final_cross_section = cross_section_decimal * W_ev_BR * W_muv_BR * h_bb_BR
                         output.write(f"  else if (process_name == {subdir}) return {final_cross_section:.10f}; \n")
                     else:
                         output.write(f"  else if (process_name == {subdir}) return 1.00; \n")
