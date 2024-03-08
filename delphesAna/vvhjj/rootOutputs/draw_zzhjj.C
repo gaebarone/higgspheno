@@ -172,6 +172,12 @@ void draw_hist2(TFile *file, const char *name, const char *title, const char *xa
   c->Close();
 }
 
+void draw_zzhjj(string sel=""){
+
+  // define by selection 
+  
+}
+
 void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filename = "all_bkg.root", const char *ttbar_filename = "ttbar.root", const char *ttHbb_filename = "ttHbb.root", const char *diboson_filename = "diboson.root", const char *drellyan_filename = "drellyan.root", const char *outputFolder = "../histograms/") {
 
   // open files

@@ -1,5 +1,5 @@
-//#ifndef LEPANALYZER_H
-//#define LEPANALYZER_H
+#ifndef LEPANALYZER_H
+#define LEPANALYZER_H
 
 #include "HepMC/GenParticle.h"
 #include "classes/DelphesClasses.h"
@@ -618,6 +618,7 @@ void getParticleZLeps(int& thisParticleEventType,  const vector<pair<int,pair<in
       else if (lhs.first == 0 && rhs.first == 0) return ((Electron*)branchElectron->At(lhs.second))->PT > ((Electron*)branchElectron->At(rhs.second))->PT; // e e
       else if (lhs.first == 1 && rhs.first == 0) return ((Muon*)branchMuon->At(lhs.second))->PT > ((Electron*)branchElectron->At(rhs.second))->PT; // mu e
       else if (lhs.first == 0 && rhs.first == 1) return ((Electron*)branchElectron->At(lhs.second))->PT > ((Muon*)branchMuon->At(rhs.second))->PT; // e mu
+      return false; 
     });
 
     return  lepRecoIndices;
@@ -636,6 +637,7 @@ void getParticleZLeps(int& thisParticleEventType,  const vector<pair<int,pair<in
       else if (lhs.first == 0 && rhs.first == 0) return ((GenParticle*)branchGenParticle->At(lhs.second))->PT > ((GenParticle*)branchGenParticle->At(rhs.second))->PT; // e e
       else if (lhs.first == 1 && rhs.first == 0) return ((GenParticle*)branchGenParticle->At(lhs.second))->PT > ((GenParticle*)branchGenParticle->At(rhs.second))->PT; // mu e
       else if (lhs.first == 0 && rhs.first == 1) return ((GenParticle*)branchGenParticle->At(lhs.second))->PT > ((GenParticle*)branchGenParticle->At(rhs.second))->PT; // e mu
+      return false;
     });
 
     return  lepParticleIndices;
@@ -747,3 +749,5 @@ void getParticleWLeps(int& thisParticleEventType,  const vector< pair<int,int>> 
     }
 
 }
+
+#endif
