@@ -219,6 +219,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH1F *hWeight = new TH1F("weights", "weight", 50, 0.0, 1.0);
   listOfTH1.push_back(hWeight);
 
+  TFile *hists= new TFile(outputFile,"recreate");
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // BOOK HISTOGRAMS
@@ -437,7 +438,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH1F *hl3l4CScosThetaparton = new TH1F("l3l4_cos#theta_{CS}_parton", "cos#theta_{CSl3l4}_parton", cosBins, -1, 1); listOfTH1.push_back(hl3l4CScosThetaparton);
 
 // 2D - parton(1) particle(2) reco(3)
-/*
+
   // higgs
   TH2F *hHpT12Comp = new TH2F("H_pT_comp_12", "p_{T}^{hbb}", pTBins, hpTmin, hpTmax, pTBins, hpTmin, hpTmax); listOfTH2.push_back(hHpT12Comp);
   TH2F *hHpT23Comp = new TH2F("H_pT_comp_23", "p_{T}^{hbb}", pTBins, hpTmin, hpTmax, pTBins, hpTmin, hpTmax); listOfTH2.push_back(hHpT23Comp);
@@ -531,7 +532,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
   kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
 
-*/
+
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // DEF QUANTITIES
@@ -742,7 +743,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
 
-    //if( entry > 100) break;
+    if( entry > 10) break;
     treeReader->ReadEntry(entry);
     std::map<int,double> kappaLambdaWeights;
     HepMCEvent *event = (HepMCEvent*) branchEvent -> At(0);
@@ -1124,8 +1125,8 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     
     //increaseCount(cutFlowMap_reco,"at least two lep pairs",weight); 
     
-    vector<pair<int,pair<int,int>>> ZRecoPairIndices=GetRecoPairIndices(elecZRecoPairIndices,muZRecoPairIndices,thisRecoEventType,branchElectron,branchMuon); // 0 for electron 1 for muon
-   
+    ZRecoPairIndices=GetRecoPairIndices(elecZRecoPairIndices,muZRecoPairIndices,thisRecoEventType,branchElectron,branchMuon); // 0 for electron 1 for muon
+
     if(enableCutReco["OSSL - reco"]){
       if (switchVal_reco==0 && ZRecoPairIndices.size()>=2) increaseCount(cutFlowMap_reco,"OSSL - reco",weight);
       else switchVal_reco=1;
@@ -1190,7 +1191,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
     // WW 
 
-    } else if(analysis == "HWWJJ"){
+   } else if(analysis == "HWWJJ"){
 
       if(enableCutReco["lep pT > 15 & eta < 2.5 - reco"]){
         if (switchVal_reco==0) {
@@ -1199,7 +1200,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
         else  switchVal_reco=1;
       }
 
-      vector< pair<int,int>> WRecoIndices = GetWRecoIndices(branchElectron, branchMuon, goodE_reco_indices, goodMu_reco_indices);
+      WRecoIndices = GetWRecoIndices(branchElectron, branchMuon, goodE_reco_indices, goodMu_reco_indices);
 
 /*
       if( switchVal_reco==0 && WRecoIndices.size()>=2){
@@ -1261,8 +1262,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     // Mll cut at 10 (WW mass)
     // transverse W mass plot (m_t plot of leptons + met)
 
-    }
-
+  }
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // PARTICLE - HIGGS
@@ -1344,7 +1344,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
     }
  
-
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
     // PARTICLE - VBF JETS
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1420,7 +1419,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   // PARTICLE - LEPTONS
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
   int thisParticleEventType=-1;
 
   vector<pair<int,pair<int,int>>> ZParticlePairIndices;
@@ -1442,7 +1440,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     vector< pair<int,int>> elecZParticlePairIndices=GetelecParticlePairIndices(branchGenParticle,goodE_particle_indices); 
     vector< pair<int,int>> muZParticlePairIndices=GetmuParticlePairIndices(branchGenParticle,goodMu_particle_indices);
     
-    vector<pair<int,pair<int,int>>> ZParticlePairIndices=GetParticlePairIndices(elecZParticlePairIndices,muZParticlePairIndices,thisParticleEventType,branchGenParticle); // 0 for electron 1 for muon
+    ZParticlePairIndices=GetParticlePairIndices(elecZParticlePairIndices,muZParticlePairIndices,thisParticleEventType,branchGenParticle); // 0 for electron 1 for muon
 
     if(enableCutParticle["OSSL - particle"]){
       if (switchVal_particle ==0 && ZParticlePairIndices.size()>=2 )  increaseCount(cutFlowMap_particle,"OSSL - particle",weight);
@@ -1517,7 +1515,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
         else  switchVal_particle=1;
       }
 
-      vector< pair<int,int>> WParticleIndices = GetWParticleIndices(branchGenParticle, goodE_particle_indices, goodMu_particle_indices);
+      WParticleIndices = GetWParticleIndices(branchGenParticle, goodE_particle_indices, goodMu_particle_indices);
 
       if( switchVal_particle==0 && WParticleIndices.size()>=2){
           if( WParticleIndices[0].first == 1 && WParticleIndices[1].first == 1) thisParticleEventType=0; // mu mu
@@ -1580,7 +1578,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     // transverse W mass plot (m_t plot of leptons + met)
 
     }
- 
+
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
     // parton
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1945,7 +1943,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     }
 
   // 2D - parton(1) particle(2) reco(3)
-/*
+
     if(switchVal_parton==0 && switchVal_particle==0 ){
       hHpT12Comp -> Fill(h_parton.Pt(), h_particle.Pt(), weight);
       hHm12Comp -> Fill(h_parton.M(), h_particle.M(), weight);
@@ -2025,7 +2023,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       hbbzzdeltaPhicompparton->Fill(bbdeltaPhiparton, zzdeltaPhiparton, weight);
       hbbzzdeltaEtacompparton->Fill(bbdeltaEtaparton, zzdeltaEtaparton, weight);
     }
-  */ 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // END OF EVENT LOOP
@@ -2063,13 +2060,13 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 // WRITE HISTOGRAMS
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  TFile *hists= new TFile(outputFile,"recreate");
   hists->cd();
 
   for(std::vector<TH1F*>::iterator h=listOfTH1.begin(); h!=listOfTH1.end(); h++){
     ( *h)->Write();
     delete (*h); 
   }
+
   for(std::vector<TH2F*>::iterator h=listOfTH2.begin(); h!=listOfTH2.end(); h++){
     ( *h)->Write();
     delete (*h); 
@@ -2079,7 +2076,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     ( *h)->Write();
     delete (*h); 
   }
-   
+  
   //kappaLambda -> Write();
   //delete kappaLambda;
    
