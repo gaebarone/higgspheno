@@ -68,12 +68,14 @@ void PrintCanvas(TCanvas *c=nullptr, string name="default", string outputFolder=
   std::vector <string> types={"jpg"}; 
   for(std::vector<string>::iterator it=types.begin(); it!=types.end(); it++) {
     c->Print(Form("%s/%s/%s.%s", outputFolder.c_str(), subFolder.c_str(), name.c_str(), (*it).c_str()), (*it).c_str());
+    c->SetLogy(); 
+    c->Print(Form("%s/%s/%s_log.%s", outputFolder.c_str(), subFolder.c_str(), name.c_str(), (*it).c_str()), (*it).c_str());
   }
 }
 
 
 // draw 1d histograms
-void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *diboson_file, TFile *drellyan_file, const char *name, const char *title, const char *axistitle, const char *outputFolder, double lumiScaling=100) {
+void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *diboson_file, TFile *drellyan_file, const char *name, const char *title, const char *axistitle, const char *outputFolder) {
 
   // get the histograms from the files
   TH1F *sig_hist = (TH1F*)sig_file->Get(name);
@@ -81,13 +83,18 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   TH1F *ttHbb_hist = (TH1F*)ttHbb_file->Get(name);
   TH1F *diboson_hist = (TH1F*)diboson_file->Get(name);
   TH1F *drellyan_hist = (TH1F*)drellyan_file->Get(name);
+
+  TH1F *sigClone=(TH1F*)sig_hist->Clone("sigClone");
+
+  double lumiScaling = 1000;
   
   // change lumi if desired
-  sig_hist->Scale(lumiScaling);
+  sig_hist->Scale(lumiScaling); //*0.000013 for W
   ttbar_hist->Scale(lumiScaling);
   diboson_hist->Scale(lumiScaling);
   ttHbb_hist->Scale(lumiScaling);
   drellyan_hist->Scale(lumiScaling);
+  sigClone->Scale(lumiScaling); //*0.000013 for W  
 
   // rebin if desired
   sig_hist->Rebin(1);
@@ -97,8 +104,8 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   drellyan_hist->Rebin(1);
 
   // total hist 
-  TH1F *total=(TH1F*)sig_hist->Clone("total");
-  total->Add(ttbar_hist);
+  TH1F *total=(TH1F*)ttbar_hist->Clone("total");
+  total->Add(sig_hist);
   total->Add(ttHbb_hist);
   total->Add(drellyan_hist); 
   total->Add(diboson_hist);
@@ -143,13 +150,12 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   legend->Draw();
 
   // sig on top
-  //TH1F *sigClone=(TH1F*)sig_hist->Clone("sigClone");
-  //sigClone->Scale(1000);
-  //sigClone->SetLineColor(kBlack);
+  sigClone->Scale(1000000);
+  sigClone->SetLineColor(kBlack);
   //sigClone->SetFillColor(kWhite);
-  //legend->AddEntry(sigClone, "sig x 1000", "l");
-  //sigClone->SetLineWidth(2);
-  //sigClone->Draw("hist same");
+  //  legend->AddEntry(sigClone, "Signal x 1000000", "l");
+  sigClone->SetLineWidth(2);
+  //  sigClone->Draw("hist same");
 
   PrintCanvas(c, name, outputFolder, "stacks");
   c->Close();
@@ -164,6 +170,12 @@ void draw_hist2(TFile *file, const char *name, const char *title, const char *xa
   histo->Draw("COLZ");
   PrintCanvas(c, name, outputFolder, subFolder);
   c->Close();
+}
+
+void draw_zzhjj(string sel=""){
+
+  // define by selection 
+  
 }
 
 void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filename = "all_bkg.root", const char *ttbar_filename = "ttbar.root", const char *ttHbb_filename = "ttHbb.root", const char *diboson_filename = "diboson.root", const char *drellyan_filename = "drellyan.root", const char *outputFolder = "../histograms/") {
@@ -260,7 +272,7 @@ void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filena
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta#eta_parton", "#Delta#eta_{l3l4}_parton", "#eta", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta R_parton", "#Delta R_{l1l2}_parton", "R", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta R_parton", "#Delta R_{l3l4}_parton", "R", outputFolder);
- 
+  /* 
   // higgs comps
   draw_hist2(sig_file, "H_pT_comp_12", "p_{T}^{hbb}", "Parton Level p_{T}", "Particle Level p_{T}", outputFolder, "signal2D");
   draw_hist2(sig_file, "H_pT_comp_23", "p_{T}^{hbb}", "Particle Level p_{T}", "Reco Level p_{T}", outputFolder, "signal2D");
@@ -281,7 +293,7 @@ void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filena
   draw_hist2(sig_file, "jj_#Delta#phi_comp_12", "#Delta#phi_{jj}", "Parton Level #Delta#phi", "Particle Level #Delta#phi", outputFolder, "signal2D");
   draw_hist2(sig_file, "jj_#Delta#phi_comp_23", "#Delta#phi_{jj}", "Particle Level #Delta#phi", "Reco Level #Delta#phi", outputFolder, "signal2D");
   draw_hist2(sig_file, "jj_#Delta#phi_comp_13", "#Delta#phi_{jj}", "Parton Level #Delta#phi", "Reco Level #Delta#phi", outputFolder, "signal2D");
-
+  */
 
   // print signal significance
   
