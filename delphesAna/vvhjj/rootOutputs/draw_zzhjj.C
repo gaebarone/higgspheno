@@ -65,7 +65,7 @@ Float_t diboson_scale = 0;
 
 // save plots as different file types
 void PrintCanvas(TCanvas *c=nullptr, string name="default", string outputFolder="default", string subFolder="default"){
-  std::vector <string> types={"jpg"}; 
+  std::vector <string> types={"jpg","png"}; 
   for(std::vector<string>::iterator it=types.begin(); it!=types.end(); it++) {
     c->Print(Form("%s/%s/%s.%s", outputFolder.c_str(), subFolder.c_str(), name.c_str(), (*it).c_str()), (*it).c_str());
     c->SetLogy(); 
@@ -75,14 +75,14 @@ void PrintCanvas(TCanvas *c=nullptr, string name="default", string outputFolder=
 
 
 // draw 1d histograms
-void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *diboson_file, TFile *drellyan_file, const char *name, const char *title, const char *axistitle, const char *outputFolder) {
+void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *diboson_file, TFile *drellyan_file, string name, string title, string axistitle, string outputFolder) {
 
   // get the histograms from the files
-  TH1F *sig_hist = (TH1F*)sig_file->Get(name);
-  TH1F *ttbar_hist = (TH1F*)ttbar_file->Get(name);
-  TH1F *ttHbb_hist = (TH1F*)ttHbb_file->Get(name);
-  TH1F *diboson_hist = (TH1F*)diboson_file->Get(name);
-  TH1F *drellyan_hist = (TH1F*)drellyan_file->Get(name);
+  TH1F *sig_hist = (TH1F*)sig_file->Get(name.c_str());
+  TH1F *ttbar_hist = (TH1F*)ttbar_file->Get(name.c_str());
+  TH1F *ttHbb_hist = (TH1F*)ttHbb_file->Get(name.c_str());
+  TH1F *diboson_hist = (TH1F*)diboson_file->Get(name.c_str());
+  TH1F *drellyan_hist = (TH1F*)drellyan_file->Get(name.c_str());
 
   TH1F *sigClone=(TH1F*)sig_hist->Clone("sigClone");
 
@@ -126,7 +126,7 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   */
 
   // form the histogram stack
-  THStack *stack = new THStack(name, title);
+  THStack *stack = new THStack(name.c_str(), title.c_str());
   stack->Add(ttbar_hist);
   stack->Add(drellyan_hist);
   stack->Add(diboson_hist);
@@ -142,11 +142,11 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   legend->AddEntry(diboson_hist, "diboson", "f");
   
   // make a canvas and draw on it
-  TCanvas *c = new TCanvas(name, title, 1500, 1200);
+  TCanvas *c = new TCanvas(name.c_str(), title.c_str(), 1500, 1200);
   c->cd();
   stack->Draw("hist");
   total->Draw("hist same pe");
-  stack->GetXaxis()->SetTitle(axistitle);
+  stack->GetXaxis()->SetTitle(axistitle.c_str());
   legend->Draw();
 
   // sig on top
@@ -156,40 +156,46 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   //  legend->AddEntry(sigClone, "Signal x 1000000", "l");
   sigClone->SetLineWidth(2);
   //  sigClone->Draw("hist same");
-
-  PrintCanvas(c, name, outputFolder, "stacks");
+  cout <<" Output folder "<<outputFolder<<endl;
+  
+  TString nameOut(name);
+  nameOut.ReplaceAll(" ","_");
+  nameOut.ReplaceAll("#","");
+  nameOut.ReplaceAll("^","");
+  nameOut.ReplaceAll("/","");
+  nameOut.ReplaceAll("{","");
+  nameOut.ReplaceAll("}","");
+  cout<<" Name "<<nameOut.Data()<<endl;
+  PrintCanvas(c,nameOut.Data(), outputFolder, "stacks");
   c->Close();
+  delete c; 
 }
 
 // draw 2d histograms
-void draw_hist2(TFile *file, const char *name, const char *title, const char *xaxistitle, const char *yaxistitle, const char *outputFolder, const char *subFolder) {
-  TH1 *histo = dynamic_cast<TH1*>(file->Get(name));
-  TCanvas *c = new TCanvas(name, title, 1500, 1200);
-  histo->GetXaxis()->SetTitle(xaxistitle);
-  histo->GetYaxis()->SetTitle(yaxistitle);
+void draw_hist2(TFile *file, string name, string title, string xaxistitle,  string yaxistitle, string outputFolder, string subFolder) {
+  TH1 *histo = dynamic_cast<TH1*>(file->Get(name.c_str()));
+  TCanvas *c = new TCanvas(name.c_str(), title.c_str(), 1500, 1200);
+  histo->GetXaxis()->SetTitle(xaxistitle.c_str());
+  histo->GetYaxis()->SetTitle(yaxistitle.c_str());
   histo->Draw("COLZ");
   PrintCanvas(c, name, outputFolder, subFolder);
   c->Close();
 }
 
-void draw_zzhjj(string sel=""){
 
-  // define by selection 
-  
-}
 
-void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filename = "all_bkg.root", const char *ttbar_filename = "ttbar.root", const char *ttHbb_filename = "ttHbb.root", const char *diboson_filename = "diboson.root", const char *drellyan_filename = "drellyan.root", const char *outputFolder = "../histograms/") {
+void draw_zzhjj_(string sig_filename = "signal.root", string bkg_filename = "all_bkg.root",string ttbar_filename = "ttbar.root", string ttHbb_filename = "ttHbb.root", string diboson_filename = "diboson.root", string drellyan_filename = "drellyan.root", string outputFolder = "../histograms/") {
 
   // open files
-  TFile *sig_file = TFile::Open(sig_filename, "READ");
-  TFile *bkg_file = TFile::Open(bkg_filename, "READ");
-  TFile *ttbar_file = TFile::Open(ttbar_filename, "READ");
-  TFile *ttHbb_file = TFile::Open(ttHbb_filename, "READ");
-  TFile *diboson_file = TFile::Open(diboson_filename, "READ");
-  TFile *drellyan_file = TFile::Open(drellyan_filename, "READ");
+  TFile *sig_file = TFile::Open(sig_filename.c_str(), "READ");
+  TFile *bkg_file = TFile::Open(bkg_filename.c_str(), "READ");
+  TFile *ttbar_file = TFile::Open(ttbar_filename.c_str(), "READ");
+  TFile *ttHbb_file = TFile::Open(ttHbb_filename.c_str(), "READ");
+  TFile *diboson_file = TFile::Open(diboson_filename.c_str(), "READ");
+  TFile *drellyan_file = TFile::Open(drellyan_filename.c_str(), "READ");
 
   // draw histograms
-  gROOT->SetBatch(kTRUE);
+  //gROOT->SetBatch(kTRUE);
 
   // cft
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "hSel_reco", "", "", outputFolder);
@@ -360,4 +366,22 @@ void draw_zzhjj(const char *sig_filename = "signal.root", const char *bkg_filena
   diboson_file->Close();
   drellyan_file->Close();
 
+}
+
+void draw_zzhjj(string sel=""){
+  std::map<string,string> selMapToHistsSignal;
+  selMapToHistsSignal["HWWJJ"] = "w+w-hqq_HWWJJ.root";
+  selMapToHistsSignal["HZZJJ"] = "zzhqq_HZZJJ.root";
+
+  system(Form("mkdir -p ../histograms/%s/stacks",sel.c_str()));
+
+  draw_zzhjj_(selMapToHistsSignal[sel],
+	     Form("all_bkg_%s.root",sel.c_str()),
+	     Form("ttbar_%s.root",sel.c_str()),
+	     Form("ttHbb_%s.root",sel.c_str()),
+	     Form("diboson_%s.root",sel.c_str()),
+	     Form("drellyan_%s.root",sel.c_str()),
+	     Form("../histograms/%s",sel.c_str()));
+	     
+	     
 }
