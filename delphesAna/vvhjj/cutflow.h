@@ -1,27 +1,34 @@
+#ifndef CUTFLOW_INCLUDE_H
+#define CUTFLOW_INCLUDE_H
+
 // typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
 
-std::vector <string> cutList_reco;  //{"initial reco", "1 PAIReD jet", "1 bb PAIReD jet", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"};
-std::vector <string> cutList_particle;  //{"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-std::vector <string> cutList_parton;  //{"initial parton", "Higgs Candidate", "ZZ parton"};
+std::vector <string> cutList_reco;  
+std::vector <string> cutList_particle;  
+std::vector <string> cutList_parton;  
 
 std::map<std::string, std::vector<string> > cutSelectionProcessReco;
 std::map<std::string, std::vector<string> > cutSelectionProcessParticle;
 std::map<std::string, std::vector<string> > cutSelectionProcessParton;
 
 void DefineSelections(){
-  // Cut selections to consider
-  // ghost seleciton
-  cutSelectionProcessReco["all"]={"initial reco", "1 btag reco", "2 good j reco", "2 b-like jet pairs reco", "found bb reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"}; 
-  cutSelectionProcessParticle["all"]={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-  cutSelectionProcessParton["all"]={"initial parton", "Higgs Candidate", "ZZ parton"};
-  
-  cutSelectionProcessReco["HZZJJ"]={"initial reco", "1 btag reco", "2 good j reco", "2 b-like jet pairs reco", "found bb reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"}; 
-  cutSelectionProcessParticle["HZZJJ"]={"initial particle", "1 btag particle", "2 good j particle", "2 b-like jet pairs part", "found bb particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-  cutSelectionProcessParton["HZZJJ"]={"initial parton", "Higgs Candidate", "ZZ parton"};
-  
-  cutSelectionProcessReco["ZZJJ"]={"initial reco", "2 vbfj reco", "vbfj pairs","2.5 deltaEta vbf reco","OSFL"}; 
-  cutSelectionProcessParticle["ZZJJ"]={"initial particle", "2 vbfj particle", "comb vbf part","2.5 deltaEta vbf particle","OSFL"};
-  cutSelectionProcessParton["ZZJJ"]={"initial parton","ZZ parton"};
+
+    cutSelectionProcessReco["all"]={"initial - reco", "jet pT > 20 - reco", "1 PAIReD jet - reco", "1 bb PAIReD jet - reco", "2 VBF jet - reco", "2.5 deltaEta VBF jet - reco", "lep pT > 5 & eta < 2.5 - reco", "lep pT > 15 & eta < 2.5 - reco", "OSSF - reco", "OSOF - reco", "mll > 12 - reco"}; 
+    cutSelectionProcessParticle["all"]={"initial - particle", "jet pT > 20 - particle", "1 PAIReD jet - particle", "1 bb PAIReD jet - particle", "2 VBF jet - particle", "2.5 deltaEta VBF jet - particle", "lep pT > 5 & eta < 2.5 - particle", "lep pT > 15 & eta < 2.5 - particle", "OSSF - particle", "OSOF - particle", "mll > 12 - particle"}; 
+    cutSelectionProcessParton["all"]={"initial parton", "Higgs Candidate", "ZZ parton"};
+
+    cutSelectionProcessReco["HZZJJ"]={"initial - reco", "jet pT > 20 - reco", "1 PAIReD jet - reco", "1 bb PAIReD jet - reco", "2 VBF jet - reco", "2.5 deltaEta VBF jet - reco", "lep pT > 5 & eta < 2.5 - reco", "OSSF - reco"}; 
+    cutSelectionProcessParticle["HZZJJ"]={"initial - particle", "jet pT > 20 - particle", "1 PAIReD jet - particle", "1 bb PAIReD jet - particle", "2 VBF jet - particle", "2.5 deltaEta VBF jet - particle",  "lep pT > 5 & eta < 2.5 - particle", "OSSF - particle"}; 
+    cutSelectionProcessParton["HZZJJ"]={"initial parton", "Higgs Candidate", "ZZ parton"};
+
+    cutSelectionProcessReco["ZZJJ"]={"initial - reco", "2 VBF jet - reco", "2.5 deltaEta VBF jet - reco", "OSFL"};  
+    cutSelectionProcessParticle["ZZJJ"]={"initial - particle", "2 VBF jet - particle", "2.5 deltaEta VBF jet - particle", "OSFL"}; 
+    cutSelectionProcessParton["ZZJJ"]={"initial parton","ZZ parton"};
+
+    cutSelectionProcessReco["HWWJJ"]={"initial - reco", "jet pT > 20 - reco", "1 PAIReD jet - reco", "1 bb PAIReD jet - reco", "2 VBF jet - reco", "2.5 deltaEta VBF jet - reco" , "lep pT > 15 & eta < 2.5 - reco", , "OSOF - reco", "mll > 12 - reco"}; 
+    cutSelectionProcessParticle["HWWJJ"]={"initial - particle", "jet pT > 20 - particle", "1 PAIReD jet - particle", "1 bb PAIReD jet - particle", "2 VBF jet - particle", "2.5 deltaEta VBF jet - particle", "lep pT > 15 & eta < 2.5 - particle", "OSOF - particle", "mll > 12 - reco"}; 
+    cutSelectionProcessParton["HWWJJ"]={"initial parton", "Higgs Candidate", "ZZ parton"};
+
 }
 
 
@@ -91,3 +98,44 @@ void increaseAllCounts(std::vector<string,std::map<string, std::pair<int,double>
   for(std::map<string,vector<string>>::iterator it=cutSelectionProcessReco_.begin(); it!=cutSelectionProcessReco_.end(); it++){
   }
 }
+
+/*
+class Histograms {
+    initializeHists; 
+    fillHists; 
+    writeHists 
+
+} 
+
+
+
+class Selection : public bla {
+
+    public: 
+bool  passSelection(Event); 
+}; 
+
+// initialize stuff; 
+for (selectionConfiguration in selectionsConfigurartionsWeant )
+    selectionMap[selectionConfiguration]=new Slection; 
+    selectionMap[selectionConfiguration]->configureAsNeeded; 
+    Histograms[selectionConfiguration]->initializeHists; 
+
+
+// Event Loop 
+for ( n in nEvents )
+
+cutflowMap; 
+for (selectionConfiguration in selectionsConfigurartionsWeant )
+        mapPass[selectionConfiguration]=selectionMap[selectionConfiguration]-passSelection(n)
+        FillSelectionAmp(scutflowMap[selectionConfiguration],mapPass[selectionConfiguration]); 
+        Histograms[selectionConfiguration]->Fill(n);
+
+    ); 
+
+
+
+*/
+
+
+#endif
