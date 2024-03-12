@@ -86,15 +86,15 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
 
   TH1F *sigClone=(TH1F*)sig_hist->Clone("sigClone");
 
-  double lumiScaling = 1000;
+  double lumiScaling = 10;
   
   // change lumi if desired
-  sig_hist->Scale(lumiScaling); //*0.000013 for W
+  sig_hist->Scale(lumiScaling*0.000013); //*0.000013 for W
   ttbar_hist->Scale(lumiScaling);
   diboson_hist->Scale(lumiScaling);
   ttHbb_hist->Scale(lumiScaling);
   drellyan_hist->Scale(lumiScaling);
-  sigClone->Scale(lumiScaling); //*0.000013 for W  
+  sigClone->Scale(lumiScaling*0.000013); //*0.000013 for W  
 
   // rebin if desired
   sig_hist->Rebin(1);
@@ -150,10 +150,10 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   legend->Draw();
 
   // sig on top
-  sigClone->Scale(1000000);
+  sigClone->Scale(100000);
   sigClone->SetLineColor(kBlack);
   //sigClone->SetFillColor(kWhite);
-  //  legend->AddEntry(sigClone, "Signal x 1000000", "l");
+  //legend->AddEntry(sigClone, "Signal x 1000000", "l");
   sigClone->SetLineWidth(2);
   //  sigClone->Draw("hist same");
   cout <<" Output folder "<<outputFolder<<endl;
@@ -257,6 +257,12 @@ void draw_zzhjj_(string sig_filename = "signal.root", string bkg_filename = "all
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#Delta#phi_parton", "#Delta#phi_{zz}_parton", "#phi", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#Delta#eta_parton", "#Delta#eta_{zz}_parton", "#eta", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#DeltaR_parton", "#DeltaR_{zz}_parton", "R", outputFolder);
+  // w - reco
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w1_pT_reco", "p^{T}_{w1}_reco", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w1_m_reco", "m_{w1}_reco", "mass (GeV)", outputFolder);
+  // w - particle 
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w1_pT_particle", "p^{T}_{w1}_particle", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w1_m_particle", "m_{w1}_particle", "mass (GeV)", outputFolder);
   // leps - reco
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta#phi_reco", "#Delta#phi_{l1l2}_reco", "#phi", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta#phi_reco", "#Delta#phi_{l3l4}_reco", "#phi", outputFolder);
@@ -368,6 +374,7 @@ void draw_zzhjj_(string sig_filename = "signal.root", string bkg_filename = "all
 
 }
 
+
 void draw_zzhjj(string sel=""){
   std::map<string,string> selMapToHistsSignal;
   selMapToHistsSignal["HWWJJ"] = "w+w-hqq_HWWJJ.root";
@@ -385,3 +392,4 @@ void draw_zzhjj(string sel=""){
 	     
 	     
 }
+
