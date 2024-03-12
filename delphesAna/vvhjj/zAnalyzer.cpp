@@ -199,6 +199,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TClonesArray *branchGenParticle = treeReader->UseBranch("Particle");
   TClonesArray *branchGenJet = treeReader->UseBranch("GenJet");
   TClonesArray *branchMissingET = treeReader->UseBranch("MissingET");
+  TClonesArray *branchGenMissingET = treeReader->UseBranch("GenMissingET");
   TClonesArray *branchWeight   = treeReader->UseBranch("Weight");
 
   TClonesArray *branchPFCand = nullptr;
@@ -243,11 +244,13 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   const double zpTmin = 0;
   const double wpTmin = 0;
   const double lpTmin = 0;
+  const double METpTmin = 0;
   const double hpTmax = 500;
   const double jpTmax = 500;
   const double zpTmax = 500;
   const double wpTmax = 500;
   const double lpTmax = 500;
+  const double METpTmax = 500;
 
   const double hmmin = 0;
   const double jmmin = 0;
@@ -263,22 +266,26 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   const double zetamin = -2.5;
   const double wetamin = -2.5;
   const double letamin = -2.5;
+  const double METetamin = -2.5;
   const double hetamax = 2.5;
   const double jetamax = 2.5;
   const double zetamax = 2.5;
   const double wetamax = 2.5;
   const double letamax = 2.5;
+  const double METetamax = 2.5;
 
   const double hRmin = 0;
   const double jRmin = 0;
   const double zRmin = 0;
   const double wRmin = 0;
   const double lRmin = 0;
+  const double METRmin = 0;
   const double hRmax = 5;
   const double jRmax = 5;
   const double zRmax = 5;
   const double wRmax = 5;
   const double lRmax = 5;
+  const double METRmax = 5;
 
 // 1D
 
@@ -437,6 +444,18 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH1F *hl1l2CScosThetaparton = new TH1F("l1l2_cos#theta_{CS}_parton", "cos#theta_{CSl1l2}_parton", cosBins, -1, 1); listOfTH1.push_back(hl1l2CScosThetaparton);
   TH1F *hl3l4CScosThetaparton = new TH1F("l3l4_cos#theta_{CS}_parton", "cos#theta_{CSl3l4}_parton", cosBins, -1, 1); listOfTH1.push_back(hl3l4CScosThetaparton);
 
+  // MET
+  TH1F *hMETreco = new TH1F("MET_reco", "E_{missing}_reco", pTBins, METpTmin, METpTmax); listOfTH1.push_back(hMETreco);
+  TH1F *hMETEtareco = new TH1F("MET_#eta_reco", "#eta_{MET}_reco", etaBins, METetamin, METetamax); listOfTH1.push_back(hMETEtareco);
+  TH1F *hMETPhireco = new TH1F("MET_#phi_reco", "#phi_{MET}_reco", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hMETPhireco);
+
+  // GenMET
+  TH1F *hGenMETparticle = new TH1F("GenMET_particle", "E_{missing}_particle", pTBins, METpTmin, METpTmax); listOfTH1.push_back(hMETreco);
+  TH1F *hGenMETEtaparticle = new TH1F("GenMET_#eta_particle", "#eta_{MET}_particle", etaBins, METetamin, METetamax); listOfTH1.push_back(hMETEtareco);
+  TH1F *hGenMETPhiparticle = new TH1F("GenMET_#phi_particle", "#phi_{MET}_particle", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hMETPhireco);
+
+ 
+
 // 2D - parton(1) particle(2) reco(3)
 
   // paired
@@ -478,7 +497,10 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH2F*hz2m12Comp = new TH2F("z2_m_comp_12", "m_{z2}", mBins, zmmin, zmmax, mBins, zmmin, zmmax); listOfTH2.push_back(hz2m12Comp);
   TH2F*hz2m23Comp = new TH2F("z2_m_comp_23", "m_{z2}", mBins, zmmin, zmmax, mBins, zmmin, zmmax); listOfTH2.push_back(hz2m23Comp);
   TH2F*hz2m13Comp = new TH2F("z2_m_comp_13", "m_{z2}", mBins, zmmin, zmmax, mBins, zmmin, zmmax); listOfTH2.push_back(hz2m13Comp);
-  
+
+  // met
+  TH2F *hMET23Comp = new TH2F("MET_comp_23", "MET", pTBins, METpTmin, METpTmax, pTBins, METpTmin, METpTmax); listOfTH2.push_back(hMET23Comp);
+
   // mixed
       
   // higgs dphi vs. vbfj dphi
@@ -725,6 +747,15 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   int q2_parton = -9999;
   int q3_parton = -9999;
   int q4_parton = -9999;
+
+  // met
+  double MET;
+  double MET_eta;
+  double MET_phi;
+
+  double GenMET;
+  double GenMET_eta;
+  double GenMET_phi;
 
   double sumOfWeights=0;
   TH1F *hClosure = new TH1F("hClosure","hClosure",1,0,1);
@@ -1254,14 +1285,28 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       l1l2CScosThetareco=(q1_reco > q2_reco ? -1:+1)*TMath::Abs(2*(l2_reco.Pz()*l1_reco.E()-l1_reco.Pz()*l2_reco.E())/(z1_reco.M()*sqrt(z1_reco.M()*z1_reco.M()+z1_reco.Pt()*z1_reco.Pt())));  
     
+     }
+
+      // no MET - but plot it
+      // Mll cut at 10 (WW mass)
+      // transverse W mass plot (m_t plot of leptons + met)
+
+      double MET;
+      double MET_eta;
+      double MET_phi;
+
+      MissingET *met;
+      met = (MissingET*) branchMissingET->At(0);
+
+      MET = met->MET;
+      MET_eta = met->Eta;
+      MET_phi = met->Phi;
+
+      hMETreco -> Fill(MET, weight);
+      hMETEtareco -> Fill(MET_eta, weight);
+      hMETPhireco->Fill(MET_phi,weight);
+
     }
-
-    // no MET - but plot it
-    // Mll cut at 10 (WW mass)
-    // transverse W mass plot (m_t plot of leptons + met)
-
-  }
-
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // PARTICLE - HIGGS
@@ -1564,14 +1609,28 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       
       }
 
+
     // no MET - but plot it
     // Mll cut at 10 (WW mass)
     // transverse W mass plot (m_t plot of leptons + met)
+      
+    
+      GenMissingET *genmet;
+      genmet = (GenMissingET*) branchGenMissingET->At(0);
+
+      GenMET = genmet->MET;
+      GenMET_eta = genmet->Eta;
+      GenMET_phi = genmet->Phi;
+
+      hGenMETparticle -> Fill(GenMET, weight);
+      hGenMETEtaparticle -> Fill(GenMET_eta, weight);
+      hGenMETPhiparticle->Fill(GenMET_phi,weight);
+    
 
     }
 
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // parton
+    // PARTON - HIGGS
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     // higgs
@@ -1942,6 +2001,8 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   hPJsize23Comp -> Fill(pairedJetSize_particle, pairedJetSize_reco, weight);
   hPJBsize23Comp -> Fill(pairedBJetSize_particle, pairedBJetSize_reco, weight);
+
+  // hMET23Comp-> Fill(MET, GenMET, weight);
 
     if(switchVal_parton==0 && switchVal_particle==0 ){
       hHpT12Comp -> Fill(h_parton.Pt(), h_particle.Pt(), weight);
