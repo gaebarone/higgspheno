@@ -276,7 +276,7 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
     for (Int_t i = 0; i < ncands; ++i) {
 
       p_gen = (GenParticle *)branchPassed->At(i);
-      
+
       auto retpair = paired::isInJet(jet1,jet2,p_gen,jetR,bridge,ellipse,semimajoradd);
       if (retpair.first) {
 
@@ -286,6 +286,9 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
           FOUND_Z = true;
           }
         }
+
+        if (FOUND_Z) break;
+        if (p_gen->Status != 1) continue;
 
         particles.push_back(paired::ParticleInfo(p_gen,retpair.second));
         if (isparticle1) {

@@ -25,8 +25,8 @@ void DefineSelections(){
     cutSelectionProcessParticle["ZZJJ"]={"initial - particle", "2 VBF jet - particle", "2.5 deltaEta VBF jet - particle", "OSFL"}; 
     cutSelectionProcessParton["ZZJJ"]={"initial parton","ZZ parton"};
 
-    cutSelectionProcessReco["HWWJJ"]={"initial - reco", "jet pT > 20 - reco", "1 PAIReD jet - reco", "1 bb PAIReD jet - reco", "2 VBF jet - reco", "2.5 deltaEta VBF jet - reco" , "lep pT > 15 & eta < 2.5 - reco", "OSOF - reco", "mll > 12 - reco"}; 
-    cutSelectionProcessParticle["HWWJJ"]={"initial - particle", "jet pT > 20 - particle", "1 PAIReD jet - particle", "1 bb PAIReD jet - particle", "2 VBF jet - particle", "2.5 deltaEta VBF jet - particle", "lep pT > 15 & eta < 2.5 - particle", "OSOF - particle", "mll > 12 - particle"}; 
+    cutSelectionProcessReco["HWWJJ"]={"initial - reco", "jet pT > 20 - reco", "1 PAIReD jet - reco", "1 bb PAIReD jet - reco", "2 VBF jet - reco", "2.5 deltaEta VBF jet - reco" , "lep pT > 15 & eta < 2.5 - reco", "mll > 12 - reco"}; 
+    cutSelectionProcessParticle["HWWJJ"]={"initial - particle", "jet pT > 20 - particle", "1 PAIReD jet - particle", "1 bb PAIReD jet - particle", "2 VBF jet - particle", "2.5 deltaEta VBF jet - particle", "lep pT > 15 & eta < 2.5 - particle", "mll > 12 - particle"}; 
     cutSelectionProcessParton["HWWJJ"]={"initial parton", "Higgs Candidate", "ZZ parton"};
 
 }
@@ -53,28 +53,27 @@ void FillCutFlow(TH1F* hSel, TProfile *hEff,std::map<string, std::pair<int,doubl
 }
 
 void PrintCutFlow(std::map<std::string, std::pair<int, double>> cutFlowMap, std::vector<std::string> cutList, std::string label) {
-    int nameWidth = 30;
-    int valueWidth = 10;
+    int width = 15;
 
     auto printLine = [&]() {    
-        std::cout << std::setw(nameWidth + valueWidth * 3 + 7) << std::setfill('-') << "" << std::setfill(' ') << std::endl;
+        std::cout << std::setw(170) << std::setfill('-') << "" << std::setfill(' ') << std::endl;
     };
 
     auto printRow = [&](const std::string& name, int passed, double relEff, double efficiency, double normpassed) {
-        std::cout << "| " << std::setw(nameWidth) << std::left << name << "|";
-        std::cout << std::setw(valueWidth) << std::left << passed << "|";
-        std::cout << std::setw(valueWidth) << std::left << relEff << "|";
-        std::cout << std::setw(valueWidth) << std::left << efficiency << "|";
-        std::cout << std::setw(20) << std::left << normpassed << "|" << std::endl;
+        std::cout << "| " << std::setw(width*3) << std::left << name << "|";
+        std::cout << std::setw(width*2) << std::left << passed << "|";
+        std::cout << std::setw(width*2) << std::left << relEff << "|";
+        std::cout << std::setw(width*2) << std::left << efficiency << "|";
+        std::cout << std::setw(width*2) << std::left << normpassed << "|" << std::endl;
     };
 
     printLine();
 
-    std::cout << "| " << std::setw(nameWidth) << std::left << label + " Cut" << "|";
-    std::cout << std::setw(valueWidth) << std::left << label + " Passed" << "|";
-    std::cout << std::setw(valueWidth) << std::left << " Rel Eff " << "|";
-    std::cout << std::setw(valueWidth) << std::left << label + " Efficiency" << "|" ;
-    std::cout << std::setw(valueWidth) << std::left << label + " Norm Count" << "|" << std::endl;
+    std::cout << "| " << std::setw(width*3) << std::left << label + " Cut" << "|";
+    std::cout << std::setw(width*2) << std::left << label + " Passed" << "|";
+    std::cout << std::setw(width*2) << std::left << " Rel Eff " << "|";
+    std::cout << std::setw(width*2) << std::left << label + " Efficiency" << "|" ;
+    std::cout << std::setw(width*2) << std::left << label + " Norm Count" << "|" << std::endl;
 
     printLine();
 

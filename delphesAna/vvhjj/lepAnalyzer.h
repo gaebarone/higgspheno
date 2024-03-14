@@ -386,7 +386,7 @@ for(int i=0; i<(int) elecRecoPairIndices.size(); i++)
     // sort all of the indices by closeness to mZ
     sort(RecoPairIndices.begin(), RecoPairIndices.end(), [branchMuon,branchElectron]  ( const pair<int,pair<int,int>>  lhs , const pair<int,pair<int,int>>   rhs ){
 
-	double mass1_reco=0 ;
+	double mass1_reco=0;
   double mass2_reco=0;
 	
 	if( lhs.first==0 ) mass1_reco = (((Electron*)branchElectron->At(lhs.second.first))->P4() + ((Electron*)branchElectron->At(lhs.second.second))->P4()).M();
@@ -606,6 +606,7 @@ void getParticleZLeps(int& thisParticleEventType,  const vector<pair<int,pair<in
 // W
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+/*
    vector< pair<int,int>> GetWRecoIndices(TClonesArray *branchElectron=nullptr, TClonesArray *branchMuon=nullptr, vector<int> goodE_reco_indices=vector<int>(0), vector<int> goodMu_reco_indices=vector<int>(0)){
  
     vector< pair<int,int>> lepRecoIndices;
@@ -624,7 +625,9 @@ void getParticleZLeps(int& thisParticleEventType,  const vector<pair<int,pair<in
     return  lepRecoIndices;
 
   }
+*/
 
+/*
   vector< pair<int,int>> GetWParticleIndices(TClonesArray *branchGenParticle=nullptr, vector<int> goodE_particle_indices=vector<int>(0), vector<int> goodMu_particle_indices=vector<int>(0)){
 
     vector< pair<int,int>> lepParticleIndices;
@@ -643,15 +646,92 @@ void getParticleZLeps(int& thisParticleEventType,  const vector<pair<int,pair<in
     return  lepParticleIndices;
 
   }
+*/
 
-void getRecoWLeps(int& thisRecoEventType,  const vector< pair<int,int>> WRecoIndices, TClonesArray *branchElectron, TClonesArray *branchMuon,  TLorentzVector &l1_reco,  TLorentzVector &l2_reco, int& q1_reco, int& q2_reco){
+
+vector<pair<pair<int,int>, int>> GetWRecoPairIndices(vector<int> goodE_reco_indices=vector<int>(0), vector<int> goodMu_reco_indices=vector<int>(0), TClonesArray *branchElectron=nullptr, TClonesArray *branchMuon=nullptr, TClonesArray *branchMissingET=nullptr){
+
+  vector< pair<int,int>> lepRecoIndices;
+  vector<pair<pair<int,int>, int>> WRecoPairIndices;
+
+  for(int i=0; i<(int) goodE_reco_indices.size(); i++) lepRecoIndices.push_back(make_pair(0,goodE_reco_indices.at(i)));
+  for(int i=0; i<(int) goodMu_reco_indices.size(); i++) lepRecoIndices.push_back(make_pair(1,goodMu_reco_indices.at(i)));
+
+  //for(int i=0; i<(int) min(lepRecoIndices.size(),goodMET_reco_indices.size()); i++) WRecoPairIndices.push_back(make_pair(lepRecoIndices.at(i), goodMET_reco_indices.at(i)));
+
+  // sort all of the indices by closeness to mW
+
+  int METIndex=0;
+
+  sort(lepRecoIndices.begin(), lepRecoIndices.end(), [branchMuon,branchElectron,branchMissingET,&METIndex]  ( const pair<int,int>   & lhs , const pair<int,int>  &rhs ){
+
+    double massW1_reco=0;
+    double massW2_reco=0;
+
+    if( lhs.first == 0 ) massW1_reco = (((Electron*)branchElectron->At(lhs.second))->P4() + ((MissingET*)branchMissingET->At(METIndex))->P4()).Mt();
+    else massW1_reco = (((Muon*)branchMuon->At(lhs.second))->P4() + ((MissingET*)branchMissingET->At(METIndex))->P4()).Mt();
+    
+    if( rhs.first == 0 ) massW2_reco = (((Electron*)branchElectron->At(rhs.second))->P4() + ((MissingET*)branchMissingET->At(METIndex))->P4()).Mt();
+    else massW2_reco = (((Muon*)branchMuon->At(rhs.second))->P4() + ((MissingET*)branchMissingET->At(METIndex))->P4()).Mt();
+    
+    return fabs(massW1_reco - 80.0 )  <  fabs(massW2_reco - 80.0); 
+    
+  });
+
+  for( int i=0; i<(int) lepRecoIndices.size(); i++) WRecoPairIndices.push_back(make_pair(make_pair(lepRecoIndices[i].first,lepRecoIndices[i].second),METIndex));
+  return WRecoPairIndices;
+
+}
+
+
+vector<pair<pair<int,int>, int>> GetWParticlePairIndices(vector<int> goodE_particle_indices=vector<int>(0), vector<int> goodMu_particle_indices=vector<int>(0), TClonesArray *branchGenParticle=nullptr, TClonesArray *branchMissingET=nullptr){
+
+  vector< pair<int,int>> lepParticleIndices;
+  vector<pair<pair<int,int>, int>> WParticlePairIndices;
+
+  for(int i=0; i<(int) goodE_particle_indices.size(); i++) lepParticleIndices.push_back(make_pair(0,goodE_particle_indices.at(i)));
+  for(int i=0; i<(int) goodMu_particle_indices.size(); i++) lepParticleIndices.push_back(make_pair(1,goodMu_particle_indices.at(i)));
+
+  //for(int i=0; i<(int) min(lepParticleIndices.size(),goodMET_reco_indices.size()); i++) WParticlePairIndices.push_back(make_pair(lepParticleIndices.at(i), goodMET_reco_indices.at(i)));
+
+  // sort all of the indices by closeness to mW
+
+  int METIndex=0;
+
+  sort(lepParticleIndices.begin(), lepParticleIndices.end(), [branchGenParticle,branchMissingET,&METIndex]  ( const pair<int,int>   & lhs , const pair<int,int>  &rhs ){
+
+    double massW1_particle=0;
+    double massW2_particle=0;
+
+    if( lhs.first == 0 ) massW1_particle = (((GenParticle*)branchGenParticle->At(lhs.second))->P4() + ((MissingET*)branchMissingET->At(METIndex))->P4()).Mt();
+    else massW1_particle = (((GenParticle*)branchGenParticle->At(lhs.second))->P4() + ((MissingET*)branchMissingET->At(METIndex))->P4()).Mt();
+    
+    if( rhs.first == 0 ) massW2_particle = (((GenParticle*)branchGenParticle->At(rhs.second))->P4() + ((MissingET*)branchMissingET->At(METIndex))->P4()).Mt();
+    else massW2_particle = (((GenParticle*)branchGenParticle->At(rhs.second))->P4() + ((MissingET*)branchMissingET->At(METIndex))->P4()).Mt();
+    
+    return fabs(massW1_particle - 80.0 )  <  fabs(massW2_particle - 80.0); 
+    
+  });
+
+  for( int i=0; i<(int) lepParticleIndices.size(); i++) WParticlePairIndices.push_back(make_pair(make_pair(lepParticleIndices[i].first,lepParticleIndices[i].second),METIndex));
+  return WParticlePairIndices;
+
+}
+
+void getWReco(int& thisRecoEventType,  const vector<pair<pair<int,int>, int>> WRecoPairIndices, TClonesArray *branchElectron, TClonesArray *branchMuon, TClonesArray *branchMissingET, TLorentzVector &l1_reco, TLorentzVector &l2_reco, int& q1_reco, int& q2_reco,  TLorentzVector& met1, TLorentzVector& met2){
     
     if( thisRecoEventType==-1 ) return;
 
+    MissingET *Met1 = (MissingET *) branchMissingET->At( WRecoPairIndices[0].second);
+    MissingET *Met2 = (MissingET *) branchMissingET->At( WRecoPairIndices[1].second);
+
+    met1.SetPtEtaPhiM(Met1->MET,0,Met1->Phi,0);
+    met2.SetPtEtaPhiM(Met2->MET,0,Met2->Phi,0);
+
     if( thisRecoEventType==0 ) { // case 2mu 
       
-      Muon *muon1_reco = (Muon *) branchMuon->At( WRecoIndices[0].second);
-      Muon *muon2_reco = (Muon *) branchMuon->At( WRecoIndices[1].second);
+      Muon *muon1_reco = (Muon *) branchMuon->At( WRecoPairIndices[0].first.second);
+      Muon *muon2_reco = (Muon *) branchMuon->At( WRecoPairIndices[1].first.second);
       
       q1_reco = muon1_reco->Charge;
       q2_reco = muon2_reco->Charge;
@@ -661,8 +741,8 @@ void getRecoWLeps(int& thisRecoEventType,  const vector< pair<int,int>> WRecoInd
       
     } else if( thisRecoEventType==1 ) { // case 2e
     
-      Electron *muon1_reco = (Electron *) branchElectron->At( WRecoIndices[0].second);
-      Electron *muon2_reco = (Electron *) branchElectron->At( WRecoIndices[0].second);
+      Electron *muon1_reco = (Electron *) branchElectron->At( WRecoPairIndices[0].first.second);
+      Electron *muon2_reco = (Electron *) branchElectron->At( WRecoPairIndices[1].first.second);
 
       q1_reco = muon1_reco->Charge;
       q2_reco = muon2_reco->Charge;
@@ -672,8 +752,8 @@ void getRecoWLeps(int& thisRecoEventType,  const vector< pair<int,int>> WRecoInd
 
     } else if( thisRecoEventType==2 ) { // case 1mu1e 
     
-      Muon *muon1_reco = (Muon *) branchMuon->At( WRecoIndices[0].second);
-      Electron *muon2_reco = (Electron *) branchElectron->At( WRecoIndices[0].second);
+      Muon *muon1_reco = (Muon *) branchMuon->At( WRecoPairIndices[0].first.second);
+      Electron *muon2_reco = (Electron *) branchElectron->At( WRecoPairIndices[1].first.second);
 
       q1_reco = muon1_reco->Charge;
       q2_reco = muon2_reco->Charge;
@@ -683,8 +763,8 @@ void getRecoWLeps(int& thisRecoEventType,  const vector< pair<int,int>> WRecoInd
 
     } else if( thisRecoEventType==3 ) { // case 1e1mu 
     
-      Electron *muon1_reco = (Electron *) branchElectron->At( WRecoIndices[0].second);
-      Muon *muon2_reco = (Muon *) branchMuon->At( WRecoIndices[0].second);
+      Electron *muon1_reco = (Electron *) branchElectron->At( WRecoPairIndices[0].first.second);
+      Muon *muon2_reco = (Muon *) branchMuon->At( WRecoPairIndices[1].first.second);
 
       q1_reco = muon1_reco->Charge;
       q2_reco = muon2_reco->Charge;
@@ -697,15 +777,20 @@ void getRecoWLeps(int& thisRecoEventType,  const vector< pair<int,int>> WRecoInd
 }
 
 
-
-void getParticleWLeps(int& thisParticleEventType,  const vector< pair<int,int>> WParticleIndices, TClonesArray *branchGenParticle,  TLorentzVector &l1_particle,  TLorentzVector &l2_particle, int& q1_particle, int& q2_particle){
+void getWParticle(int& thisParticleEventType,  const vector<pair<pair<int,int>,int>> WParticlePairIndices, TClonesArray *branchGenParticle, TClonesArray *branchMissingET, TLorentzVector &l1_particle, TLorentzVector &l2_particle, int& q1_particle, int& q2_particle,  TLorentzVector& met1, TLorentzVector& met2){    
     
     if( thisParticleEventType==-1 ) return;
 
+    MissingET *Met1 = (MissingET *) branchMissingET->At( WParticlePairIndices[0].second);
+    MissingET *Met2 = (MissingET *) branchMissingET->At( WParticlePairIndices[1].second);
+
+    met1.SetPtEtaPhiM(Met1->MET,0,Met1->Phi,0);
+    met2.SetPtEtaPhiM(Met2->MET,0,Met2->Phi,0);
+
     if( thisParticleEventType==0 ) { // case 2mu 
       
-      GenParticle *muon1_particle = (GenParticle *) branchGenParticle->At( WParticleIndices[0].second);
-      GenParticle *muon2_particle = (GenParticle *) branchGenParticle->At( WParticleIndices[1].second);
+      GenParticle *muon1_particle = (GenParticle *) branchGenParticle->At( WParticlePairIndices[0].first.second);
+      GenParticle *muon2_particle = (GenParticle *) branchGenParticle->At( WParticlePairIndices[1].first.second);
       
       q1_particle = muon1_particle->Charge;
       q2_particle = muon2_particle->Charge;
@@ -715,8 +800,8 @@ void getParticleWLeps(int& thisParticleEventType,  const vector< pair<int,int>> 
       
     } else if( thisParticleEventType==1 ) { // case 2e
     
-      GenParticle *muon1_particle = (GenParticle *) branchGenParticle->At( WParticleIndices[0].second);
-      GenParticle *muon2_particle = (GenParticle *) branchGenParticle->At( WParticleIndices[0].second);
+      GenParticle *muon1_particle = (GenParticle *) branchGenParticle->At( WParticlePairIndices[0].first.second);
+      GenParticle *muon2_particle = (GenParticle *) branchGenParticle->At( WParticlePairIndices[0].first.second);
 
       q1_particle = muon1_particle->Charge;
       q2_particle = muon2_particle->Charge;
@@ -726,8 +811,8 @@ void getParticleWLeps(int& thisParticleEventType,  const vector< pair<int,int>> 
 
     } else if( thisParticleEventType==2 ) { // case 1mu1e 
     
-      GenParticle *muon1_particle = (GenParticle *) branchGenParticle->At( WParticleIndices[0].second);
-      GenParticle *muon2_particle = (GenParticle *) branchGenParticle->At( WParticleIndices[0].second);
+      GenParticle *muon1_particle = (GenParticle *) branchGenParticle->At( WParticlePairIndices[0].first.second);
+      GenParticle *muon2_particle = (GenParticle *) branchGenParticle->At( WParticlePairIndices[0].first.second);
 
       q1_particle = muon1_particle->Charge;
       q2_particle = muon2_particle->Charge;
@@ -737,8 +822,8 @@ void getParticleWLeps(int& thisParticleEventType,  const vector< pair<int,int>> 
 
     } else if( thisParticleEventType==3 ) { // case 1e1mu 
     
-      GenParticle *muon1_particle = (GenParticle *) branchGenParticle->At( WParticleIndices[0].second);
-      GenParticle *muon2_particle = (GenParticle *) branchGenParticle->At( WParticleIndices[0].second);
+      GenParticle *muon1_particle = (GenParticle *) branchGenParticle->At( WParticlePairIndices[0].first.second);
+      GenParticle *muon2_particle = (GenParticle *) branchGenParticle->At( WParticlePairIndices[0].first.second);
 
       q1_particle = muon1_particle->Charge;
       q2_particle = muon2_particle->Charge;

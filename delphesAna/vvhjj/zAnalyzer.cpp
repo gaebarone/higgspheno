@@ -356,14 +356,24 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH1F *hzzdeltaRparton = new TH1F("zz_#DeltaR_parton", "#DeltaR_{zz}_parton", RBins, zRmin, zRmax); listOfTH1.push_back(hzzdeltaRparton);
 
   // w - reco
+  TH1F *hllpTreco = new TH1F("ll_pT_reco", "p^{T}_{ll}_reco", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hllpTreco);
+  TH1F *hllmreco = new TH1F("ll_m_reco", "m_{ll}_reco", mBins, wmmin, wmmax); listOfTH1.push_back(hllmreco);
   TH1F *hw1pTreco = new TH1F("w1_pT_reco", "p^{T}_{w1}_reco", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hw1pTreco);
   TH1F *hw1mreco = new TH1F("w1_m_reco", "m_{w1}_reco", mBins, wmmin, wmmax); listOfTH1.push_back(hw1mreco);
-  TH1F *hw1cosThetareco = new TH1F("w1_cos#theta_reco", "cos#theta_{w1}_reco", cosBins, -1, 1); listOfTH1.push_back(hw1cosThetareco);
+  TH1F *hw2pTreco = new TH1F("w2_pT_reco", "p^{T}_{w2}_reco", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hw2pTreco);
+  TH1F *hw2mreco = new TH1F("w2_m_reco", "m_{w2}_reco", mBins, wmmin, wmmax); listOfTH1.push_back(hw2mreco);
+  TH1F *hwwpTreco = new TH1F("ww_pT_reco", "p^{T}_{ww}_reco", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hwwpTreco);
+  TH1F *hwwmreco = new TH1F("ww_m_reco", "m_{ww}_reco", mBins, wmmin, wmmax); listOfTH1.push_back(hwwmreco);
 
   // w - particle
-  TH1F *hw1pTparticle = new TH1F("w1_pT_particle", "p^{T}_{w1}_particle", pTBins, wpTmin, wpTmax);listOfTH1.push_back(hw1pTparticle);
-  TH1F *hw1mparticle = new TH1F("w1_m_particle", "m_{w1}_particle", mBins, wmmin, wmmax);listOfTH1.push_back(hw1mparticle);
-  TH1F *hw1cosThetaparticle = new TH1F("w1_cos#theta_particle", "cos#theta_{w1}_particle", cosBins, -1, 1); listOfTH1.push_back(hw1cosThetaparticle);
+  TH1F *hllpTparticle = new TH1F("ll_pT_particle", "p^{T}_{ll}_particle", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hllpTparticle);
+  TH1F *hllmparticle = new TH1F("ll_m_particle", "m_{ll}_particle", mBins, wmmin, wmmax); listOfTH1.push_back(hllmparticle);
+  TH1F *hw1pTparticle = new TH1F("w1_pT_particle", "p^{T}_{w1}_particle", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hw1pTparticle);
+  TH1F *hw1mparticle = new TH1F("w1_m_particle", "m_{w1}_particle", mBins, wmmin, wmmax); listOfTH1.push_back(hw1mparticle);
+  TH1F *hw2pTparticle = new TH1F("w2_pT_particle", "p^{T}_{w2}_particle", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hw2pTparticle);
+  TH1F *hw2mparticle = new TH1F("w2_m_particle", "m_{w2}_particle", mBins, wmmin, wmmax); listOfTH1.push_back(hw2mparticle);
+  TH1F *hwwpTparticle = new TH1F("ww_pT_particle", "p^{T}_{ww}_particle", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hwwpTparticle);
+  TH1F *hwwmparticle = new TH1F("ww_m_particle", "m_{ww}_particle", mBins, wmmin, wmmax); listOfTH1.push_back(hwwmparticle);
 
   // w - parton
   TH1F *hw1pTparton = new TH1F("w1_pT_parton", "p^{T}_{w1}_parton", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hw1pTparton);
@@ -444,17 +454,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH1F *hl1l2CScosThetaparton = new TH1F("l1l2_cos#theta_{CS}_parton", "cos#theta_{CSl1l2}_parton", cosBins, -1, 1); listOfTH1.push_back(hl1l2CScosThetaparton);
   TH1F *hl3l4CScosThetaparton = new TH1F("l3l4_cos#theta_{CS}_parton", "cos#theta_{CSl3l4}_parton", cosBins, -1, 1); listOfTH1.push_back(hl3l4CScosThetaparton);
 
-  // MET
-  TH1F *hMETreco = new TH1F("MET_reco", "E_{missing}_reco", pTBins, METpTmin, METpTmax); listOfTH1.push_back(hMETreco);
-  TH1F *hMETEtareco = new TH1F("MET_#eta_reco", "#eta_{MET}_reco", etaBins, METetamin, METetamax); listOfTH1.push_back(hMETEtareco);
-  TH1F *hMETPhireco = new TH1F("MET_#phi_reco", "#phi_{MET}_reco", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hMETPhireco);
-
-  // GenMET
-  TH1F *hGenMETparticle = new TH1F("GenMET_particle", "E_{missing}_particle", pTBins, METpTmin, METpTmax); listOfTH1.push_back(hMETreco);
-  TH1F *hGenMETEtaparticle = new TH1F("GenMET_#eta_particle", "#eta_{MET}_particle", etaBins, METetamin, METetamax); listOfTH1.push_back(hMETEtareco);
-  TH1F *hGenMETPhiparticle = new TH1F("GenMET_#phi_particle", "#phi_{MET}_particle", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hMETPhireco);
-
- 
 
 // 2D - parton(1) particle(2) reco(3)
 
@@ -606,6 +605,10 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TLorentzVector z2_reco, z2_particle,  z2_parton;
 
   TLorentzVector w1_reco, w1_particle,  w1_parton;
+  TLorentzVector w2_reco, w2_particle,  w2_parton;
+  TLorentzVector v1_reco, v1_particle,  v1_parton;
+  TLorentzVector v2_reco, v2_particle,  v2_parton;
+  TLorentzVector MET, met1, met2;
 
 // kinematic quantities
 
@@ -747,15 +750,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   int q2_parton = -9999;
   int q3_parton = -9999;
   int q4_parton = -9999;
-
-  // met
-  double MET;
-  double MET_eta;
-  double MET_phi;
-
-  double GenMET;
-  double GenMET_eta;
-  double GenMET_phi;
 
   double sumOfWeights=0;
   TH1F *hClosure = new TH1F("hClosure","hClosure",1,0,1);
@@ -1067,6 +1061,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
     #endif
 
+
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // RECO - VBF JETS
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1144,7 +1139,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   int thisRecoEventType=-1;
 
   vector<pair<int,pair<int,int>>> ZRecoPairIndices;
-  vector< pair<int,int>> WRecoIndices;
+  vector<pair<pair<int,int>,int>> WRecoPairIndices;
 
   vector <int> goodE_reco_indices  = GoodElectronRecoIndices(branchElectron, analysis);
   vector <int> goodMu_reco_indices = GoodMuonRecoIndices(branchMuon, analysis);
@@ -1234,19 +1229,19 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       if(enableCutReco["lep pT > 15 & eta < 2.5 - reco"]){
         if (switchVal_reco==0) {
-          if (goodE_reco_indices.size() > 0 || goodMu_reco_indices.size() > 0) increaseCount(cutFlowMap_reco,"lep pT > 15 & eta < 2.5 - reco",weight);
-          } 
-        else switchVal_reco=1;
+          if (goodE_reco_indices.size() > 0 || goodMu_reco_indices.size() > 0) increaseCount(cutFlowMap_reco,"lep pT > 15 & eta < 2.5 - reco",weight); 
+          else switchVal_reco=1;
+        }
       }
+      
+      WRecoPairIndices = GetWRecoPairIndices(goodE_reco_indices, goodMu_reco_indices, branchElectron, branchMuon, branchMissingET);
 
-      WRecoIndices = GetWRecoIndices(branchElectron, branchMuon, goodE_reco_indices, goodMu_reco_indices);
-
-      // FOR OF SWITCH mu mu / e e EVENT TYPE TO -1
-      if( switchVal_reco==0 && WRecoIndices.size()>=2){
-          if( WRecoIndices[0].first == 1 && WRecoIndices[1].first == 1) thisRecoEventType=-1; // mu mu
-          else if( WRecoIndices[0].first == 0 && WRecoIndices[1].first == 0) thisRecoEventType=-1; // e e
-          else if( WRecoIndices[0].first == 1 && WRecoIndices[1].first == 0) thisRecoEventType=2; // mu e
-          else if( WRecoIndices[0].first == 0 && WRecoIndices[1].first == 1) thisRecoEventType=3; // e mu
+      // FOR OFOS SWITCH mu mu / e e EVENT TYPE TO -1
+      if( switchVal_reco==0 && WRecoPairIndices.size()>=2){
+          if( WRecoPairIndices[0].first.first == 1 && WRecoPairIndices[1].first.first == 1) thisRecoEventType=0; // mu mu
+          else if( WRecoPairIndices[0].first.first == 0 && WRecoPairIndices[1].first.first == 0) thisRecoEventType=1; // e e
+          else if( WRecoPairIndices[0].first.first == 1 && WRecoPairIndices[1].first.first == 0) thisRecoEventType=2; // mu e
+          else if( WRecoPairIndices[0].first.first == 0 && WRecoPairIndices[1].first.first == 1) thisRecoEventType=3; // e mu
       }
 
       if(enableCutReco["OSOF - reco"]){
@@ -1254,16 +1249,21 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
         else switchVal_reco=1;
       }
 
-      getRecoWLeps(thisRecoEventType, WRecoIndices, branchElectron, branchMuon, l1_reco, l2_reco, q1_reco, q2_reco);
+      getWReco(thisRecoEventType, WRecoPairIndices, branchElectron, branchMuon, branchMissingET, l1_reco, l2_reco, q1_reco, q2_reco, met1, met2);
 
-      w1_reco = l1_reco + l2_reco; 
+      // make loop 
+      // print w w indices
+      // fill dist for 1st W , 2nd W, ...
 
-    if(enableCutReco["mll > 12 - reco"]) {
-          if(switchVal_reco == 0 && w1_reco.M() >= 12) increaseCount(cutFlowMap_reco,"mll > 12 - reco",weight);
+      if(enableCutReco["mll > 12 - reco"]) {
+          if(switchVal_reco == 0 && (l1_reco+l2_reco).M() >= 12) increaseCount(cutFlowMap_reco,"mll > 12 - reco",weight);
           else switchVal_reco = 1;
-    }
+      }
 
     if( switchVal_reco == 0){
+
+      w1_reco=l1_reco + met1;
+      w2_reco=l2_reco + met2;
     
       l1l2deltaPhireco=(l1_reco.Phi() > l2_reco.Phi() ? -1:+1)*TMath::Abs(l2_reco.Phi() - l1_reco.Phi());
       l1l2deltaEtareco=(l1_reco.Eta() > l2_reco.Eta() ? -1:+1)*TMath::Abs(l2_reco.Eta() - l1_reco.Eta());
@@ -1286,25 +1286,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       l1l2CScosThetareco=(q1_reco > q2_reco ? -1:+1)*TMath::Abs(2*(l2_reco.Pz()*l1_reco.E()-l1_reco.Pz()*l2_reco.E())/(z1_reco.M()*sqrt(z1_reco.M()*z1_reco.M()+z1_reco.Pt()*z1_reco.Pt())));  
     
      }
-
-      // no MET - but plot it
-      // Mll cut at 10 (WW mass)
-      // transverse W mass plot (m_t plot of leptons + met)
-
-      double MET;
-      double MET_eta;
-      double MET_phi;
-
-      MissingET *met;
-      met = (MissingET*) branchMissingET->At(0);
-
-      MET = met->MET;
-      MET_eta = met->Eta;
-      MET_phi = met->Phi;
-
-      hMETreco -> Fill(MET, weight);
-      hMETEtareco -> Fill(MET_eta, weight);
-      hMETPhireco->Fill(MET_phi,weight);
 
     }
 
@@ -1468,7 +1449,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   int thisParticleEventType=-1;
 
   vector<pair<int,pair<int,int>>> ZParticlePairIndices;
-  vector< pair<int,int>> WParticleIndices;
+  vector<pair<pair<int,int>,int>> WParticlePairIndices;
 
   vector <int> goodE_particle_indices  = GoodElectronParticleIndices(branchGenParticle, analysis);
   vector <int> goodMu_particle_indices = GoodMuonParticleIndices(branchGenParticle, analysis);
@@ -1556,19 +1537,19 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       if(enableCutParticle["lep pT > 15 & eta < 2.5 - particle"]){
         if (switchVal_particle==0) {
-        if (goodE_particle_indices.size() > 0 || goodMu_particle_indices.size() > 0) increaseCount(cutFlowMap_particle,"lep pT > 15 & eta < 2.5 - particle",weight);
+          if (goodE_particle_indices.size() > 0 || goodMu_particle_indices.size() > 0) increaseCount(cutFlowMap_particle,"lep pT > 15 & eta < 2.5 - particle",weight);
+          else  switchVal_particle=1; 
         } 
-        else  switchVal_particle=1; 
       }
 
-      WParticleIndices = GetWParticleIndices(branchGenParticle, goodE_particle_indices, goodMu_particle_indices);
+      WParticlePairIndices = GetWParticlePairIndices(goodE_particle_indices, goodMu_particle_indices, branchGenParticle, branchMissingET);
 
-      // FOR OF SWITCH mu mu / e e EVENT TYPE TO -1
-      if( switchVal_particle==0 && WParticleIndices.size()>=2){
-          if( WParticleIndices[0].first == 1 && WParticleIndices[1].first == 1) thisParticleEventType = -1; // mu mu
-          else if( WParticleIndices[0].first == 0 && WParticleIndices[1].first == 0) thisParticleEventType = -1; // e e
-          else if( WParticleIndices[0].first == 1 && WParticleIndices[1].first == 0) thisParticleEventType = 2; // mu e
-          else if( WParticleIndices[0].first == 0 && WParticleIndices[1].first == 1) thisParticleEventType = 3; // e mu
+      // FOR OFOS SWITCH mu mu / e e EVENT TYPE TO -1
+      if( switchVal_particle==0 && WParticlePairIndices.size()>=2){
+          if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 0; // mu mu
+          else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 1; // e e
+          else if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 2; // mu e
+          else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 3; // e mu
       }
 
       if(enableCutParticle["OSOF - particle"]){
@@ -1576,16 +1557,17 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
         else switchVal_particle=1;
       }
 
-      getParticleWLeps(thisParticleEventType, WParticleIndices, branchGenParticle, l1_particle, l2_particle, q1_particle, q2_particle);
-
-      w1_particle = l1_particle + l2_particle;
+      getWParticle(thisParticleEventType, WParticlePairIndices, branchGenParticle,branchMissingET, l1_particle, l2_particle, q1_particle, q2_particle, met1, met2);
 
       if(enableCutParticle["mll > 12 - particle"]) {
-        if(switchVal_particle == 0 && w1_particle.M() >= 12) increaseCount(cutFlowMap_particle,"mll > 12 - particle",weight);
+        if(switchVal_particle == 0 &&  (l1_particle+l2_particle).M() >= 12) increaseCount(cutFlowMap_particle,"mll > 12 - particle",weight);
         else switchVal_particle = 1;
       }
 
       if( switchVal_particle == 0 ) {
+
+        w1_particle=l1_particle + met1;
+        w2_particle=l2_particle + met2;
 
         l1l2deltaPhiparticle=(l1_particle.Phi() > l2_particle.Phi() ? -1:+1)*TMath::Abs(l2_particle.Phi() - l1_particle.Phi());
         l1l2deltaEtaparticle=(l1_particle.Eta() > l2_particle.Eta() ? -1:+1)*TMath::Abs(l2_particle.Eta() - l1_particle.Eta());
@@ -1608,24 +1590,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
         l1l2CScosThetaparticle=(q1_particle > q2_particle ? -1:+1)*TMath::Abs(2*(l2_particle.Pz()*l1_particle.E()-l1_particle.Pz()*l2_particle.E())/(z1_particle.M()*sqrt(z1_particle.M()*z1_particle.M()+z1_particle.Pt()*z1_particle.Pt())));  
       
       }
-
-
-    // no MET - but plot it
-    // Mll cut at 10 (WW mass)
-    // transverse W mass plot (m_t plot of leptons + met)
-      
-    
-      GenMissingET *genmet;
-      genmet = (GenMissingET*) branchGenMissingET->At(0);
-
-      GenMET = genmet->MET;
-      GenMET_eta = genmet->Eta;
-      GenMET_phi = genmet->Phi;
-
-      hGenMETparticle -> Fill(GenMET, weight);
-      hGenMETEtaparticle -> Fill(GenMET_eta, weight);
-      hGenMETPhiparticle->Fill(GenMET_phi,weight);
-    
 
     }
 
@@ -1768,11 +1732,11 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
     if( entry % 1000 == 0 ){
       cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
-      cout<<" Reco CutF Flow "<<endl;
+      //cout<<" Reco CutF Flow "<<endl;
       PrintCutFlow(cutFlowMap_reco,cutList_reco,"Reco");
-      cout<<" Particle  CutF Flow "<<endl;
+      //cout<<" Particle  CutF Flow "<<endl;
       PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
-      cout<<" Parton  CutF Flow "<<endl;
+      //cout<<" Parton  CutF Flow "<<endl;
       PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
     }
 
@@ -1822,10 +1786,15 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
     // w - reco
     if(switchVal_reco==0){
-      if(thisRecoEventType!=-1 && WRecoIndices.size()>=2){
+      if(thisRecoEventType!=-1 && WRecoPairIndices.size()>=2){
+        hllpTreco->Fill((l1_reco+l2_reco).Pt(),weight);
+        hllmreco->Fill((l1_reco+l2_reco).M(),weight);
         hw1pTreco->Fill(w1_reco.Pt(),weight);
         hw1mreco->Fill(w1_reco.M(),weight);
-        hw1cosThetareco->Fill(w1_reco.CosTheta(),weight);
+        hw2pTreco->Fill(w2_reco.Pt(),weight);
+        hw2mreco->Fill(w2_reco.M(),weight);
+        hwwpTreco->Fill((w1_reco + w2_reco).Pt(),weight);
+        hwwmreco->Fill((w1_reco + w2_reco).M(),weight);
       }
     }
 
@@ -1903,10 +1872,15 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
     // w - particle
     if(switchVal_particle==0){
-      if(thisParticleEventType!=-1 && WParticleIndices.size()>=2){
+      if(thisParticleEventType!=-1 && WParticlePairIndices.size()>=2){
+        hllpTparticle->Fill((l1_particle+l2_particle).Pt(),weight);
+        hllmparticle->Fill((l1_particle+l2_particle).M(),weight);
         hw1pTparticle->Fill(w1_particle.Pt(),weight);
         hw1mparticle->Fill(w1_particle.M(),weight);
-        hw1cosThetaparticle->Fill(w1_particle.CosTheta(),weight);
+        hw2pTparticle->Fill(w2_particle.Pt(),weight);
+        hw2mparticle->Fill(w2_particle.M(),weight);
+        hwwpTparticle->Fill((w1_particle + w2_particle).Pt(),weight);
+        hwwmparticle->Fill((w1_particle + w2_particle).M(),weight);
       }
     }
 
@@ -2001,8 +1975,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   hPJsize23Comp -> Fill(pairedJetSize_particle, pairedJetSize_reco, weight);
   hPJBsize23Comp -> Fill(pairedBJetSize_particle, pairedBJetSize_reco, weight);
-
-  // hMET23Comp-> Fill(MET, GenMET, weight);
 
     if(switchVal_parton==0 && switchVal_particle==0 ){
       hHpT12Comp -> Fill(h_parton.Pt(), h_particle.Pt(), weight);
