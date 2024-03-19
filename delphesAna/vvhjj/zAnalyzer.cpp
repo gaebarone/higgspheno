@@ -249,7 +249,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   const double jpTmax = 500;
   const double zpTmax = 500;
   const double wpTmax = 500;
-  const double lpTmax = 500;
+  const double lpTmax = 100;
   const double METpTmax = 500;
 
   const double hmmin = 0;
@@ -1524,7 +1524,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // PARTICLE - LEPTONS
+  // PARTICLE - LEPTONS 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   int thisParticleEventType=-1;
@@ -1618,12 +1618,16 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
    } else if(analysis == "HWWJJ") {
 
+    // E + mu > 1
+
       if(enableCutParticle["lep pT > 15 & eta < 2.5 - particle"]){
         if (switchVal_particle==0) {
           if (goodE_particle_indices.size() > 0 || goodMu_particle_indices.size() > 0) increaseCount(cutFlowMap_particle,"lep pT > 15 & eta < 2.5 - particle",weight);
           else  switchVal_particle=1; 
         } 
       }
+
+      // lep pt eta phi here 
 
       WParticlePairIndices = GetWParticlePairIndices(goodE_particle_indices, goodMu_particle_indices, branchGenParticle, branchMissingET);
 

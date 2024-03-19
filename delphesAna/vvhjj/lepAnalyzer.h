@@ -826,7 +826,7 @@ void getWReco(int& thisRecoEventType,  const vector<pair<pair<int,int>, int>> WR
     met1.SetPtEtaPhiM((Met1->MET)/2,0,Met1->Phi,0);
     met2.SetPtEtaPhiM((Met2->MET)/2,0,Met2->Phi,0);
 
-    if( thisRecoEventType==0 ) { // case 2mu 
+    if( thisRecoEventType==0 ) { // case 2mu // remove this reco event type
       
       Muon *muon1_reco = (Muon *) branchMuon->At( WRecoPairIndices[0].first.second);
       Muon *muon2_reco = (Muon *) branchMuon->At( WRecoPairIndices[1].first.second);
