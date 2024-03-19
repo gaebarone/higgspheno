@@ -27,7 +27,7 @@ void DefineSelections(){
 
     cutSelectionProcessReco["HWWJJ"]={"initial - reco", "jet pT > 20 - reco", "1 PAIReD jet - reco", "1 bb PAIReD jet - reco", "2 VBF jet - reco", "2.5 deltaEta VBF jet - reco" , "lep pT > 15 & eta < 2.5 - reco", "mll > 12 - reco"}; 
     cutSelectionProcessParticle["HWWJJ"]={"initial - particle", "jet pT > 20 - particle", "1 PAIReD jet - particle", "1 bb PAIReD jet - particle", "2 VBF jet - particle", "2.5 deltaEta VBF jet - particle", "lep pT > 15 & eta < 2.5 - particle", "mll > 12 - particle"}; 
-    cutSelectionProcessParton["HWWJJ"]={"initial parton", "Higgs Candidate", "ZZ parton"};
+    cutSelectionProcessParton["HWWJJ"]={"initial parton", "Higgs Candidate", "WW parton"};
 
 }
 

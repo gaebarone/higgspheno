@@ -133,49 +133,61 @@ bool FillHiggsTruthRecord(TClonesArray *branchGenParticle, TLorentzVector & h_pa
   bool foundHiggsOrinTree=false;
   bool foundHiggsToBbb=false;
   bool foundHiggsToBbbJets=false;
+
   GenParticle *daughter1=nullptr;
   GenParticle *daughter2=nullptr;
 
   for(int i=0; i<(int)branchGenParticle->GetEntries(); i++) {
+
     GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
+
     int d1_pid = 9999;
+    int d2_pid = 9999;
+
     if (particle->D1 != -1) {
       daughter1 = (GenParticle*) branchGenParticle->At(particle->D1);
       d1_pid = daughter1 -> PID;
     }
-    int d2_pid = 9999;
+
     if (particle->D2 != -1) {
       daughter2 = (GenParticle*) branchGenParticle->At(particle->D2);
       d2_pid = daughter2 -> PID;
     } 
-    // higgs parton
+
     if (particle->PID == 25 && d1_pid != 25 && d2_pid != 25) {
+
       h_parton = particle->P4();
       foundHiggsOrinTree=true;
-	
-      // check for b parton children
+    
       if (abs(d1_pid) == 5 && abs(d2_pid) == 5) {
-	foundHiggsToBbb=true; 
-	if (daughter1 -> PT > daughter2 -> PT) {
-	  b1_parton = daughter1 -> P4();
-	  b2_parton = daughter2 -> P4();
-	} else {
-	  b1_parton = daughter2 -> P4();
-	  b2_parton = daughter1 -> P4();
-	}
+
+        foundHiggsToBbb=true; 
+
+        if (daughter1 -> PT > daughter2 -> PT) {
+          b1_parton = daughter1 -> P4();
+          b2_parton = daughter2 -> P4();
+        } else {
+          b1_parton = daughter2 -> P4();
+          b2_parton = daughter1 -> P4();
+        }
       }
-    } else if ((particle->PID == 1 || particle->PID == 2 || particle->PID == 3 || particle->PID == 4 || particle->PID == 6) && d1_pid != particle->PID && d2_pid != particle->PID){
+
+    } else if ((particle->PID == 1 || particle->PID == 2 || particle->PID == 3 || particle->PID == 4 || particle->PID == 6) && d1_pid != particle->PID && d2_pid != particle->PID) {
+
       foundHiggsToBbbJets=true;
+
       if (daughter1 -> PT > daughter2 -> PT) {
-	j1_parton = daughter1 -> P4();
-	j2_parton = daughter2 -> P4();
+	      j1_parton = daughter1 -> P4();
+	      j2_parton = daughter2 -> P4();
       } else {
-	j1_parton = daughter2 -> P4();
-	j2_parton = daughter1 -> P4();
+	      j1_parton = daughter2 -> P4();
+	      j2_parton = daughter1 -> P4();
       }
     }
   }
+
   return (foundHiggsOrinTree && foundHiggsToBbb && foundHiggsToBbbJets); 
+
 }
 
 
