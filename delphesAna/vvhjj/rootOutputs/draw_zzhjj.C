@@ -65,7 +65,7 @@ Float_t diboson_scale = 0;
 
 // save plots as different file types
 void PrintCanvas(TCanvas *c=nullptr, string name="default", string outputFolder="default", string subFolder="default"){
-  std::vector <string> types={"jpg","png"}; 
+  std::vector <string> types={"png"}; 
   for(std::vector<string>::iterator it=types.begin(); it!=types.end(); it++) {
     c->Print(Form("%s/%s/%s.%s", outputFolder.c_str(), subFolder.c_str(), name.c_str(), (*it).c_str()), (*it).c_str());
     c->SetLogy(); 
@@ -258,11 +258,23 @@ void draw_zzhjj_(string sig_filename = "signal.root", string bkg_filename = "all
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#Delta#eta_parton", "#Delta#eta_{zz}_parton", "#eta", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "zz_#DeltaR_parton", "#DeltaR_{zz}_parton", "R", outputFolder);
   // w - reco
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ll_pT_reco", "p^{T}_{ll}_reco", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ll_m_reco", "m_{ll}_reco", "mass (GeV)", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w1_pT_reco", "p^{T}_{w1}_reco", "p_{T}", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w1_m_reco", "m_{w1}_reco", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w2_pT_reco", "p^{T}_{w2}_reco", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w2_m_reco", "m_{w2}_reco", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ww_pT_reco", "p^{T}_{ww}_reco", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ww_m_reco", "m_{ww}_reco", "mass (GeV)", outputFolder);
   // w - particle 
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ll_pT_particle", "p^{T}_{ll}_particle", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ll_m_particle", "m_{ll}_particle", "mass (GeV)", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w1_pT_particle", "p^{T}_{w1}_particle", "p_{T}", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w1_m_particle", "m_{w1}_particle", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w2_pT_particle", "p^{T}_{w2}_particle", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "w2_m_particle", "m_{w2}_particle", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ww_pT_particle", "p^{T}_{ww}_particle", "p_{T}", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ww_m_particle", "m_{ww}_particle", "mass (GeV)", outputFolder);
   // leps - reco
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l1l2_#Delta#phi_reco", "#Delta#phi_{l1l2}_reco", "#phi", outputFolder);
   draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "l3l4_#Delta#phi_reco", "#Delta#phi_{l3l4}_reco", "#phi", outputFolder);
@@ -307,6 +319,10 @@ void draw_zzhjj_(string sig_filename = "signal.root", string bkg_filename = "all
   draw_hist2(sig_file, "jj_#Delta#phi_comp_13", "#Delta#phi_{jj}", "Parton Level #Delta#phi", "Reco Level #Delta#phi", outputFolder, "signal2D");
   */
 
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ll_m_reco_0_15", "m_{ll}_reco_0_15", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "ll_m_particle_0_15", "m_{ll}_particle_0_15", "mass (GeV)", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "reco_event_type", "ET", "ET", outputFolder);
+  draw_stack(sig_file, ttbar_file, ttHbb_file, diboson_file, drellyan_file, "particle_event_type", "ET", "ET", outputFolder);
   // print signal significance
   
   std::cout<<"Reco Level Contributions:"<<std::endl;
