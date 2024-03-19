@@ -800,7 +800,8 @@ vector <int> GetWPartonIndices(TClonesArray *branchGenParticle=nullptr, string a
         d1_pid = daughter1 -> PID;
       }
 
-      if( particle->PID == 24 && d1_pid != 24) WPartonIndices.push_back(i);
+      if( abs(particle->PID) == 24 && abs(d1_pid) != 24) WPartonIndices.push_back(i);
+      
     
     }
 
@@ -932,37 +933,47 @@ void getWParticle(int& thisParticleEventType,  const vector<pair<pair<int,int>,i
   */
 }
 
-/*
-void getPartonWLeps(int thisPartonEventType, vector <int> WPartonIndices, TClonesArray *branchGenParticle,   TLorentzVector &w1_parton,  TLorentzVector &w2_parton, TLorentzVector &l1_parton,  TLorentzVector &l2_parton, int& q1_parton, int& q2_parton){
+
+void getPartonWLeps(int& thisPartonEventType, vector <int> WPartonIndices, TClonesArray *branchGenParticle,   TLorentzVector &w1_parton,  TLorentzVector &w2_parton, TLorentzVector &l1_parton,  TLorentzVector &l2_parton, int& q1_parton, int& q2_parton){
   
   vector <int> W1childrenIndices;
   vector <int> W2childrenIndices;
 
+  // get w
   GenParticle *w1=(GenParticle*) branchGenParticle->At(WPartonIndices[0]);
   GenParticle *w2=(GenParticle*) branchGenParticle->At(WPartonIndices[1]);
 
+  // get w daughters + pid
   GenParticle *w1daughter1 = (GenParticle*) branchGenParticle->At(w1->D1);
   GenParticle *w1daughter2 = (GenParticle*) branchGenParticle->At(w1->D2);
   GenParticle *w2daughter1 = (GenParticle*) branchGenParticle->At(w2->D1);
   GenParticle *w2daughter2 = (GenParticle*) branchGenParticle->At(w2->D2);
-
   int w1d1_pid = w1daughter1 -> PID;
   int w1d2_pid = w1daughter2 -> PID;
   int w2d1_pid = w2daughter1 -> PID;
   int w2d2_pid = w2daughter2 -> PID;
 
-  if(abs(w1d1_pid) == 11 || abs(w1d1_pid) == 13) W1childrenIndices.push_back((GenParticle*) branchGenParticle->At(w1->D1));
-  else if(abs(w1d2_pid) == 11 || abs(w1d2_pid) == 13) W1childrenIndices.push_back((GenParticle*) branchGenParticle->At(w1->D2));
+  // get the daughter that is not a neutrino
+  if(abs(w1d1_pid) == 11 || abs(w1d1_pid) == 13) W1childrenIndices.push_back(w1->D1);
+  else if(abs(w1d2_pid) == 11 || abs(w1d2_pid) == 13) W1childrenIndices.push_back(w1->D2);
   else return;
 
-  if(abs(w2d1_pid) == 11 || abs(w2d1_pid) == 13) W2childrenIndices.push_back((GenParticle*) branchGenParticle->At(w2->D1));
-  else if(abs(w2d2_pid) == 11 || abs(w2d2_pid) == 13) W2childrenIndices.push_back((GenParticle*) branchGenParticle->At(w2->D2));
+  if(abs(w2d1_pid) == 11 || abs(w2d1_pid) == 13) W2childrenIndices.push_back(w2->D1);
+  else if(abs(w2d2_pid) == 11 || abs(w2d2_pid) == 13) W2childrenIndices.push_back(w2->D2);
   else return;
 
-  if (abs(((GenParticle*) branchGenParticle->At(W1childrenIndices[0]))->PID) == 13 && abs(((GenParticle*) branchGenParticle->At(W2childrenIndices[0]))->PID) == 13) thisPartonEventType = 0;
-  else if (abs(((GenParticle*) branchGenParticle->At(W1childrenIndices[0]))->PID) == 11 && abs(((GenParticle*) branchGenParticle->At(W2childrenIndices[0]))->PID) == 11) thisPartonEventType = 1;
-  else if (abs(((GenParticle*) branchGenParticle->At(W1childrenIndices[0]))->PID) == 13 && abs(((GenParticle*) branchGenParticle->At(W2childrenIndices[0]))->PID) == 11) thisPartonEventType = 2;
-  else if (abs(((GenParticle*) branchGenParticle->At(W1childrenIndices[0]))->PID) == 11 && abs(((GenParticle*) branchGenParticle->At(W2childrenIndices[0]))->PID) == 13) thisPartonEventType = 3;
+  // sort here ?
+
+  // get event type
+  GenParticle *w1lep = (GenParticle*) branchGenParticle->At(W1childrenIndices[0]);
+  GenParticle *w2lep = (GenParticle*) branchGenParticle->At(W2childrenIndices[0]);
+  int w1lep_pid = w1lep -> PID;
+  int w2lep_pid = w2lep -> PID;
+
+  if (abs(w1lep_pid) == 13 && abs(w2lep_pid) == 13) thisPartonEventType = 0;
+  else if (abs(w1lep_pid) == 11 && abs(w2lep_pid) == 11) thisPartonEventType = 1;
+  else if (abs(w1lep_pid) == 13 && abs(w2lep_pid) == 11) thisPartonEventType = 2;
+  else if (abs(w1lep_pid) == 11 && abs(w2lep_pid) == 13) thisPartonEventType = 3;
   else return;
 
   w1_parton = ((GenParticle*)branchGenParticle->At(WPartonIndices[0]))->P4(); 
@@ -975,5 +986,5 @@ void getPartonWLeps(int thisPartonEventType, vector <int> WPartonIndices, TClone
   q2_parton = ((GenParticle*) branchGenParticle->At(W2childrenIndices[0]))->Charge;
 
 }
-*/
+
 #endif
