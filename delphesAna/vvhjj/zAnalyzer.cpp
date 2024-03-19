@@ -1287,8 +1287,8 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       // FOR OFOS SWITCH mu mu / e e EVENT TYPE TO -1
       if( switchVal_reco==0 && WRecoPairIndices.size()>=2){
-          if( WRecoPairIndices[0].first.first == 1 && WRecoPairIndices[1].first.first == 1) thisRecoEventType=-1; // mu mu
-          else if( WRecoPairIndices[0].first.first == 0 && WRecoPairIndices[1].first.first == 0) thisRecoEventType=-1; // e e
+          if( WRecoPairIndices[0].first.first == 1 && WRecoPairIndices[1].first.first == 1) thisRecoEventType=0; // mu mu
+          else if( WRecoPairIndices[0].first.first == 0 && WRecoPairIndices[1].first.first == 0) thisRecoEventType=1; // e e
           else if( WRecoPairIndices[0].first.first == 1 && WRecoPairIndices[1].first.first == 0) thisRecoEventType=2; // mu e
           else if( WRecoPairIndices[0].first.first == 0 && WRecoPairIndices[1].first.first == 1) thisRecoEventType=3; // e mu
       }

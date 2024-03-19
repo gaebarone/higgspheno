@@ -94,7 +94,7 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   diboson_hist->Scale(lumiScaling);
   ttHbb_hist->Scale(lumiScaling);
   drellyan_hist->Scale(lumiScaling);
-  sigClone->Scale(lumiScaling*0.000013); //*0.000013 for W  
+  sigClone->Scale(lumiScaling*0.000013); //*0.000013 for W    
 
   // rebin if desired
   sig_hist->Rebin(1);
@@ -377,7 +377,7 @@ void draw_zzhjj_(string sig_filename = "signal.root", string bkg_filename = "all
 
 void draw_zzhjj(string sel=""){
   std::map<string,string> selMapToHistsSignal;
-  selMapToHistsSignal["HWWJJ"] = "w+w-hqq_HWWJJ.root";
+  selMapToHistsSignal["HWWJJ"] = "wpwmhqq_HWWJJ.root";
   selMapToHistsSignal["HZZJJ"] = "zzhqq_HZZJJ.root";
 
   system(Form("mkdir -p ../histograms/%s/stacks",sel.c_str()));
