@@ -89,12 +89,12 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   double lumiScaling = 10;
   
   // change lumi if desired
-  sig_hist->Scale(lumiScaling); //*0.000013 for W
+  sig_hist->Scale(lumiScaling*0.000013); //*0.000013 for W
   ttbar_hist->Scale(lumiScaling);
   diboson_hist->Scale(lumiScaling);
   ttHbb_hist->Scale(lumiScaling);
   drellyan_hist->Scale(lumiScaling);
-  sigClone->Scale(lumiScaling); //*0.000013 for W    
+  sigClone->Scale(lumiScaling*0.000013); //*0.000013 for W    
 
   // rebin if desired
   sig_hist->Rebin(1);

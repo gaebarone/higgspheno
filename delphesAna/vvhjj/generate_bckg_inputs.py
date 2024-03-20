@@ -2,7 +2,7 @@ import os
 
 process_list = ['ttHbb', 'ttbar012j', 'wwjj_j', 'wz_wjj_123j', 'wzjj_j', 'zll_123j', 'zz_zjj_123j', 'zzjj_j']
 directory_list = ['/isilon/data/common/smondal5/delphesouts_VVHjj/'] * 8
-selection_list = ['HZZJJ', 'HWWJJ'] #ZZJJ
+selection_list = ['HWWJJ'] #ZZJJ
 
 #process_list = ['hqqz0z0', 'hqqz0zT', 'hqqzTzT', 'hqqzz'] 
 #directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 4
