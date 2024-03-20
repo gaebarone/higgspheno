@@ -1594,10 +1594,10 @@ if (goodMu_reco_indices.size()>1) m2_reco = ((Muon *) branchMuon->At(goodMu_reco
 
 // lep details
 
-if (goodE_particle_indices.size()>0) e1_particle = ((Electron *) branchElectron->At(goodE_particle_indices[0]))->P4();
-if (goodE_particle_indices.size()>1) e2_particle = ((Electron *) branchElectron->At(goodE_particle_indices[1]))->P4();
-if (goodMu_particle_indices.size()>0) m1_particle = ((Muon *) branchMuon->At(goodMu_particle_indices[0]))->P4();
-if (goodMu_particle_indices.size()>1) m2_particle = ((Muon *) branchMuon->At(goodMu_particle_indices[1]))->P4();
+if (goodE_particle_indices.size()>0) e1_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[0]))->P4();
+if (goodE_particle_indices.size()>1) e2_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[1]))->P4();
+if (goodMu_particle_indices.size()>0) m1_particle = ((GenParticle *) branchGenParticle->At(goodMu_particle_indices[0]))->P4();
+if (goodMu_particle_indices.size()>1) m2_particle = ((GenParticle *) branchGenParticle->At(goodMu_particle_indices[1]))->P4();
 
   lead_e_pt_particle->Fill(e1_particle.Pt(),weight);
   lead_e_eta_particle->Fill(e1_particle.Eta(),weight);
