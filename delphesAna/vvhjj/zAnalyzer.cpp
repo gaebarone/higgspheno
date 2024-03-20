@@ -417,6 +417,22 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH1F *hwwdeltaRparton = new TH1F("ww_#DeltaR_parton", "#DeltaR_{ww}_parton", RBins, wRmin, wRmax); listOfTH1.push_back(hwwdeltaRparton);
 
   // lepton - reco
+  TH1F *lead_e_pt_reco = new TH1F("lead_e_pT_reco", "p^{T}_{e1}_reco", pTBins, lpTmin, lpTmax); listOfTH1.push_back(lead_e_pt_reco);
+  TH1F *lead_e_eta_reco = new TH1F("lead_e_#eta_reco", "#eta_{e1}_reco", etaBins, letamin, letamax); listOfTH1.push_back(lead_e_eta_reco);
+  TH1F *lead_e_phi_reco = new TH1F("lead_e_#phi_reco", "#phi_{e1}_reco", phiBins, -TMath::Pi(), TMath::Pi()); listOfTH1.push_back(lead_e_phi_reco);
+  TH1F *sublead_e_pt_reco = new TH1F("sublead_e_pT_reco", "p^{T}_{e2}_reco", pTBins, lpTmin, lpTmax); listOfTH1.push_back(sublead_e_pt_reco);
+  TH1F *sublead_e_eta_reco = new TH1F("sublead_e_#eta_reco", "#eta_{e2}_reco", etaBins, letamin, letamax); listOfTH1.push_back(sublead_e_eta_reco);
+  TH1F *sublead_e_phi_reco = new TH1F("sublead_e_#phi_reco", "#phi_{e2}_reco", phiBins, -TMath::Pi(), TMath::Pi()); listOfTH1.push_back(sublead_e_phi_reco);
+  TH1F *goodE_size_reco = new TH1F("goodE_size_reco", "size", 5, 0, 5); listOfTH1.push_back(goodE_size_reco);
+
+  TH1F *lead_mu_pt_reco = new TH1F("lead_mu_pT_reco", "p^{T}_{mu1}_reco", pTBins, lpTmin, lpTmax); listOfTH1.push_back(lead_mu_pt_reco);
+  TH1F *lead_mu_eta_reco = new TH1F("lead_mu_#eta_reco", "#eta_{mu1}_reco", etaBins, letamin, letamax); listOfTH1.push_back(lead_mu_eta_reco);
+  TH1F *lead_mu_phi_reco = new TH1F("lead_mu_#phi_reco", "#phi_{mu1}_reco", phiBins, -TMath::Pi(), TMath::Pi()); listOfTH1.push_back(lead_mu_phi_reco);
+  TH1F *sublead_mu_pt_reco = new TH1F("sublead_mu_pT_reco", "p^{T}_{mu2}_reco", pTBins, lpTmin, lpTmax); listOfTH1.push_back(sublead_mu_pt_reco);
+  TH1F *sublead_mu_eta_reco = new TH1F("sublead_mu_#eta_reco", "#eta_{mu2}_reco", etaBins, letamin, letamax); listOfTH1.push_back(sublead_mu_eta_reco);
+  TH1F *sublead_mu_phi_reco = new TH1F("sublead_mu_#phi_reco", "#phi_{mu2}_reco", phiBins, -TMath::Pi(), TMath::Pi()); listOfTH1.push_back(sublead_mu_phi_reco);
+  TH1F *goodMu_size_reco = new TH1F("goodMu_size_reco", "size", 5, 0, 5); listOfTH1.push_back(goodMu_size_reco);
+
   TH1F *hl1l2deltaPhireco = new TH1F("l1l2_#Delta#phi_reco", "#Delta#phi_{l1l2}_reco", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl1l2deltaPhireco);
   TH1F *hl3l4deltaPhireco = new TH1F("l3l4_#Delta#phi_reco", "#Delta#phi_{l3l4}_reco", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl3l4deltaPhireco);
   TH1F *hl1l2deltaPhiBoostreco = new TH1F("l1l2_#Delta#phi_Boost_reco", "#Delta#phi_{l1l2}_reco", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl1l2deltaPhiBoostreco);
@@ -442,6 +458,22 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH1F *hl3l4CScosThetareco = new TH1F("l3l4_cos#theta_{CS}_reco", "cos#theta_{CSl3l4}_reco", cosBins, -1, 1); listOfTH1.push_back(hl3l4CScosThetareco);
 
   // lepton - particle
+  TH1F *lead_e_pt_particle = new TH1F("lead_e_pT_particle", "p^{T}_{e1}_particle", pTBins, lpTmin, lpTmax); listOfTH1.push_back(lead_e_pt_particle);
+  TH1F *lead_e_eta_particle = new TH1F("lead_e_#eta_particle", "#eta_{e1}_particle", etaBins, letamin, letamax); listOfTH1.push_back(lead_e_eta_particle);
+  TH1F *lead_e_phi_particle = new TH1F("lead_e_#phi_particle", "#phi_{e1}_particle", phiBins, -TMath::Pi(), TMath::Pi()); listOfTH1.push_back(lead_e_phi_particle);
+  TH1F *sublead_e_pt_particle = new TH1F("sublead_e_pT_particle", "p^{T}_{e2}_particle", pTBins, lpTmin, lpTmax); listOfTH1.push_back(sublead_e_pt_particle);
+  TH1F *sublead_e_eta_particle = new TH1F("sublead_e_#eta_particle", "#eta_{e2}_particle", etaBins, letamin, letamax); listOfTH1.push_back(sublead_e_eta_particle);
+  TH1F *sublead_e_phi_particle = new TH1F("sublead_e_#phi_particle", "#phi_{e2}_particle", phiBins, -TMath::Pi(), TMath::Pi()); listOfTH1.push_back(sublead_e_phi_particle);
+  TH1F *goodE_size_particle = new TH1F("goodE_size_particle", "size", 5, 0, 5); listOfTH1.push_back(goodE_size_particle);
+
+  TH1F *lead_mu_pt_particle = new TH1F("lead_mu_pT_particle", "p^{T}_{mu1}_particle", pTBins, lpTmin, lpTmax); listOfTH1.push_back(lead_mu_pt_particle);
+  TH1F *lead_mu_eta_particle = new TH1F("lead_mu_#eta_particle", "#eta_{mu1}_particle", etaBins, letamin, letamax); listOfTH1.push_back(lead_mu_eta_particle);
+  TH1F *lead_mu_phi_particle = new TH1F("lead_mu_#phi_particle", "#phi_{mu1}_particle", phiBins, -TMath::Pi(), TMath::Pi()); listOfTH1.push_back(lead_mu_phi_particle);
+  TH1F *sublead_mu_pt_particle = new TH1F("sublead_mu_pT_particle", "p^{T}_{mu2}_particle", pTBins, lpTmin, lpTmax); listOfTH1.push_back(sublead_mu_pt_particle);
+  TH1F *sublead_mu_eta_particle = new TH1F("sublead_mu_#eta_particle", "#eta_{mu2}_particle", etaBins, letamin, letamax); listOfTH1.push_back(sublead_mu_eta_particle);
+  TH1F *sublead_mu_phi_particle = new TH1F("sublead_mu_#phi_particle", "#phi_{mu2}_particle", phiBins, -TMath::Pi(), TMath::Pi()); listOfTH1.push_back(sublead_mu_phi_particle);
+  TH1F *goodMu_size_particle = new TH1F("goodMu_size_particle", "size", 5, 0, 5); listOfTH1.push_back(goodMu_size_particle);
+
   TH1F *hl1l2deltaPhiparticle = new TH1F("l1l2_#Delta#phi_particle", "#Delta#phi_{l1l2}_particle", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl1l2deltaPhiparticle);
   TH1F *hl3l4deltaPhiparticle = new TH1F("l3l4_#Delta#phi_particle", "#Delta#phi_{l3l4}_particle", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl3l4deltaPhiparticle);
   TH1F *hl1l2deltaPhiBoostparticle = new TH1F("l1l2_#Delta#phi_Boost_particle", "#Delta#phi_{l1l2}_particle", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl1l2deltaPhiBoostparticle);
@@ -1210,11 +1242,36 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   int thisRecoEventType=-1;
 
-  vector<pair<int,pair<int,int>>> ZRecoPairIndices;
-  vector<pair<pair<int,int>,int>> WRecoPairIndices;
-
   vector <int> goodE_reco_indices  = GoodElectronRecoIndices(branchElectron, analysis);
   vector <int> goodMu_reco_indices = GoodMuonRecoIndices(branchMuon, analysis);
+  goodE_size_reco->Fill(goodE_reco_indices.size(),weight);
+  goodMu_size_reco->Fill(goodMu_reco_indices.size(),weight);
+
+// lep details
+
+if (goodE_reco_indices.size()>0) e1_reco = ((Electron *) branchElectron->At(goodE_reco_indices[0]))->P4();
+if (goodE_reco_indices.size()>1) e2_reco = ((Electron *) branchElectron->At(goodE_reco_indices[1]))->P4();
+if (goodMu_reco_indices.size()>0) m1_reco = ((Muon *) branchMuon->At(goodMu_reco_indices[0]))->P4();
+if (goodMu_reco_indices.size()>1) m2_reco = ((Muon *) branchMuon->At(goodMu_reco_indices[1]))->P4();
+
+  lead_e_pt_reco->Fill(e1_reco.Pt(),weight);
+  lead_e_eta_reco->Fill(e1_reco.Eta(),weight);
+  lead_e_phi_reco->Fill(e1_reco.Phi(),weight);
+  sublead_e_pt_reco->Fill(e2_reco.Pt(),weight);
+  sublead_e_eta_reco->Fill(e2_reco.Eta(),weight);
+  sublead_e_phi_reco->Fill(e2_reco.Phi(),weight);
+
+  lead_mu_pt_reco->Fill(m1_reco.Pt(),weight);
+  lead_mu_eta_reco->Fill(m1_reco.Eta(),weight);
+  lead_mu_phi_reco->Fill(m1_reco.Phi(),weight);
+  sublead_mu_pt_reco->Fill(m2_reco.Pt(),weight);
+  sublead_mu_eta_reco->Fill(m2_reco.Eta(),weight);
+  sublead_mu_phi_reco->Fill(m2_reco.Phi(),weight);
+  
+// V details
+
+  vector<pair<int,pair<int,int>>> ZRecoPairIndices;
+  vector<pair<pair<int,int>,int>> WRecoPairIndices;
 
   if(analysis == "HZZJJ"){
 
@@ -1303,7 +1360,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       if(enableCutReco["lep pT > 15 & eta < 2.5 - reco"]){
         if (switchVal_reco==0) {
-          if (goodE_reco_indices.size() > 0 || goodMu_reco_indices.size() > 0) increaseCount(cutFlowMap_reco,"lep pT > 15 & eta < 2.5 - reco",weight); 
+          if (goodE_reco_indices.size() + goodMu_reco_indices.size()  > 1) increaseCount(cutFlowMap_reco,"lep pT > 15 & eta < 2.5 - reco",weight); 
           else switchVal_reco=1;
         }
       }
@@ -1333,8 +1390,8 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       hllm_0_15_reco->Fill((l1_reco+l2_reco).M(),weight);
 
-      if(enableCutReco["mll > 12 - reco"]) {
-          if(switchVal_reco == 0 && (l1_reco+l2_reco).M() >= 12) increaseCount(cutFlowMap_reco,"mll > 12 - reco",weight);
+      if(enableCutReco["mll > 10 - reco"]) {
+          if(switchVal_reco == 0 && (l1_reco+l2_reco).M() >= 10) increaseCount(cutFlowMap_reco,"mll > 10 - reco",weight);
           else switchVal_reco = 1;
       }
 
@@ -1529,11 +1586,37 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   int thisParticleEventType=-1;
 
-  vector<pair<int,pair<int,int>>> ZParticlePairIndices;
-  vector<pair<pair<int,int>,int>> WParticlePairIndices;
 
   vector <int> goodE_particle_indices  = GoodElectronParticleIndices(branchGenParticle, analysis);
   vector <int> goodMu_particle_indices = GoodMuonParticleIndices(branchGenParticle, analysis);
+  goodE_size_particle->Fill(goodE_particle_indices.size(),weight);
+  goodMu_size_particle->Fill(goodMu_particle_indices.size(),weight);
+
+// lep details
+
+if (goodE_particle_indices.size()>0) e1_particle = ((Electron *) branchElectron->At(goodE_particle_indices[0]))->P4();
+if (goodE_particle_indices.size()>1) e2_particle = ((Electron *) branchElectron->At(goodE_particle_indices[1]))->P4();
+if (goodMu_particle_indices.size()>0) m1_particle = ((Muon *) branchMuon->At(goodMu_particle_indices[0]))->P4();
+if (goodMu_particle_indices.size()>1) m2_particle = ((Muon *) branchMuon->At(goodMu_particle_indices[1]))->P4();
+
+  lead_e_pt_particle->Fill(e1_particle.Pt(),weight);
+  lead_e_eta_particle->Fill(e1_particle.Eta(),weight);
+  lead_e_phi_particle->Fill(e1_particle.Phi(),weight);
+  sublead_e_pt_particle->Fill(e2_particle.Pt(),weight);
+  sublead_e_eta_particle->Fill(e2_particle.Eta(),weight);
+  sublead_e_phi_particle->Fill(e2_particle.Phi(),weight);
+
+  lead_mu_pt_particle->Fill(m1_particle.Pt(),weight);
+  lead_mu_eta_particle->Fill(m1_particle.Eta(),weight);
+  lead_mu_phi_particle->Fill(m1_particle.Phi(),weight);
+  sublead_mu_pt_particle->Fill(m2_particle.Pt(),weight);
+  sublead_mu_eta_particle->Fill(m2_particle.Eta(),weight);
+  sublead_mu_phi_particle->Fill(m2_particle.Phi(),weight);
+  
+// V details
+
+  vector<pair<int,pair<int,int>>> ZParticlePairIndices;
+  vector<pair<pair<int,int>,int>> WParticlePairIndices;
 
   if(analysis == "HZZJJ"){
 
@@ -1622,7 +1705,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       if(enableCutParticle["lep pT > 15 & eta < 2.5 - particle"]){
         if (switchVal_particle==0) {
-          if (goodE_particle_indices.size() > 0 || goodMu_particle_indices.size() > 0) increaseCount(cutFlowMap_particle,"lep pT > 15 & eta < 2.5 - particle",weight);
+          if (goodE_particle_indices.size() + goodMu_particle_indices.size()  > 1) increaseCount(cutFlowMap_particle,"lep pT > 15 & eta < 2.5 - particle",weight);
           else  switchVal_particle=1; 
         } 
       }
@@ -1641,8 +1724,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       particleET->Fill(thisParticleEventType,weight);
 
-      // cout << "particle event type: " << thisParticleEventType << endl; 
-
       if(enableCutParticle["OSOF - particle"]){
         if (switchVal_particle==0 && thisParticleEventType != -1) increaseCount(cutFlowMap_particle,"OSOF - particle",weight);
         else switchVal_particle=1;
@@ -1650,12 +1731,10 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       getWParticle(thisParticleEventType, WParticlePairIndices, branchGenParticle,branchMissingET, l1_particle, l2_particle, q1_particle, q2_particle, met1, met2);
 
-      // cout << "mll_particle: " << (l1_particle+l2_particle).M() << endl;
-
       hllm_0_15_particle->Fill((l1_particle+l2_particle).M(),weight);
 
-      if(enableCutParticle["mll > 12 - particle"]) {
-        if(switchVal_particle == 0 &&  (l1_particle+l2_particle).M() >= 12) increaseCount(cutFlowMap_particle,"mll > 12 - particle",weight);
+      if(enableCutParticle["mll > 10 - particle"]) {
+        if(switchVal_particle == 0 &&  (l1_particle+l2_particle).M() >= 10) increaseCount(cutFlowMap_particle,"mll > 10 - particle",weight);
         else switchVal_particle = 1;
       }
 
@@ -1750,10 +1829,11 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
         if(switchVal_parton == 0 && foundZZ) increaseCount(cutFlowMap_parton,"ZZ parton",weight);
         else switchVal_parton = 1;
       }
-      
-      getPartonZLeps(thisPartonEventType, ZPartonIndices, branchGenParticle, z1_parton, z2_parton, l1_parton, l2_parton, l3_parton, l4_parton, q1_parton, q2_parton, q3_parton, q4_parton);
+  
+      if(switchVal_parton == 0) getPartonZLeps(thisPartonEventType, ZPartonIndices, branchGenParticle, z1_parton, z2_parton, l1_parton, l2_parton, l3_parton, l4_parton, q1_parton, q2_parton, q3_parton, q4_parton);
 
       if (foundZZ){
+
         fourl_parton=l1_parton + l2_parton + l3_parton + l4_parton;
       
         l1l2deltaPhiparton=(l1_parton.Phi() > l2_parton.Phi() ? -1:+1)*TMath::Abs(l2_parton.Phi() - l1_parton.Phi());
@@ -1805,11 +1885,12 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
         else switchVal_parton = 1;
       }
 
-      getPartonWLeps(thisPartonEventType, WPartonIndices, branchGenParticle, w1_parton, w2_parton, l1_parton, l2_parton, q1_parton, q2_parton);
+      if(switchVal_parton == 0) getPartonWLeps(thisPartonEventType, WPartonIndices, branchGenParticle, w1_parton, w2_parton, l1_parton, l2_parton, q1_parton, q2_parton);
 
       partonET->Fill(thisPartonEventType,weight);
 
       if(foundWW) {
+
         l1l2deltaPhiparton=(l1_parton.Phi() > l2_parton.Phi() ? -1:+1)*TMath::Abs(l2_parton.Phi() - l1_parton.Phi());
         l1l2deltaEtaparton=(l1_parton.Eta() > l2_parton.Eta() ? -1:+1)*TMath::Abs(l2_parton.Eta() - l1_parton.Eta());
         l1l2deltaRparton=sqrt((l1l2deltaPhiparton*l1l2deltaPhiparton)+(l1l2deltaEtaparton*l1l2deltaEtaparton));
@@ -1832,7 +1913,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
         double wwdeltaRparton=sqrt((wwdeltaPhiparton*zzdeltaPhiparton)+(wwdeltaEtaparton*zzdeltaEtaparton));
       }
     }
-  
+
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // PRINT CFT 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------

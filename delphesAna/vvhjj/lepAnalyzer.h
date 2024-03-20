@@ -189,8 +189,6 @@ vector <int> GoodMuonParticleIndices(TClonesArray *branchGenParticle=nullptr, st
     
 }
 
-
-
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Z 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -934,8 +932,8 @@ void getWParticle(int& thisParticleEventType,  const vector<pair<pair<int,int>,i
 }
 
 
-void getPartonWLeps(int& thisPartonEventType, vector <int> WPartonIndices, TClonesArray *branchGenParticle,   TLorentzVector &w1_parton,  TLorentzVector &w2_parton, TLorentzVector &l1_parton,  TLorentzVector &l2_parton, int& q1_parton, int& q2_parton){
-  
+void getPartonWLeps(int& thisPartonEventType, vector <int> &WPartonIndices, TClonesArray *branchGenParticle,   TLorentzVector &w1_parton,  TLorentzVector &w2_parton, TLorentzVector &l1_parton,  TLorentzVector &l2_parton, int& q1_parton, int& q2_parton){
+
   vector <int> W1childrenIndices;
   vector <int> W2childrenIndices;
 
