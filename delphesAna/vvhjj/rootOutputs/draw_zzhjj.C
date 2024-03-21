@@ -89,12 +89,12 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   double lumiScaling = 10;
   
   // change lumi if desired
-  sig_hist->Scale(lumiScaling*0.000013); //*0.000013 for W
+  sig_hist->Scale(lumiScaling); //*0.000013 for W
   ttbar_hist->Scale(lumiScaling);
   diboson_hist->Scale(lumiScaling);
   ttHbb_hist->Scale(lumiScaling);
   drellyan_hist->Scale(lumiScaling);
-  sigClone->Scale(lumiScaling*0.000013); //*0.000013 for W    
+  sigClone->Scale(lumiScaling); //*0.000013 for W    
 
   // rebin if desired
   sig_hist->Rebin(1);
@@ -153,10 +153,10 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   sigClone->Scale(100000);
   sigClone->SetLineColor(kBlack);
   //sigClone->SetFillColor(kWhite);
-  //legend->AddEntry(sigClone, "Signal x 1000000", "l");
+  legend->AddEntry(sigClone, "Signal x 100000", "l");
   sigClone->SetLineWidth(2);
-  //  sigClone->Draw("hist same");
-  cout <<" Output folder "<<outputFolder<<endl;
+  sigClone->Draw("hist same");
+  // cout <<" Output folder "<<outputFolder<<endl;
   
   TString nameOut(name);
   nameOut.ReplaceAll(" ","_");
