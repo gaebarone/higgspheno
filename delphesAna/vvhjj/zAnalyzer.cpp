@@ -499,6 +499,10 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH1F *hl3l4CScosThetaparticle = new TH1F("l3l4_cos#theta_{CS}_particle", "cos#theta_{CSl3l4}_particle", cosBins, -1, 1); listOfTH1.push_back(hl3l4CScosThetaparticle);
 
   // lepton - parton
+
+  TH1F *goodE_size_parton = new TH1F("goodE_size_parton", "size", 5, 0, 5); listOfTH1.push_back(goodE_size_parton);
+  TH1F *goodMu_size_parton = new TH1F("goodMu_size_parton", "size", 5, 0, 5); listOfTH1.push_back(goodMu_size_parton);
+  
   TH1F *hl1l2deltaPhiparton = new TH1F("l1l2_#Delta#phi_parton", "#Delta#phi_{l1l2}_parton", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl1l2deltaPhiparton);
   TH1F *hl3l4deltaPhiparton = new TH1F("l3l4_#Delta#phi_parton", "#Delta#phi_{l3l4}_parton", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl3l4deltaPhiparton);
   TH1F *hl1l2deltaPhiBoostparton = new TH1F("l1l2_#Delta#phi_Boost_parton", "#Delta#phi_{l1l2}_parton", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl1l2deltaPhiBoostparton);
@@ -645,9 +649,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   //TProfile *kappaLambda = new TProfile("kappaLambda", "kappaLambda", 40, -20, 20);
   // kappaLambda -> GetXaxis() -> SetTitle("#kappa_{#lambda}");
 
-  TH1F *recoET = new TH1F("reco_event_type", "ET", 5, -1, 3); listOfTH1.push_back(recoET);
-  TH1F *particleET = new TH1F("particle_event_type", "ET", 5, -1, 3); listOfTH1.push_back(particleET);
-  TH1F *partonET = new TH1F("parton_event_type", "ET", 5, -1, 3); listOfTH1.push_back(partonET);
+  TH1F *recoET = new TH1F("reco_event_type", "ET", 5, -1, 4); listOfTH1.push_back(recoET);
+  TH1F *particleET = new TH1F("particle_event_type", "ET", 5, -1, 4); listOfTH1.push_back(particleET);
+  TH1F *partonET = new TH1F("parton_event_type", "ET", 5, -1, 4); listOfTH1.push_back(partonET);
 
 
 
@@ -1377,7 +1381,11 @@ if (goodMu_reco_indices.size()>1) m2_reco = ((Muon *) branchMuon->At(goodMu_reco
 
     recoET->Fill(thisRecoEventType,weight);
 
-    // cout << "reco event type: " << thisRecoEventType << endl; 
+    cout << "reco event type: " << thisRecoEventType << " event number "<< entry << endl; 
+    cout << "Electron size " << branchElectron->GetEntries()<<endl;
+    cout << " Good electron size "<<goodE_reco_indices.size()<<endl;
+    cout << " Muon size " << branchMuon->GetEntries()<<endl;
+    cout << " Good muon size "<<goodMu_reco_indices.size()<<endl;
 
       if(enableCutReco["OSOF - reco"]){
         if (switchVal_reco==0 && thisRecoEventType != -1) increaseCount(cutFlowMap_reco, "OSOF - reco", weight);
@@ -1646,7 +1654,7 @@ if (goodMu_particle_indices.size()>1) m2_particle = ((GenParticle *) branchGenPa
     }
 
     particleET->Fill(thisParticleEventType,weight);
-
+    
     getParticleZLeps(thisParticleEventType, ZParticlePairIndices, branchGenParticle, l1_particle, l2_particle, l3_particle, l4_particle, q1_particle, q2_particle, q3_particle, q4_particle);
 
     if( switchVal_particle == 0 && thisParticleEventType != -1 && ZParticlePairIndices.size() >= 2 ){
@@ -1723,6 +1731,14 @@ if (goodMu_particle_indices.size()>1) m2_particle = ((GenParticle *) branchGenPa
       }
 
       particleET->Fill(thisParticleEventType,weight);
+
+      cout << "-------------------------------------------------------------------------"<< endl;
+
+      cout << "PARTICLE event type: " << thisParticleEventType << " event number "<< entry << endl;
+      cout << " PARTICLE Good electron size "<< goodE_particle_indices.size() << endl;
+      cout << " PARTICLE Good muon size "<< goodMu_particle_indices.size() << endl;
+
+      cout << "-------------------------------------------------------------------------"<< endl;
 
       if(enableCutParticle["OSOF - particle"]){
         if (switchVal_particle==0 && thisParticleEventType != -1) increaseCount(cutFlowMap_particle,"OSOF - particle",weight);
@@ -1813,6 +1829,11 @@ if (goodMu_particle_indices.size()>1) m2_particle = ((GenParticle *) branchGenPa
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     int thisPartonEventType=-1;
+
+    vector <int> goodE_parton_indices  = GoodElectronPartonIndices(branchGenParticle, analysis);
+    vector <int> goodMu_parton_indices = GoodMuonPartonIndices(branchGenParticle, analysis);
+    goodE_size_parton->Fill(goodE_parton_indices.size(),weight);
+    goodMu_size_parton->Fill(goodMu_parton_indices.size(),weight);
 
     vector <int> ZPartonIndices;
     vector <int> WPartonIndices;

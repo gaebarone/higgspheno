@@ -16,9 +16,9 @@ import os
 #directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 5
 #selection_list = ['HWWJJ']
 
-process_list = ['wpwmhqq'] 
+process_list = ['zzhqq'] 
 directory_list = ['/isilon/data/common/sellis9/vvhjjCondor/loopsm/qq/'] * 1
-selection_list = ['HWWJJ'] 
+selection_list = ['HZZJJ'] 
 
 def generate_file_list(directory_path, output_file):
         with open(output_file, 'w') as file:

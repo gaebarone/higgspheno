@@ -27,7 +27,7 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
 
   TH1F *sigClone=(TH1F*)sig_hist->Clone("sigClone");
 
-  double lumiScaling = 10;
+  double lumiScaling = 1;
   
   // change lumi if desired
   sig_hist->Scale(lumiScaling); //*0.000013 for W
@@ -94,11 +94,10 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   sigClone->Scale(100000);
   sigClone->SetLineColor(kBlack);
   //sigClone->SetFillColor(kWhite);
-  //legend->AddEntry(sigClone, "Signal x 1000000", "l");
-  sigClone->SetLineWidth(2);
-  //  sigClone->Draw("hist same");
-  cout <<" Output folder "<<outputFolder<<endl;
-  
+  legend->AddEntry(sigClone, "Signal x 100000", "l");
+  //sigClone->SetLineWidth(2);
+  sigClone->Draw("hist same");
+    
   TString nameOut(name);
   nameOut.ReplaceAll(" ","_");
   nameOut.ReplaceAll("#","");

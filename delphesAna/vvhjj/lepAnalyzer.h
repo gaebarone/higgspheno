@@ -53,6 +53,10 @@ void remove_overlaps(vector< pair<int,int>> muPairIndices){
   }
 }
 
+int goodE_pT_min = 5;
+int goodMu_pT_min = 5;
+int goodE_eta_max = 2.5;
+int goodMu_eta_max = 2.5;
 
 vector <int> GoodElectronRecoIndices(TClonesArray *branchElectron=nullptr, string analysis="HZZJJ"){
 
@@ -67,11 +71,11 @@ vector <int> GoodElectronRecoIndices(TClonesArray *branchElectron=nullptr, strin
       // pT and eta cuts 
       if( analysis == "HZZJJ" || analysis == "ZZJJ" ){
 
-        if( el_reco->PT > 5.0 && fabs(el_reco->Eta) < 2.5) goodE_reco_indices.push_back(i);
+        if( el_reco->PT > goodE_pT_min && fabs(el_reco->Eta) < goodE_eta_max) goodE_reco_indices.push_back(i);
 
       } else if( analysis == "HWWJJ" || analysis == "WWJJ" ){
 
-        if( el_reco->PT > 15.0 && fabs(el_reco->Eta) < 2.5) goodE_reco_indices.push_back(i);
+        if( el_reco->PT > goodE_pT_min  && fabs(el_reco->Eta) < goodE_eta_max) goodE_reco_indices.push_back(i);
 
       }
     }
@@ -98,11 +102,11 @@ vector <int> GoodElectronParticleIndices(TClonesArray *branchGenParticle=nullptr
 
       if( analysis == "HZZJJ" || analysis == "ZZJJ "){
 
-        if( particle->PT > 5 && fabs(particle->Eta) < 2.5 ) goodE_particle_indices.push_back(i);
+        if( particle->PT > goodE_pT_min && fabs(particle->Eta) < goodE_eta_max ) goodE_particle_indices.push_back(i);
 
       } else if( analysis == "HWWJJ" || analysis == "WWJJ" ) {
         
-        if( particle->PT > 15 && fabs(particle->Eta) < 2.5 ) goodE_particle_indices.push_back(i);
+        if( particle->PT > goodE_pT_min && fabs(particle->Eta) < goodE_eta_max ) goodE_particle_indices.push_back(i);
 
       }  
 
@@ -121,6 +125,41 @@ vector <int> GoodElectronParticleIndices(TClonesArray *branchGenParticle=nullptr
 
 }
 
+vector <int> GoodElectronPartonIndices(TClonesArray *branchGenParticle=nullptr, string analysis="HZZJJ") {
+
+  vector <int> goodE_parton_indices;
+
+  for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
+
+    GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
+
+    if( particle->Status !=1 ) continue;
+
+    if( analysis == "HZZJJ" || analysis == "ZZJJ "){
+
+      if( fabs(particle->PID) == 11 && particle->PT > goodE_pT_min && fabs(particle->Eta) < goodE_eta_max ) goodE_parton_indices.push_back(i);
+
+    } else if( analysis == "HWWJJ" || analysis == "WWJJ" ) {
+
+      if( fabs(particle->PID) == 11 && particle->PT > goodE_pT_min && fabs(particle->Eta) < goodE_eta_max ) goodE_parton_indices.push_back(i);
+
+    }
+
+    //GenParticle *parent=find_parent(branchGenParticle,particle,particle->PID);                                                                                                                                                                                              
+    //if(parent == nullptr) continue;                                                                                                                                                                                                                                         
+    //cout<<" --> Parent "<<parent->PID<<endl;                                                                                                                                                                                                                                
+    //if( abs(parent->PID) != 22 &&  abs(parent->PID)!=23  &&  abs(parent->PID)!= 25 ) continue;                                                                                                                                                                              
+
+    // sort the indices by pT ;                                                                                                                                                                                                                                               
+    sort(goodE_parton_indices.begin(), goodE_parton_indices.end(), [branchGenParticle](const int& lhs, const int& rhs) {
+	return ((GenParticle*) branchGenParticle->At(lhs))->PT > ((GenParticle*) branchGenParticle->At(rhs))->PT;
+      });
+  }
+
+  return goodE_parton_indices;
+
+}
+
 
 vector <int> GoodMuonRecoIndices(TClonesArray *branchMuon=nullptr, string analysis="HZZJJ"){
 
@@ -135,11 +174,11 @@ vector <int> GoodMuonRecoIndices(TClonesArray *branchMuon=nullptr, string analys
       // pT and eta cuts 
       if( analysis == "HZZJJ" || analysis == "ZZJJ" ){
 
-        if( mu_reco->PT > 5.0 && fabs(mu_reco->Eta) < 2.5) goodMu_reco_indices.push_back(i);
+        if( mu_reco->PT > goodMu_pT_min && fabs(mu_reco->Eta) < goodMu_eta_max) goodMu_reco_indices.push_back(i);
 
       } else if( analysis == "HWWJJ" || analysis == "WWJJ" ){
 
-        if( mu_reco->PT > 15.0 && fabs(mu_reco->Eta) < 2.5) goodMu_reco_indices.push_back(i);
+        if( mu_reco->PT > goodMu_pT_min && fabs(mu_reco->Eta) < goodMu_eta_max) goodMu_reco_indices.push_back(i);
 
       }
     }
@@ -166,11 +205,11 @@ vector <int> GoodMuonParticleIndices(TClonesArray *branchGenParticle=nullptr, st
 
       if( analysis == "HZZJJ" || analysis == "ZZJJ "){
 
-        if( particle->PT > 5 && fabs(particle->Eta) < 2.5 ) goodMu_particle_indices.push_back(i);
+        if( particle->PT > goodMu_pT_min && fabs(particle->Eta) < goodMu_eta_max ) goodMu_particle_indices.push_back(i);
 
       } else if( analysis == "HWWJJ" || analysis == "WWJJ" ) {
         
-        if( particle->PT > 15 && fabs(particle->Eta) < 2.5 ) goodMu_particle_indices.push_back(i);
+        if( particle->PT > goodMu_pT_min && fabs(particle->Eta) < goodMu_eta_max ) goodMu_particle_indices.push_back(i);
 
       }  
 
@@ -187,6 +226,41 @@ vector <int> GoodMuonParticleIndices(TClonesArray *branchGenParticle=nullptr, st
 
     return goodMu_particle_indices;
     
+}
+
+vector <int> GoodMuonPartonIndices(TClonesArray *branchGenParticle=nullptr, string analysis="HZZJJ"){
+
+  vector <int> goodMu_parton_indices;
+
+  for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
+
+    GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
+
+    if( particle->Status !=1 ) continue;
+
+    if( analysis == "HZZJJ" || analysis == "ZZJJ "){
+
+      if( fabs(particle->PID) == 13 && particle->PT > goodMu_pT_min && fabs(particle->Eta) < goodMu_eta_max ) goodMu_parton_indices.push_back(i);
+
+    } else if( analysis == "HWWJJ" || analysis == "WWJJ" ) {
+
+      if( fabs(particle->PID) == 13 && particle->PT > goodMu_pT_min && fabs(particle->Eta) < goodMu_eta_max ) goodMu_parton_indices.push_back(i);
+
+    }
+
+    //GenParticle *parent=find_parent(branchGenParticle,particle,particle->PID);                                                                                                                                                                                              
+    //if(parent == nullptr) continue;                                                                                                                                                                                                                                         
+    //cout<<" --> Parent "<<parent->PID<<endl;                                                                                                                                                                                                                                
+    //if( abs(parent->PID) != 22 &&  abs(parent->PID)!=23  &&  abs(parent->PID)!= 25 ) continue;                                                                                                                                                                              
+
+    // sort the indices by pT ;                                                                                                                                                                                                                                               
+    sort(goodMu_parton_indices.begin(), goodMu_parton_indices.end(), [branchGenParticle](const int& lhs, const int& rhs) {
+	return ((GenParticle*) branchGenParticle->At(lhs))->PT > ((GenParticle*) branchGenParticle->At(rhs))->PT;
+      });
+  }
+
+  return goodMu_parton_indices;
+
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -638,7 +712,7 @@ void getParticleZLeps(int& thisParticleEventType,  const vector<pair<int,pair<in
 }
 
 void getPartonZLeps(int thisPartonEventType, vector <int> ZPartonIndices, TClonesArray *branchGenParticle,   TLorentzVector &z1_parton,  TLorentzVector &z2_parton, TLorentzVector &l1_parton,  TLorentzVector &l2_parton,  TLorentzVector& l3_parton,  TLorentzVector& l4_parton, int& q1_parton, int& q2_parton, int& q3_parton, int& q4_parton){
-  
+
   vector <int> Z1children;
   Z1children.push_back( ((GenParticle*)branchGenParticle->At(ZPartonIndices[0]))->D1 ); 
   Z1children.push_back( ((GenParticle*)branchGenParticle->At(ZPartonIndices[0]))->D2 ); 
@@ -665,7 +739,7 @@ void getPartonZLeps(int thisPartonEventType, vector <int> ZPartonIndices, TClone
   q2_parton = ((GenParticle*) branchGenParticle->At(Z1children[1]))->Charge;
   q3_parton = ((GenParticle*) branchGenParticle->At(Z2children[0]))->Charge;
   q4_parton = ((GenParticle*) branchGenParticle->At(Z2children[1]))->Charge;
-    
+
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
