@@ -1246,17 +1246,26 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   int thisRecoEventType=-1;
 
-  vector <int> goodE_reco_indices  = GoodElectronRecoIndices(branchElectron, analysis);
-  vector <int> goodMu_reco_indices = GoodMuonRecoIndices(branchMuon, analysis);
+  // get e+e- mu+mu-
+  vector <int> goodE_min_reco_indices = get_good_reco_lepton_indices(branchElectron, 15, 2.5, analysis, "electron", -1);
+  vector <int> goodE_plus_reco_indices = get_good_reco_lepton_indices(branchElectron, 15, 2.5, analysis, "electron", 1);
+  vector <int> goodMu_min_reco_indices = get_good_reco_lepton_indices(branchMuon, 15, 2.5, analysis, "muon", -1);
+  vector <int> goodMu_plus_reco_indices = get_good_reco_lepton_indices(branchMuon, 15, 2.5, analysis, "muon", 1);
+
+  // e = e+ & e- , mu = mu+ & mu-
+  vector<int> goodE_reco_indices(goodE_min_reco_indices);
+  goodE_reco_indices.insert(goodE_reco_indices.end(), goodE_plus_reco_indices.begin(), goodE_plus_reco_indices.end());
+  vector<int> goodMu_reco_indices(goodMu_min_reco_indices);
+  goodMu_reco_indices.insert(goodMu_reco_indices.end(), goodMu_plus_reco_indices.begin(), goodMu_plus_reco_indices.end());
+
   goodE_size_reco->Fill(goodE_reco_indices.size(),weight);
   goodMu_size_reco->Fill(goodMu_reco_indices.size(),weight);
 
-// lep details
-
-if (goodE_reco_indices.size()>0) e1_reco = ((Electron *) branchElectron->At(goodE_reco_indices[0]))->P4();
-if (goodE_reco_indices.size()>1) e2_reco = ((Electron *) branchElectron->At(goodE_reco_indices[1]))->P4();
-if (goodMu_reco_indices.size()>0) m1_reco = ((Muon *) branchMuon->At(goodMu_reco_indices[0]))->P4();
-if (goodMu_reco_indices.size()>1) m2_reco = ((Muon *) branchMuon->At(goodMu_reco_indices[1]))->P4();
+  // lep details
+  if (goodE_reco_indices.size()>0) e1_reco = ((Electron *) branchElectron->At(goodE_reco_indices[0]))->P4();
+  if (goodE_reco_indices.size()>1) e2_reco = ((Electron *) branchElectron->At(goodE_reco_indices[1]))->P4();
+  if (goodMu_reco_indices.size()>0) m1_reco = ((Muon *) branchMuon->At(goodMu_reco_indices[0]))->P4();
+  if (goodMu_reco_indices.size()>1) m2_reco = ((Muon *) branchMuon->At(goodMu_reco_indices[1]))->P4();
 
   lead_e_pt_reco->Fill(e1_reco.Pt(),weight);
   lead_e_eta_reco->Fill(e1_reco.Eta(),weight);
@@ -1279,7 +1288,7 @@ if (goodMu_reco_indices.size()>1) m2_reco = ((Muon *) branchMuon->At(goodMu_reco
 
   if(analysis == "HZZJJ"){
 
-    if(enableCutReco["lep pT > 5 & eta < 2.5 - reco"]){
+    if(enableCutReco["lep pT > 15 & eta < 2.5 - reco"]){
       if (switchVal_reco==0) {
        if (goodE_reco_indices.size() > 0 || goodMu_reco_indices.size() > 0) increaseCount(cutFlowMap_reco,"lep pT > 5 & eta < 2.5 - reco",weight);
       } 
@@ -1381,11 +1390,11 @@ if (goodMu_reco_indices.size()>1) m2_reco = ((Muon *) branchMuon->At(goodMu_reco
 
     recoET->Fill(thisRecoEventType,weight);
 
-    cout << "reco event type: " << thisRecoEventType << " event number "<< entry << endl; 
-    cout << "Electron size " << branchElectron->GetEntries()<<endl;
-    cout << " Good electron size "<<goodE_reco_indices.size()<<endl;
-    cout << " Muon size " << branchMuon->GetEntries()<<endl;
-    cout << " Good muon size "<<goodMu_reco_indices.size()<<endl;
+    //cout << "reco event type: " << thisRecoEventType << " event number "<< entry << endl; 
+    //cout << "Electron size " << branchElectron->GetEntries()<<endl;
+    //cout << " Good electron size "<<goodE_reco_indices.size()<<endl;
+    //cout << " Muon size " << branchMuon->GetEntries()<<endl;
+    //cout << " Good muon size "<<goodMu_reco_indices.size()<<endl;
 
       if(enableCutReco["OSOF - reco"]){
         if (switchVal_reco==0 && thisRecoEventType != -1) increaseCount(cutFlowMap_reco, "OSOF - reco", weight);
@@ -1594,18 +1603,29 @@ if (goodMu_reco_indices.size()>1) m2_reco = ((Muon *) branchMuon->At(goodMu_reco
 
   int thisParticleEventType=-1;
 
+  // get e+e- mu+mu-
+  vector <int> goodE_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, 15, 2.5, analysis, 11);
+  vector <int> goodE_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle, 15, 2.5, analysis, -11);
+  vector <int> goodMu_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, 15, 2.5, analysis, 13);
+  vector <int> goodMu_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle, 15, 2.5, analysis, -13);
 
-  vector <int> goodE_particle_indices  = GoodElectronParticleIndices(branchGenParticle, analysis);
-  vector <int> goodMu_particle_indices = GoodMuonParticleIndices(branchGenParticle, analysis);
+  // e = e+ & e- , mu = mu+ & mu- 
+  vector<int> goodE_particle_indices(goodE_min_particle_indices);
+  goodE_particle_indices.insert(goodE_particle_indices.end(), goodE_plus_particle_indices.begin(), goodE_plus_particle_indices.end());
+  vector<int> goodMu_particle_indices(goodMu_min_particle_indices);
+  goodMu_particle_indices.insert(goodMu_particle_indices.end(), goodMu_plus_particle_indices.begin(), goodMu_plus_particle_indices.end());
+
   goodE_size_particle->Fill(goodE_particle_indices.size(),weight);
   goodMu_size_particle->Fill(goodMu_particle_indices.size(),weight);
 
 // lep details
 
-if (goodE_particle_indices.size()>0) e1_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[0]))->P4();
-if (goodE_particle_indices.size()>1) e2_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[1]))->P4();
-if (goodMu_particle_indices.size()>0) m1_particle = ((GenParticle *) branchGenParticle->At(goodMu_particle_indices[0]))->P4();
-if (goodMu_particle_indices.size()>1) m2_particle = ((GenParticle *) branchGenParticle->At(goodMu_particle_indices[1]))->P4();
+cout << "E/Mu: " << goodE_particle_indices.size() << "/" << goodMu_particle_indices.size() << endl;
+
+  if (goodE_particle_indices.size()>0) e1_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[0]))->P4();
+  if (goodE_particle_indices.size()>1) e2_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[1]))->P4();
+  if (goodMu_particle_indices.size()>0) m1_particle = ((GenParticle *) branchGenParticle->At(goodMu_particle_indices[0]))->P4();
+  if (goodMu_particle_indices.size()>1) m2_particle = ((GenParticle *) branchGenParticle->At(goodMu_particle_indices[1]))->P4();
 
   lead_e_pt_particle->Fill(e1_particle.Pt(),weight);
   lead_e_eta_particle->Fill(e1_particle.Eta(),weight);
@@ -1628,7 +1648,7 @@ if (goodMu_particle_indices.size()>1) m2_particle = ((GenParticle *) branchGenPa
 
   if(analysis == "HZZJJ"){
 
-    if(enableCutParticle["lep pT > 5 & eta < 2.5 - particle"]){
+    if(enableCutParticle["lep pT > 15 & eta < 2.5 - particle"]){
       if (switchVal_particle==0) {
        if (goodE_particle_indices.size() > 0 || goodMu_particle_indices.size() > 0) increaseCount(cutFlowMap_particle,"lep pT > 5 & eta < 2.5 - particle",weight);
       } 
@@ -1718,34 +1738,40 @@ if (goodMu_particle_indices.size()>1) m2_particle = ((GenParticle *) branchGenPa
         } 
       }
 
-      // lep pt eta phi here 
-
-      WParticlePairIndices = GetWParticlePairIndices(goodE_particle_indices, goodMu_particle_indices, branchGenParticle, branchMissingET);
+      // WParticlePairIndices = GetWParticlePairIndices(goodE_particle_indices, goodMu_particle_indices, branchGenParticle, branchMissingET);
 
       // FOR OFOS SWITCH mu mu / e e EVENT TYPE TO -1
-      if( switchVal_particle==0 && WParticlePairIndices.size()>=2){
-          if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 0; // mu mu
-          else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 1; // e e
-          else if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 2; // mu e
-          else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 3; // e mu
+      if( switchVal_particle==0 && goodE_particle_indices.size() + goodMu_particle_indices.size() >= 2){
+
+        if (goodMu_min_particle_indices.size() > 0 && goodMu_plus_particle_indices.size() > 0) thisParticleEventType = 0;
+        if (goodE_min_particle_indices.size() > 0 && goodE_plus_particle_indices.size() > 0) thisParticleEventType = 1;
+        if (goodMu_min_particle_indices.size() > 0 && goodE_plus_particle_indices.size() > 0) thisParticleEventType = 2;
+        if (goodE_min_particle_indices.size() > 0 && goodMu_plus_particle_indices.size() > 0) thisParticleEventType = 3;
+
+          // if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 0; // mu mu
+          // else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 1; // e e
+          // else if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 2; // mu e
+          // else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 3; // e mu
       }
+
+      cout << thisParticleEventType << endl;
 
       particleET->Fill(thisParticleEventType,weight);
 
-      cout << "-------------------------------------------------------------------------"<< endl;
+      //cout << "-------------------------------------------------------------------------"<< endl;
 
-      cout << "PARTICLE event type: " << thisParticleEventType << " event number "<< entry << endl;
-      cout << " PARTICLE Good electron size "<< goodE_particle_indices.size() << endl;
-      cout << " PARTICLE Good muon size "<< goodMu_particle_indices.size() << endl;
+      //cout << "PARTICLE event type: " << thisParticleEventType << " event number "<< entry << endl;
+      //cout << " PARTICLE Good electron size "<< goodE_particle_indices.size() << endl;
+      //cout << " PARTICLE Good muon size "<< goodMu_particle_indices.size() << endl;
 
-      cout << "-------------------------------------------------------------------------"<< endl;
+      //cout << "-------------------------------------------------------------------------"<< endl;
 
       if(enableCutParticle["OSOF - particle"]){
         if (switchVal_particle==0 && thisParticleEventType != -1) increaseCount(cutFlowMap_particle,"OSOF - particle",weight);
         else switchVal_particle=1;
       }
 
-      getWParticle(thisParticleEventType, WParticlePairIndices, branchGenParticle,branchMissingET, l1_particle, l2_particle, q1_particle, q2_particle, met1, met2);
+      //getWParticle(thisParticleEventType, WParticlePairIndices, branchGenParticle,branchMissingET, l1_particle, l2_particle, q1_particle, q2_particle, met1, met2);
 
       hllm_0_15_particle->Fill((l1_particle+l2_particle).M(),weight);
 

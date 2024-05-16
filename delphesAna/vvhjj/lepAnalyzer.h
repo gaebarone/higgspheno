@@ -53,41 +53,102 @@ void remove_overlaps(vector< pair<int,int>> muPairIndices){
   }
 }
 
+void sort_by_pT(vector<int> lep_indices, TClonesArray *branchElectron=nullptr, string branchName="Electron"){
+
+  if (branchName == "Electron") {
+      sort(lep_indices.begin(), lep_indices.end(), [branchElectron](const int& lhs, const int& rhs) {
+        return ((Electron*)branchElectron->At(lhs))->PT > ((Electron*)branchElectron->At(rhs))->PT;
+      });
+  } else if (branchName == "Muon") {
+      sort(lep_indices.begin(), lep_indices.end(), [branchElectron](const int& lhs, const int& rhs) {
+        return ((Muon*)branchElectron->At(lhs))->PT > ((Muon*)branchElectron->At(rhs))->PT;
+      });
+  } else if (branchName == "GenParticle") {
+      sort(lep_indices.begin(), lep_indices.end(), [branchElectron](const int& lhs, const int& rhs) {
+        return ((GenParticle*)branchElectron->At(lhs))->PT > ((GenParticle*)branchElectron->At(rhs))->PT;
+      });
+  } else throw std::runtime_error("Unknown branchName: " + branchName);
+
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+vector<int> get_good_reco_lepton_indices(TClonesArray *branchElectron=nullptr, int pTmin=15, int etaMax=2.5, string analysis="HZZJJ", string lepType="electron", int charge=-1) {
+
+vector <int> lep_indices;
+
+  if( branchElectron == nullptr) return lep_indices;
+
+  for(int i=0; i<(int)branchElectron->GetEntries(); i++){
+
+      if (lepType == "electron") {
+
+            Electron *lep_reco = (Electron *)branchElectron->At(i);
+
+            if (analysis == "HZZJJ" || analysis == "ZZJJ") {
+                if (lep_reco->PT > pTmin && fabs(lep_reco->Eta) < etaMax && lep_reco->Charge == charge) lep_indices.push_back(i);
+            } else if (analysis == "HWWJJ" || analysis == "WWJJ") {
+                if (lep_reco->PT > pTmin && fabs(lep_reco->Eta) < etaMax && lep_reco->Charge == charge) lep_indices.push_back(i);
+            }
+ 
+        } else if (lepType == "muon") {
+
+            Muon *lep_reco = (Muon *)branchElectron->At(i);
+
+            if (analysis == "HZZJJ" || analysis == "ZZJJ") {
+                if (lep_reco->PT > pTmin && fabs(lep_reco->Eta) < etaMax && lep_reco->Charge == charge) lep_indices.push_back(i);
+            } else if (analysis == "HWWJJ" || analysis == "WWJJ") {
+                if (lep_reco->PT > pTmin && fabs(lep_reco->Eta) < etaMax && lep_reco->Charge == charge) lep_indices.push_back(i);
+            }
+
+        }
+    }
+  
+    // sort the indices by pT
+    if ( lepType == "electron" ) sort_by_pT(lep_indices, branchElectron, "Electron");
+    if ( lepType == "muon" ) sort_by_pT(lep_indices, branchElectron, "Muon");
+
+    return lep_indices; 
+  
+  }
+
+
+vector<int> get_good_particle_lepton_indices(TClonesArray *branchGenParticle=nullptr, int pTmin=15, int etaMax=2.5, string analysis="HZZJJ", int pid=11) {
+
+vector <int> lep_indices;
+
+  if( branchGenParticle == nullptr) return lep_indices;
+
+  for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
+
+    
+    GenParticle *lep_particle = (GenParticle *)branchGenParticle->At(i);
+
+    if( lep_particle->Status !=1 ) continue;
+
+      if (analysis == "HZZJJ" || analysis == "ZZJJ") {
+          if (lep_particle->PT > pTmin && fabs(lep_particle->Eta) < etaMax && lep_particle->PID == pid) lep_indices.push_back(i);
+      } else if (analysis == "HWWJJ" || analysis == "WWJJ") {
+          if (lep_particle->PT > pTmin && fabs(lep_particle->Eta) < etaMax && lep_particle->PID == pid) lep_indices.push_back(i);
+      }
+
+    }
+  
+    // sort the indices by pT
+    sort_by_pT(lep_indices, branchGenParticle, "GenParticle");
+
+    return lep_indices; 
+  
+  }
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 int goodE_pT_min = 5;
 int goodMu_pT_min = 5;
 int goodE_eta_max = 2.5;
 int goodMu_eta_max = 2.5;
 
-vector <int> GoodElectronRecoIndices(TClonesArray *branchElectron=nullptr, string analysis="HZZJJ"){
-
-    vector <int> goodE_reco_indices;
-
-    if( branchElectron == nullptr) return goodE_reco_indices;
-
-    for(int i=0; i<(int)branchElectron->GetEntries(); i++){
-
-      Electron *el_reco = (Electron *) branchElectron->At(i);
-
-      // pT and eta cuts 
-      if( analysis == "HZZJJ" || analysis == "ZZJJ" ){
-
-        if( el_reco->PT > goodE_pT_min && fabs(el_reco->Eta) < goodE_eta_max) goodE_reco_indices.push_back(i);
-
-      } else if( analysis == "HWWJJ" || analysis == "WWJJ" ){
-
-        if( el_reco->PT > goodE_pT_min  && fabs(el_reco->Eta) < goodE_eta_max) goodE_reco_indices.push_back(i);
-
-      }
-    }
-
-    // sort the indices by pT ;
-    sort(goodE_reco_indices.begin(), goodE_reco_indices.end(), [branchElectron](const int& lhs, const int& rhs) {
-      return ((Electron*)branchElectron->At(lhs))->PT > ((Electron*)branchElectron->At(rhs))->PT;
-    });
-  
-    return goodE_reco_indices; 
-  
-}
 
 vector <int> GoodElectronParticleIndices(TClonesArray *branchGenParticle=nullptr, string analysis="HZZJJ") {
 
@@ -158,38 +219,6 @@ vector <int> GoodElectronPartonIndices(TClonesArray *branchGenParticle=nullptr, 
 
   return goodE_parton_indices;
 
-}
-
-
-vector <int> GoodMuonRecoIndices(TClonesArray *branchMuon=nullptr, string analysis="HZZJJ"){
-
-    vector <int> goodMu_reco_indices;
-
-    if( branchMuon==nullptr) return goodMu_reco_indices;
-
-    for(int i=0; i<(int)branchMuon->GetEntries(); i++){
-
-      Muon *mu_reco = (Muon *) branchMuon->At(i);
-
-      // pT and eta cuts 
-      if( analysis == "HZZJJ" || analysis == "ZZJJ" ){
-
-        if( mu_reco->PT > goodMu_pT_min && fabs(mu_reco->Eta) < goodMu_eta_max) goodMu_reco_indices.push_back(i);
-
-      } else if( analysis == "HWWJJ" || analysis == "WWJJ" ){
-
-        if( mu_reco->PT > goodMu_pT_min && fabs(mu_reco->Eta) < goodMu_eta_max) goodMu_reco_indices.push_back(i);
-
-      }
-    }
-
-    // sort the indices by pT ;
-    sort(goodMu_reco_indices.begin(), goodMu_reco_indices.end(), [branchMuon](const int& lhs, const int& rhs) {
-      return ((Muon*)branchMuon->At(lhs))->PT > ((Muon*)branchMuon->At(rhs))->PT;
-    });
-  
-    return goodMu_reco_indices; 
-  
 }
 
 vector <int> GoodMuonParticleIndices(TClonesArray *branchGenParticle=nullptr, string analysis="HZZJJ"){
@@ -797,13 +826,13 @@ vector<pair<pair<int,int>, int>> GetWRecoPairIndices(vector<int> goodE_reco_indi
   for(int i=0; i<(int) goodE_reco_indices.size(); i++) lepRecoIndices.push_back(make_pair(0,goodE_reco_indices.at(i)));
   for(int i=0; i<(int) goodMu_reco_indices.size(); i++) lepRecoIndices.push_back(make_pair(1,goodMu_reco_indices.at(i)));
 
-  //for(int i=0; i<(int) min(lepRecoIndices.size(),goodMET_reco_indices.size()); i++) WRecoPairIndices.push_back(make_pair(lepRecoIndices.at(i), goodMET_reco_indices.at(i)));
+  // for(int i=0; i<(int) min(lepRecoIndices.size(),goodMET_reco_indices.size()); i++) WRecoPairIndices.push_back(make_pair(lepRecoIndices.at(i), goodMET_reco_indices.at(i)));
 
   // sort all of the indices by closeness to mW
 
   int METIndex=0;
 
-  sort(lepRecoIndices.begin(), lepRecoIndices.end(), [branchMuon,branchElectron,branchMissingET,&METIndex]  ( const pair<int,int>   & lhs , const pair<int,int>  &rhs ){
+  sort(lepRecoIndices.begin(), lepRecoIndices.end(), [branchMuon, branchElectron, branchMissingET, &METIndex]  ( const pair<int,int>   & lhs , const pair<int,int>  &rhs ){
 
     double massW1_reco=0;
     double massW2_reco=0;

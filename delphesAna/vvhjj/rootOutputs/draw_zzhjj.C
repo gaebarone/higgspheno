@@ -91,10 +91,10 @@ void draw_stack(TFile *sig_file, TFile *ttbar_file, TFile *ttHbb_file, TFile *di
   legend->Draw();
 
   // sig on top
-  sigClone->Scale(100000);
+  sigClone->Scale(10000);
   sigClone->SetLineColor(kBlack);
   //sigClone->SetFillColor(kWhite);
-  legend->AddEntry(sigClone, "Signal x 100000", "l");
+  legend->AddEntry(sigClone, "Signal x 10000", "l");
   //sigClone->SetLineWidth(2);
   sigClone->Draw("hist same");
     

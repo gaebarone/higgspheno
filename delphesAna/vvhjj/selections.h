@@ -171,7 +171,7 @@ vector <int> GoodJetIndices( vector <int> & btagIndex,
   
     for(int i=0; i<(int)branchJet->GetEntries(); i++){
       Jet *jet=(Jet*) branchJet->At(i);
-      //if( jet->PT < 20) continue;
+      if( jet->PT < 20) continue;
       //if (fabs(jet->Eta) > 4.4) continue; 
       //  if( jet->BTag>0) btagIndex.push_back(i);
       if( isMyBTag(jet, branchGenParticle,0,0.4,btagEff,fakeEff) && abs(jet->Eta) < 2.5 ) btagIndex.push_back(i); 
