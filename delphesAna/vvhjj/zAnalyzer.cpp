@@ -11,6 +11,8 @@
 #include <onnxruntime_cxx_api.h>
 #endif
 
+//#define MDEBUG
+
 #include "../common_includes/trasnform_inputs.h"
 #include <unordered_map>
 #include "HepMC/GenParticle.h"
@@ -502,6 +504,12 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   TH1F *goodE_size_parton = new TH1F("goodE_size_parton", "size", 5, 0, 5); listOfTH1.push_back(goodE_size_parton);
   TH1F *goodMu_size_parton = new TH1F("goodMu_size_parton", "size", 5, 0, 5); listOfTH1.push_back(goodMu_size_parton);
+  vector <TH1F*> lepPT_partonV;
+  for(int i=0; i<4; i++){
+    lepPT_partonV.push_back(new TH1F(Form("lepPT_partonV_%d",i),"",50,0,2e2));
+      listOfTH1.push_back(lepPT_partonV.at(i));
+  }
+
   
   TH1F *hl1l2deltaPhiparton = new TH1F("l1l2_#Delta#phi_parton", "#Delta#phi_{l1l2}_parton", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl1l2deltaPhiparton);
   TH1F *hl3l4deltaPhiparton = new TH1F("l3l4_#Delta#phi_parton", "#Delta#phi_{l3l4}_parton", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hl3l4deltaPhiparton);
@@ -878,7 +886,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // EVENT LOOP
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  
+#ifdef MDEBUG
+    numberOfEntries=1000;
+#endif 
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
 
     //if( entry > 10) break;
@@ -1246,11 +1256,12 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   int thisRecoEventType=-1;
 
+  double lepPTReg=15;
   // get e+e- mu+mu-
-  vector <int> goodE_min_reco_indices = get_good_reco_lepton_indices(branchElectron, 15, 2.5, analysis, "electron", -1);
-  vector <int> goodE_plus_reco_indices = get_good_reco_lepton_indices(branchElectron, 15, 2.5, analysis, "electron", 1);
-  vector <int> goodMu_min_reco_indices = get_good_reco_lepton_indices(branchMuon, 15, 2.5, analysis, "muon", -1);
-  vector <int> goodMu_plus_reco_indices = get_good_reco_lepton_indices(branchMuon, 15, 2.5, analysis, "muon", 1);
+  vector <int> goodE_min_reco_indices = get_good_reco_lepton_indices(branchElectron,lepPTReg, 2.5, analysis, "electron", -1);
+  vector <int> goodE_plus_reco_indices = get_good_reco_lepton_indices(branchElectron,lepPTReg, 2.5, analysis, "electron", 1);
+  vector <int> goodMu_min_reco_indices = get_good_reco_lepton_indices(branchMuon,lepPTReg, 2.5, analysis, "muon", -1);
+  vector <int> goodMu_plus_reco_indices = get_good_reco_lepton_indices(branchMuon, lepPTReg, 2.5, analysis, "muon", 1);
 
   // e = e+ & e- , mu = mu+ & mu-
   vector<int> goodE_reco_indices(goodE_min_reco_indices);
@@ -1602,25 +1613,49 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   int thisParticleEventType=-1;
-
+#ifdef MDEBUG
+  cout<<"Debug"<<endl;
+#endif
+  double lepPTRegFid=1;
   // get e+e- mu+mu-
-  vector <int> goodE_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, 15, 2.5, analysis, 11);
-  vector <int> goodE_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle, 15, 2.5, analysis, -11);
-  vector <int> goodMu_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, 15, 2.5, analysis, 13);
-  vector <int> goodMu_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle, 15, 2.5, analysis, -13);
+  vector <int> goodE_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, 2.5, analysis, 11);
+  vector <int> goodE_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle,lepPTRegFid, 2.5, analysis, -11);
+  vector <int> goodMu_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, 2.5, analysis, 13);
+  vector <int> goodMu_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, 2.5, analysis, -13);
 
-  // e = e+ & e- , mu = mu+ & mu- 
-  vector<int> goodE_particle_indices(goodE_min_particle_indices);
-  goodE_particle_indices.insert(goodE_particle_indices.end(), goodE_plus_particle_indices.begin(), goodE_plus_particle_indices.end());
-  vector<int> goodMu_particle_indices(goodMu_min_particle_indices);
-  goodMu_particle_indices.insert(goodMu_particle_indices.end(), goodMu_plus_particle_indices.begin(), goodMu_plus_particle_indices.end());
-
+   // e = e+ & e- , mu = mu+ & mu- 
+  //vector<int> goodE_particle_indices(goodE_min_particle_indices);
+  ////goodE_particle_indices.insert(goodE_particle_indices.end(), goodE_plus_particle_indices.begin(), goodE_plus_particle_indices.end());
+  //vector<int> goodMu_particle_indices(goodMu_min_particle_indices);
+  ////goodMu_particle_indices.insert(goodMu_particle_indices.end(), goodMu_plus_particle_indices.begin(), goodMu_plus_particle_indices.end());
+  
+  
+  vector<int> goodE_particle_indices;
+  vector<int> goodMu_particle_indices;
+  
+  ConcatenateIndices( goodE_min_particle_indices,goodE_particle_indices);
+  ConcatenateIndices( goodE_plus_particle_indices,goodE_particle_indices);
+  ConcatenateIndices( goodMu_min_particle_indices,goodMu_particle_indices);
+  ConcatenateIndices( goodMu_plus_particle_indices,goodMu_particle_indices);
+  vector<int> goodLep_particle_indices;
+  ConcatenateIndices( goodE_particle_indices,goodLep_particle_indices);
+  ConcatenateIndices( goodMu_particle_indices,goodLep_particle_indices);
+#ifdef MDEBUG
+  // Debug 
+  cout<<" After selection  particle:"<<endl;
+  for(std::vector<int>::iterator it=goodLep_particle_indices.begin(); it!=goodLep_particle_indices.end(); it++){
+    GenParticle *particle=(GenParticle*) branchGenParticle->At(*it); 
+    dumpParticle(particle,*it);
+  }
+  // lep details
+  cout << "E/Mu: " << goodE_particle_indices.size() << "/" << goodMu_particle_indices.size() << endl;
+#endif
+  //end debug 
+  
   goodE_size_particle->Fill(goodE_particle_indices.size(),weight);
   goodMu_size_particle->Fill(goodMu_particle_indices.size(),weight);
 
-// lep details
-
-cout << "E/Mu: " << goodE_particle_indices.size() << "/" << goodMu_particle_indices.size() << endl;
+  
 
   if (goodE_particle_indices.size()>0) e1_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[0]))->P4();
   if (goodE_particle_indices.size()>1) e2_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[1]))->P4();
@@ -1753,9 +1788,9 @@ cout << "E/Mu: " << goodE_particle_indices.size() << "/" << goodMu_particle_indi
           // else if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 2; // mu e
           // else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 3; // e mu
       }
-
+#ifdef MDEBUG
       cout << thisParticleEventType << endl;
-
+#endif
       particleET->Fill(thisParticleEventType,weight);
 
       //cout << "-------------------------------------------------------------------------"<< endl;
@@ -1937,7 +1972,10 @@ cout << "E/Mu: " << goodE_particle_indices.size() << "/" << goodMu_particle_indi
       partonET->Fill(thisPartonEventType,weight);
 
       if(foundWW) {
-
+	
+	lepPT_partonV.at(0)->Fill(l1_parton.Pt());
+	lepPT_partonV.at(1)->Fill(l2_parton.Pt());
+	
         l1l2deltaPhiparton=(l1_parton.Phi() > l2_parton.Phi() ? -1:+1)*TMath::Abs(l2_parton.Phi() - l1_parton.Phi());
         l1l2deltaEtaparton=(l1_parton.Eta() > l2_parton.Eta() ? -1:+1)*TMath::Abs(l2_parton.Eta() - l1_parton.Eta());
         l1l2deltaRparton=sqrt((l1l2deltaPhiparton*l1l2deltaPhiparton)+(l1l2deltaEtaparton*l1l2deltaEtaparton));

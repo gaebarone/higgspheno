@@ -41,7 +41,16 @@ using namespace std;
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Z + W
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+void ConcatenateIndices(vector<int> in, vector <int> & out){
+  out.insert(out.end(), in.begin(), in.end());
+}
 
+void dumpParticle(GenParticle *particle=nullptr,int index=-1){
+  cout<<"Particle "<<particle->PID<<" status "<<particle->Status<<" pT "<<particle->PT<<" eta "<<particle->Eta<<" phi "<<particle->Phi<< " M1 "<< particle->M1<<" M2 "<<
+    particle->M2<<" TLorenz pT "<<particle->P4().Pt()<<" "
+      <<" index "<<index<<endl;
+
+}
 
 void remove_overlaps(vector< pair<int,int>> muPairIndices){
   for( vector< pair<int,int>>::iterator it=muPairIndices.begin(); it!=muPairIndices.end(); it++){
@@ -73,7 +82,7 @@ void sort_by_pT(vector<int> lep_indices, TClonesArray *branchElectron=nullptr, s
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-vector<int> get_good_reco_lepton_indices(TClonesArray *branchElectron=nullptr, int pTmin=15, int etaMax=2.5, string analysis="HZZJJ", string lepType="electron", int charge=-1) {
+vector<int> get_good_reco_lepton_indices(TClonesArray *branchElectron=nullptr, double pTmin=15, double etaMax=2.5, string analysis="HZZJJ", string lepType="electron", int charge=-1) {
 
 vector <int> lep_indices;
 
@@ -113,7 +122,7 @@ vector <int> lep_indices;
   }
 
 
-vector<int> get_good_particle_lepton_indices(TClonesArray *branchGenParticle=nullptr, int pTmin=15, int etaMax=2.5, string analysis="HZZJJ", int pid=11) {
+vector<int> get_good_particle_lepton_indices(TClonesArray *branchGenParticle=nullptr, double pTmin=15, double etaMax=2.5, string analysis="HZZJJ", int pid=11) {
 
 vector <int> lep_indices;
 
@@ -124,8 +133,13 @@ vector <int> lep_indices;
     
     GenParticle *lep_particle = (GenParticle *)branchGenParticle->At(i);
 
+#ifdef MDEBUG
+    if(lep_particle->PID == pid )
+      dumpParticle(lep_particle,i);
+#endif
+    
     if( lep_particle->Status !=1 ) continue;
-
+    
       if (analysis == "HZZJJ" || analysis == "ZZJJ") {
           if (lep_particle->PT > pTmin && fabs(lep_particle->Eta) < etaMax && lep_particle->PID == pid) lep_indices.push_back(i);
       } else if (analysis == "HWWJJ" || analysis == "WWJJ") {
@@ -144,20 +158,22 @@ vector <int> lep_indices;
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-int goodE_pT_min = 5;
-int goodMu_pT_min = 5;
-int goodE_eta_max = 2.5;
-int goodMu_eta_max = 2.5;
+double goodE_pT_min = 5.0;
+double goodMu_pT_min = 5.0;
+double goodE_eta_max = 2.5;
+double goodMu_eta_max = 2.5;
 
 
 vector <int> GoodElectronParticleIndices(TClonesArray *branchGenParticle=nullptr, string analysis="HZZJJ") {
 
     vector <int> goodE_particle_indices; 
-
+    cout<<"Checking good electrons "<<endl;
+    
     for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
 
       GenParticle *particle=(GenParticle*) branchGenParticle->At(i); 
-
+      dumpParticle(particle,i);
+      
       if( particle->Status !=1 ) continue;
       if( fabs(particle->PID) != 11) continue;
 
@@ -1079,7 +1095,11 @@ void getPartonWLeps(int& thisPartonEventType, vector <int> &WPartonIndices, TClo
 
   w1_parton = ((GenParticle*)branchGenParticle->At(WPartonIndices[0]))->P4(); 
   w2_parton = ((GenParticle*)branchGenParticle->At(WPartonIndices[1]))->P4(); 
-
+#ifdef MDEBUG
+  cout<<" Parton lepton information:"<<endl;
+  dumpParticle((GenParticle*) branchGenParticle->At(W1childrenIndices[0]));
+  dumpParticle((GenParticle*) branchGenParticle->At(W2childrenIndices[0]));
+#endif 
   l1_parton = ((GenParticle*) branchGenParticle->At(W1childrenIndices[0]))->P4();
   l2_parton = ((GenParticle*) branchGenParticle->At(W2childrenIndices[0]))->P4();
 
