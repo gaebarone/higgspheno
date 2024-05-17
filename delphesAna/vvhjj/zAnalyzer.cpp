@@ -11,7 +11,7 @@
 #include <onnxruntime_cxx_api.h>
 #endif
 
-//#define MDEBUG
+#define MDEBUG
 
 #include "../common_includes/trasnform_inputs.h"
 #include <unordered_map>
@@ -1616,12 +1616,13 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 #ifdef MDEBUG
   cout<<"Debug"<<endl;
 #endif
-  double lepPTRegFid=1;
+  double lepPTRegFid=15;
+  double lepEtaFid=4.0;
   // get e+e- mu+mu-
-  vector <int> goodE_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, 2.5, analysis, 11);
-  vector <int> goodE_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle,lepPTRegFid, 2.5, analysis, -11);
-  vector <int> goodMu_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, 2.5, analysis, 13);
-  vector <int> goodMu_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, 2.5, analysis, -13);
+  vector <int> goodE_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, lepEtaFid, analysis, 11);
+  vector <int> goodE_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle,lepPTRegFid, lepEtaFid, analysis, -11);
+  vector <int> goodMu_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, lepEtaFid, analysis, 13);
+  vector <int> goodMu_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, lepEtaFid, analysis, -13);
 
    // e = e+ & e- , mu = mu+ & mu- 
   //vector<int> goodE_particle_indices(goodE_min_particle_indices);
@@ -1765,7 +1766,10 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
    } else if(analysis == "HWWJJ") {
 
     // E + mu > 1
-
+#ifdef MDEBUG
+      cout<<" switch val before "<<switchVal_particle<<endl;
+#endif     
+    
       if(enableCutParticle["lep pT > 15 & eta < 2.5 - particle"]){
         if (switchVal_particle==0) {
           if (goodE_particle_indices.size() + goodMu_particle_indices.size()  > 1) increaseCount(cutFlowMap_particle,"lep pT > 15 & eta < 2.5 - particle",weight);
@@ -1774,10 +1778,15 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       }
 
       // WParticlePairIndices = GetWParticlePairIndices(goodE_particle_indices, goodMu_particle_indices, branchGenParticle, branchMissingET);
-
       // FOR OFOS SWITCH mu mu / e e EVENT TYPE TO -1
-      if( switchVal_particle==0 && goodE_particle_indices.size() + goodMu_particle_indices.size() >= 2){
-
+#ifdef MDEBUG
+      cout<<" switch val "<<switchVal_particle<<endl;
+#endif     
+      //      if( switchVal_particle==0 && (goodE_particle_indices.size() + goodMu_particle_indices.size() >= 2) ){
+      if((goodE_particle_indices.size() + goodMu_particle_indices.size() >= 2) ){
+#ifdef MDEBUG
+	cout<<" Mumin "	<<goodMu_min_particle_indices.size()<<" Muplus "<<goodMu_plus_particle_indices.size()<<" Emin "<<goodE_min_particle_indices.size()<<" Eplus "<<goodE_plus_particle_indices.size()<<endl;
+#endif
         if (goodMu_min_particle_indices.size() > 0 && goodMu_plus_particle_indices.size() > 0) thisParticleEventType = 0;
         if (goodE_min_particle_indices.size() > 0 && goodE_plus_particle_indices.size() > 0) thisParticleEventType = 1;
         if (goodMu_min_particle_indices.size() > 0 && goodE_plus_particle_indices.size() > 0) thisParticleEventType = 2;
