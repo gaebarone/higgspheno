@@ -33,7 +33,7 @@ bool isMyPAIReDBTag(bool label_bb, bool label_cc, bool label_ll, int seed = 0, d
   TRandom3 rand; 
   rand.SetSeed(seed);
 #ifdef MDEBUG
-  seed=MSEED
+  seed=MSEED;
 #endif
 
   if (label_bb){
