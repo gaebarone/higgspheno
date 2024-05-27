@@ -12,6 +12,7 @@
 #endif
 
 #define MDEBUG
+#define MSEED 1234 
 
 #include "../common_includes/trasnform_inputs.h"
 #include <unordered_map>

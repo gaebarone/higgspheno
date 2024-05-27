@@ -94,8 +94,13 @@ bool isMyBTag (Jet *jet, TClonesArray *branchGenParticle=nullptr,int seed=0,doub
   
   bool isB=ghost_btag(branchGenParticle,jet,jet_radius);
   TRandom3 randEff,randIneff; 
+#ifdef MDEBUG
+  seed=MSEED
+#endif
   randEff.SetSeed(seed); 
   randIneff.SetSeed(seed);
+
+  
 
   //bool passEff=randEff.Uniform(0,1) < effWrk; 
   //bool passFake=randIneff.Uniform(0,1) < fake_eff;
@@ -130,6 +135,10 @@ double ghost_btagPseudoRecoScore(TClonesArray *branchGenParticle, Jet *jet,doubl
 
 double ghost_btagPseudoRecoScoreSmeared(TClonesArray *branchGenParticle, Jet *jet,int seed=0,double jet_radius = 0.4, double effWrk=0.9,double fake_eff=0.01, double smear=0.01){
   TRandom3 randEff,randIneff,smearRand;
+#ifdef MDEBUG
+  seed=MSEED
+#endif
+  
   randEff.SetSeed(seed); 
   randIneff.SetSeed(seed);
   smearRand.SetSeed(seed);
