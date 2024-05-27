@@ -31,11 +31,11 @@ namespace paired
 bool isMyPAIReDBTag(bool label_bb, bool label_cc, bool label_ll, int seed = 0, double effWrk=0.9,double fake_eff=0.15) {
  
   TRandom3 rand; 
-  rand.SetSeed(seed);
 #ifdef MDEBUG
   seed=MSEED;
 #endif
-
+  rand.SetSeed(seed);
+  
   if (label_bb){
     return rand.Uniform(0,1) < effWrk;
   } else { 
