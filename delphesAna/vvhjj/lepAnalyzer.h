@@ -39,18 +39,22 @@ using namespace std;
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Z + W
+// misc
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 void ConcatenateIndices(vector<int> in, vector <int> & out){
   out.insert(out.end(), in.begin(), in.end());
 }
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void dumpParticle(GenParticle *particle=nullptr,int index=-1){
   cout<<"Particle "<<particle->PID<<" status "<<particle->Status<<" pT "<<particle->PT<<" eta "<<particle->Eta<<" phi "<<particle->Phi<< " M1 "<< particle->M1<<" M2 "<<
     particle->M2<<" TLorenz pT "<<particle->P4().Pt()<<" "
       <<" index "<<index<<endl;
-
 }
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void remove_overlaps(vector< pair<int,int>> muPairIndices){
   for( vector< pair<int,int>>::iterator it=muPairIndices.begin(); it!=muPairIndices.end(); it++){
@@ -61,6 +65,8 @@ void remove_overlaps(vector< pair<int,int>> muPairIndices){
     }
   }
 }
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void sort_by_pT(vector<int> lep_indices, TClonesArray *branchElectron=nullptr, string branchName="Electron"){
 
@@ -80,6 +86,33 @@ void sort_by_pT(vector<int> lep_indices, TClonesArray *branchElectron=nullptr, s
 
 }
 
+//
+
+void sort2_by_pT(vector<int> wleps, TClonesArray *branchElectron=nullptr, TClonesArray *branchMuon=nullptr, string branch1Name="Electron" , string branch2Name="Electron"){
+
+  double lep1pT = 0;
+  double lep2pT = 0;
+
+    if (branch1Name == "Electron") {
+        lep1pT = ((Electron*) branchElectron->At(wleps[0]))->PT;
+    } else if (branch1Name == "Muon") {
+        lep1pT = ((Muon*) branchMuon->At(wleps[0]))->PT;
+    }
+
+    if (branch2Name == "Electron") {
+        lep2pT = ((Electron*) branchElectron->At(wleps[1]))->PT;
+    } else if (branch2Name == "Muon") {
+        lep2pT = ((Muon*) branchMuon->At(wleps[1]))->PT;
+    }
+
+    if (lep1pT > lep2pT) return;
+    else swap(wleps[0], wleps[1]);
+
+}
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// leps
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 vector<int> get_good_reco_lepton_indices(TClonesArray *branchElectron=nullptr, double pTmin=15, double etaMax=2.5, string analysis="HZZJJ", string lepType="electron", int charge=-1) {
@@ -121,86 +154,39 @@ vector <int> lep_indices;
   
   }
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 vector<int> get_good_particle_lepton_indices(TClonesArray *branchGenParticle=nullptr, double pTmin=15, double etaMax=2.5, string analysis="HZZJJ", int pid=11) {
 
-vector <int> lep_indices;
+vector <int> lep_particle_indices;
 
-  if( branchGenParticle == nullptr) return lep_indices;
+  if( branchGenParticle == nullptr) return lep_particle_indices;
 
   for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
-
     
     GenParticle *lep_particle = (GenParticle *)branchGenParticle->At(i);
-
-#ifdef MDEBUG
-    if(lep_particle->PID == pid )
-      dumpParticle(lep_particle,i);
-#endif
     
     if( lep_particle->Status !=1 ) continue;
     
       if (analysis == "HZZJJ" || analysis == "ZZJJ") {
-          if (lep_particle->PT > pTmin && fabs(lep_particle->Eta) < etaMax && lep_particle->PID == pid) lep_indices.push_back(i);
+          if (lep_particle->PT > pTmin && fabs(lep_particle->Eta) < etaMax && lep_particle->PID == pid) lep_particle_indices.push_back(i);
       } else if (analysis == "HWWJJ" || analysis == "WWJJ") {
-          if (lep_particle->PT > pTmin && fabs(lep_particle->Eta) < etaMax && lep_particle->PID == pid) lep_indices.push_back(i);
+          if (lep_particle->PT > pTmin && fabs(lep_particle->Eta) < etaMax && lep_particle->PID == pid) lep_particle_indices.push_back(i);
       }
 
     }
   
     // sort the indices by pT
-    sort_by_pT(lep_indices, branchGenParticle, "GenParticle");
+    sort_by_pT(lep_particle_indices, branchGenParticle, "GenParticle");
 
-    return lep_indices; 
+    return lep_particle_indices; 
   
   }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-double goodE_pT_min = 5.0;
-double goodMu_pT_min = 5.0;
-double goodE_eta_max = 2.5;
-double goodMu_eta_max = 2.5;
-
-
-vector <int> GoodElectronParticleIndices(TClonesArray *branchGenParticle=nullptr, string analysis="HZZJJ") {
-
-    vector <int> goodE_particle_indices; 
-    cout<<"Checking good electrons "<<endl;
-    
-    for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
-
-      GenParticle *particle=(GenParticle*) branchGenParticle->At(i); 
-      dumpParticle(particle,i);
-      
-      if( particle->Status !=1 ) continue;
-      if( fabs(particle->PID) != 11) continue;
-
-      if( analysis == "HZZJJ" || analysis == "ZZJJ "){
-
-        if( particle->PT > goodE_pT_min && fabs(particle->Eta) < goodE_eta_max ) goodE_particle_indices.push_back(i);
-
-      } else if( analysis == "HWWJJ" || analysis == "WWJJ" ) {
-        
-        if( particle->PT > goodE_pT_min && fabs(particle->Eta) < goodE_eta_max ) goodE_particle_indices.push_back(i);
-
-      }  
-
-      //GenParticle *parent=find_parent(branchGenParticle,particle,particle->PID);
-      //if(parent == nullptr) continue; 
-      //cout<<" --> Parent "<<parent->PID<<endl;
-      //if( abs(parent->PID) != 22 &&  abs(parent->PID)!=23  &&  abs(parent->PID)!= 25 ) continue; 
-       
-      // sort the indices by pT ;
-      sort(goodE_particle_indices.begin(), goodE_particle_indices.end(), [branchGenParticle](const int& lhs, const int& rhs) {
-	      return ((GenParticle*) branchGenParticle->At(lhs))->PT > ((GenParticle*) branchGenParticle->At(rhs))->PT;
-      });
-    }
-
-    return goodE_particle_indices;
-
-}
+double goodE_pT_min=15.0;
+double goodE_eta_max=2.5;
 
 vector <int> GoodElectronPartonIndices(TClonesArray *branchGenParticle=nullptr, string analysis="HZZJJ") {
 
@@ -237,41 +223,10 @@ vector <int> GoodElectronPartonIndices(TClonesArray *branchGenParticle=nullptr, 
 
 }
 
-vector <int> GoodMuonParticleIndices(TClonesArray *branchGenParticle=nullptr, string analysis="HZZJJ"){
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    vector <int> goodMu_particle_indices; 
-
-    for(int i=0; i<(int)branchGenParticle->GetEntries(); i++){
-
-      GenParticle *particle=(GenParticle*) branchGenParticle->At(i); 
-
-      if( particle->Status !=1 ) continue;
-      if( fabs(particle->PID) != 13) continue;
-
-      if( analysis == "HZZJJ" || analysis == "ZZJJ "){
-
-        if( particle->PT > goodMu_pT_min && fabs(particle->Eta) < goodMu_eta_max ) goodMu_particle_indices.push_back(i);
-
-      } else if( analysis == "HWWJJ" || analysis == "WWJJ" ) {
-        
-        if( particle->PT > goodMu_pT_min && fabs(particle->Eta) < goodMu_eta_max ) goodMu_particle_indices.push_back(i);
-
-      }  
-
-      //GenParticle *parent=find_parent(branchGenParticle,particle,particle->PID);
-      //if(parent == nullptr) continue; 
-      //cout<<" --> Parent "<<parent->PID<<endl;
-      //if( abs(parent->PID) != 22 &&  abs(parent->PID)!=23  &&  abs(parent->PID)!= 25 ) continue; 
-       
-      // sort the indices by pT ;
-      sort(goodMu_particle_indices.begin(), goodMu_particle_indices.end(), [branchGenParticle](const int& lhs, const int& rhs) {
-	      return ((GenParticle*) branchGenParticle->At(lhs))->PT > ((GenParticle*) branchGenParticle->At(rhs))->PT;
-      });
-    }
-
-    return goodMu_particle_indices;
-    
-}
+double goodMu_pT_min=15.0;
+double goodMu_eta_max=2.5;
 
 vector <int> GoodMuonPartonIndices(TClonesArray *branchGenParticle=nullptr, string analysis="HZZJJ"){
 
@@ -449,46 +404,6 @@ vector< pair<int,int>> GetmuParticlePairIndices(TClonesArray *branchGenParticle=
     return muParticlePairIndices;
 }
 
-/*
-vector< pair<int,int>> GetelecmuRecoPairIndices(TClonesArray *branchMuon=nullptr, vector<int> goodMu_reco_indices=vector<int>(0)){
-    vector< pair<int,int>> elecmuRecoPairIndices;
-    vector< pair<int,int>> elecmuRecoPairIndicesIn;
-    vector <vector<int>> elecmuRecoPairIndices_;
-    if(goodE_reco_indices.size() > 0 && goodMu_reco_indices.size() > 0) 
-      elecmuRecoPairIndices_=combinationsNoRepetitionAndOrderDoesNotMatter(2,goodMu_reco_indices);
-    
-      // remove all combinations not satifing criteria 
-    for(int i=0; i<(int)muRecoPairIndices_.size(); i++){
-      int elecRecoIndex=muRecoPairIndices_[i].at(0);
-      int elecRecoIndex2=muRecoPairIndices_[i].at(1);
-      
-      Muon *el1_reco= (Muon*) branchMuon->At(elecRecoIndex);
-      Muon *el2_reco=(Muon*) branchMuon->At(elecRecoIndex2);
-      if( el1_reco->Charge ==  el2_reco->Charge ) continue;
-      muRecoPairIndicesIn.push_back(make_pair(elecRecoIndex,elecRecoIndex2));
-    }
-
-    muRecoPairIndices=muRecoPairIndicesIn;
-
-    sort(muRecoPairIndices.begin(), muRecoPairIndices.end(), [branchMuon](const pair<int,int> lhs, const pair<int,int> rhs) {
-    	return fabs(((((Muon*)branchMuon->At(lhs.first))->P4() + ((Muon*)branchMuon->At(lhs.second))->P4())).M() -91 ) <
-	  fabs( ((((Muon*)branchMuon->At(rhs.first))->P4() + ((Muon*)branchMuon->At(rhs.second))->P4()).M()) -91 ) ; 
-      });
-    
-    //sort(muRecoPairIndices.begin(),muRecoPairIndices.end(), [branchMuon]( pair<int,int>   & lhs,  pair<int,int>   & rhs) {
-    //	    int index11_reco=(lhs).first;
-    //	    int index12_reco=(lhs).second;
-    //	    int index21_reco=(rhs).first;
-    //	int index22_reco=(rhs).second;
-    //	    return fabs(((((Muon*)branchMuon->At(index11_reco))->P4() + ((Muon*)branchMuon->At(index12_reco))->P4())).M() - 91) <
-    //	  fabs( ((((Muon*)branchMuon->At(index21_reco))->P4() + ((Muon*)branchMuon->At(index22_reco))->P4()).M()) -91);
-    //});
-    
-    remove_overlaps(muRecoPairIndices);
-
-    return muRecoPairIndices;
-}
-*/
 
 vector<pair<int,pair<int,int>>> GetRecoPairIndices(vector< pair<int,int>> elecRecoPairIndices, vector< pair<int,int>> muRecoPairIndices, TClonesArray *branchElectron=nullptr,TClonesArray *branchMuon=nullptr){
 
@@ -695,65 +610,7 @@ void getParticleZLeps(int& thisParticleEventType,  const vector<pair<int,pair<in
     l2_particle=muon2_particle->P4();
     l3_particle=muon3_particle->P4();
     l4_particle=muon4_particle->P4(); 
-  /*
-  } else if( thisParticleEventType==1 ) { // case 4e
-  
-    // take first two electrons
-    GenParticle *muon1_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[0].second.first);
-    GenParticle *muon2_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[0].second.second);
-    // take first two electrons
-    GenParticle *muon3_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.first);
-    GenParticle *muon4_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.second);
 
-    q1_particle = muon1_particle->Charge;
-    q2_particle = muon2_particle->Charge;
-    q3_particle = muon3_particle->Charge;
-    q4_particle = muon4_particle->Charge;
-
-    l1_particle=muon1_particle->P4();
-    l2_particle=muon2_particle->P4();
-    l3_particle=muon3_particle->P4();
-    l4_particle=muon4_particle->P4(); 
-
-  } else if( thisParticleEventType==2 ) { // case 2mu2e 
-  
-    // take first two muons
-    GenParticle *muon1_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[0].second.first);
-    GenParticle *muon2_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[0].second.second);
-    // take first two electrons
-    GenParticle *muon3_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.first);
-    GenParticle *muon4_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.second);
-
-    q1_particle = muon1_particle->Charge;
-    q2_particle = muon2_particle->Charge;
-    q3_particle = muon3_particle->Charge;
-    q4_particle = muon4_particle->Charge;
-
-    l1_particle=muon1_particle->P4();
-    l2_particle=muon2_particle->P4();
-    l3_particle=muon3_particle->P4();
-    l4_particle=muon4_particle->P4(); 
-
-  } else if( thisParticleEventType==3 ) { // case 2e2mu
-  
-    // take first two electrons
-    GenParticle *muon1_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[0].second.first);
-    GenParticle *muon2_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[0].second.second);
-    // take first two muons
-    GenParticle *muon3_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.first);
-    GenParticle *muon4_particle = (GenParticle*) branchGenParticle->At( ParticlePairIndices[1].second.second);
-
-    q1_particle = muon1_particle->Charge;
-    q2_particle = muon2_particle->Charge;
-    q3_particle = muon3_particle->Charge;
-    q4_particle = muon4_particle->Charge;
-
-    l1_particle=muon1_particle->P4();
-    l2_particle=muon2_particle->P4();
-    l3_particle=muon3_particle->P4();
-    l4_particle=muon4_particle->P4(); 
-  }
-  */
 }
 
 void getPartonZLeps(int thisPartonEventType, vector <int> ZPartonIndices, TClonesArray *branchGenParticle,   TLorentzVector &z1_parton,  TLorentzVector &z2_parton, TLorentzVector &l1_parton,  TLorentzVector &l2_parton,  TLorentzVector& l3_parton,  TLorentzVector& l4_parton, int& q1_parton, int& q2_parton, int& q3_parton, int& q4_parton){
@@ -790,6 +647,11 @@ void getPartonZLeps(int thisPartonEventType, vector <int> ZPartonIndices, TClone
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // W
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+  double calculate_mT(double pT_lepton, double pT_miss, double deltaPhi) {
+      return std::sqrt(2 * pT_lepton * pT_miss * (1 - std::cos(deltaPhi)));
+  }
 
 /*
    vector< pair<int,int>> GetWRecoIndices(TClonesArray *branchElectron=nullptr, TClonesArray *branchMuon=nullptr, vector<int> goodE_reco_indices=vector<int>(0), vector<int> goodMu_reco_indices=vector<int>(0)){
@@ -842,8 +704,6 @@ vector<pair<pair<int,int>, int>> GetWRecoPairIndices(vector<int> goodE_reco_indi
   for(int i=0; i<(int) goodE_reco_indices.size(); i++) lepRecoIndices.push_back(make_pair(0,goodE_reco_indices.at(i)));
   for(int i=0; i<(int) goodMu_reco_indices.size(); i++) lepRecoIndices.push_back(make_pair(1,goodMu_reco_indices.at(i)));
 
-  // for(int i=0; i<(int) min(lepRecoIndices.size(),goodMET_reco_indices.size()); i++) WRecoPairIndices.push_back(make_pair(lepRecoIndices.at(i), goodMET_reco_indices.at(i)));
-
   // sort all of the indices by closeness to mW
 
   int METIndex=0;
@@ -867,6 +727,7 @@ vector<pair<pair<int,int>, int>> GetWRecoPairIndices(vector<int> goodE_reco_indi
   return WRecoPairIndices;
 
 }
+
 
 
 vector<pair<pair<int,int>, int>> GetWParticlePairIndices(vector<int> goodE_particle_indices=vector<int>(0), vector<int> goodMu_particle_indices=vector<int>(0), TClonesArray *branchGenParticle=nullptr, TClonesArray *branchMissingET=nullptr){
@@ -933,6 +794,7 @@ vector <int> GetWPartonIndices(TClonesArray *branchGenParticle=nullptr, string a
 
 }
 
+
 void getWReco(int& thisRecoEventType,  const vector<pair<pair<int,int>, int>> WRecoPairIndices, TClonesArray *branchElectron, TClonesArray *branchMuon, TClonesArray *branchMissingET, TLorentzVector &l1_reco, TLorentzVector &l2_reco, int& q1_reco, int& q2_reco,  TLorentzVector& met1, TLorentzVector& met2){
     
     if( thisRecoEventType==-1 ) return;
@@ -988,6 +850,52 @@ void getWReco(int& thisRecoEventType,  const vector<pair<pair<int,int>, int>> WR
       l2_reco=muon2_reco->P4();
 
     }
+
+}
+
+
+void getWlepsReco(vector<int> lep1_reco_indices=vector<int>(0), vector<int> lep2_reco_indices=vector<int>(0), TClonesArray *branch1=nullptr, TClonesArray *branch2=nullptr, string branch1Name="branch1Name", string branch2Name="branch12Name"){
+
+  TLorentzVector l1_reco;
+  TLorentzVector l2_reco;
+
+  if ( branch1Name == "Muon" && branch2Name == "Muon") {
+    Muon *lep1_reco = (Muon *) branch1->At( lep1_reco_indices[0]);
+    Muon *lep2_reco = (Muon *) branch2->At( lep2_reco_indices[0]);
+    if (lep2_reco->PT > lep1_reco->PT){
+      Muon *lep2_reco = (Muon *) branch1->At( lep1_reco_indices[0]);
+      Muon *lep1_reco = (Muon *) branch2->At( lep2_reco_indices[0]);
+    }
+    l1_reco = lep1_reco->P4();
+    l2_reco = lep2_reco->P4();
+  } else if ( branch1Name == "Electron" && branch2Name == "Electron" ) {
+    Electron *lep1_reco = (Electron *) branch1->At( lep1_reco_indices[0]);
+    Electron *lep2_reco = (Electron *) branch2->At( lep2_reco_indices[0]);
+    if (lep2_reco->PT > lep1_reco->PT){
+      Electron *lep2_reco = (Electron *) branch1->At( lep1_reco_indices[0]);
+      Electron *lep1_reco = (Electron *) branch2->At( lep2_reco_indices[0]);
+    }
+    l1_reco = lep1_reco->P4();
+    l2_reco = lep2_reco->P4();
+  } else if ( branch1Name == "Muon" && branch2Name == "Electron" ) {
+    Muon *lep1_reco = (Muon *) branch1->At( lep1_reco_indices[0]);
+    Electron *lep2_reco = (Electron *) branch2->At( lep2_reco_indices[0]);
+    if (lep2_reco->PT > lep1_reco->PT){
+      Muon *lep2_reco = (Muon *) branch1->At( lep1_reco_indices[0]);
+      Electron *lep1_reco = (Electron *) branch2->At( lep2_reco_indices[0]);
+    }
+    l1_reco = lep1_reco->P4();
+    l2_reco = lep2_reco->P4();
+  } else if (  branch1Name == "Electron" && branch2Name == "Muon" ) {
+    Electron *lep1_reco = (Electron *) branch1->At( lep1_reco_indices[0]);
+    Muon *lep2_reco = (Muon *) branch2->At( lep2_reco_indices[0]);
+    if (lep2_reco->PT > lep1_reco->PT){
+      Electron *lep2_reco = (Electron *) branch1->At( lep1_reco_indices[0]);
+      Muon *lep1_reco = (Muon *) branch2->At( lep2_reco_indices[0]);
+    }
+    l1_reco = lep1_reco->P4();
+    l2_reco = lep2_reco->P4();
+  } 
 
 }
 
@@ -1109,3 +1017,5 @@ void getPartonWLeps(int& thisPartonEventType, vector <int> &WPartonIndices, TClo
 }
 
 #endif
+
+

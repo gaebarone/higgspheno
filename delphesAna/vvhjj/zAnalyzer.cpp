@@ -11,7 +11,7 @@
 #include <onnxruntime_cxx_api.h>
 #endif
 
-#define MDEBUG
+//#define MDEBUG
 #define MSEED 1234 
 
 #include "../common_includes/trasnform_inputs.h"
@@ -362,12 +362,12 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TH1F *hllpTreco = new TH1F("ll_pT_reco", "p^{T}_{ll}_reco", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hllpTreco);
   TH1F *hllmreco = new TH1F("ll_m_reco", "m_{ll}_reco", mBins, wmmin, wmmax); listOfTH1.push_back(hllmreco);
 
-  TH1F *hllm_0_15_reco = new TH1F("ll_m_reco_0_15", "m_{ll}_reco_0_15", 75, 0, 15); listOfTH1.push_back(hllm_0_15_reco);
+  TH1F *hmll_0_15_reco = new TH1F("ll_m_reco_0_15", "m_{ll}_reco_0_15", 75, 0, 15); listOfTH1.push_back(hmll_0_15_reco);
 
   TH1F *hw1pTreco = new TH1F("w1_pT_reco", "p^{T}_{w1}_reco", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hw1pTreco);
-  TH1F *hw1mreco = new TH1F("w1_m_reco", "m_{w1}_reco", mBins, wmmin, wmmax); listOfTH1.push_back(hw1mreco);
+  TH1F *hw1mreco = new TH1F("w1_m_reco", "m_{w1}_reco", 20, wmmin, wmmax); listOfTH1.push_back(hw1mreco);
   TH1F *hw2pTreco = new TH1F("w2_pT_reco", "p^{T}_{w2}_reco", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hw2pTreco);
-  TH1F *hw2mreco = new TH1F("w2_m_reco", "m_{w2}_reco", mBins, wmmin, wmmax); listOfTH1.push_back(hw2mreco);
+  TH1F *hw2mreco = new TH1F("w2_m_reco", "m_{w2}_reco", 20, wmmin, wmmax); listOfTH1.push_back(hw2mreco);
   TH1F *hwwpTreco = new TH1F("ww_pT_reco", "p^{T}_{ww}_reco", pTBins, wpTmin, wpTmax); listOfTH1.push_back(hwwpTreco);
   TH1F *hwwmreco = new TH1F("ww_m_reco", "m_{ww}_reco", mBins, wmmin, wmmax); listOfTH1.push_back(hwwmreco);
   TH1F *hwwdeltaPhireco = new TH1F("ww_#Delta#phi_reco", "#Delta#phi_{ww}_reco", phiBins, -TMath::Pi(), +TMath::Pi()); listOfTH1.push_back(hwwdeltaPhireco);
@@ -714,7 +714,8 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TLorentzVector w2_reco, w2_particle,  w2_parton;
   TLorentzVector v1_reco, v1_particle,  v1_parton;
   TLorentzVector v2_reco, v2_particle,  v2_parton;
-  TLorentzVector MET, met1, met2;
+  TLorentzVector met, met1, met2;
+  TLorentzVector nu;
 
 // kinematic quantities
 
@@ -1257,23 +1258,67 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   int thisRecoEventType=-1;
 
-  double lepPTReg=15;
+  double e_pT_min = 15.0;
+  double e_eta_max = 2.5;
+  double mu_pT_min = 15.0;
+  double mu_eta_max = 2.5;
+    
   // get e+e- mu+mu-
-  vector <int> goodE_min_reco_indices = get_good_reco_lepton_indices(branchElectron,lepPTReg, 2.5, analysis, "electron", -1);
-  vector <int> goodE_plus_reco_indices = get_good_reco_lepton_indices(branchElectron,lepPTReg, 2.5, analysis, "electron", 1);
-  vector <int> goodMu_min_reco_indices = get_good_reco_lepton_indices(branchMuon,lepPTReg, 2.5, analysis, "muon", -1);
-  vector <int> goodMu_plus_reco_indices = get_good_reco_lepton_indices(branchMuon, lepPTReg, 2.5, analysis, "muon", 1);
+  vector <int> goodE_min_reco_indices = get_good_reco_lepton_indices(branchElectron, e_pT_min, e_eta_max, analysis, "electron", -1);
+  vector <int> goodE_plus_reco_indices = get_good_reco_lepton_indices(branchElectron, e_pT_min, e_eta_max, analysis, "electron", 1);
+  vector <int> goodMu_min_reco_indices = get_good_reco_lepton_indices(branchMuon, mu_pT_min, mu_eta_max, analysis, "muon", -1);
+  vector <int> goodMu_plus_reco_indices = get_good_reco_lepton_indices(branchMuon, mu_pT_min, mu_eta_max, analysis, "muon", 1);
 
-  // e = e+ & e- , mu = mu+ & mu-
-  vector<int> goodE_reco_indices(goodE_min_reco_indices);
-  goodE_reco_indices.insert(goodE_reco_indices.end(), goodE_plus_reco_indices.begin(), goodE_plus_reco_indices.end());
-  vector<int> goodMu_reco_indices(goodMu_min_reco_indices);
-  goodMu_reco_indices.insert(goodMu_reco_indices.end(), goodMu_plus_reco_indices.begin(), goodMu_plus_reco_indices.end());
+
+  cout << " ------------------------ " << endl;
+  cout << "goodE_min_reco_indices: " << goodE_min_reco_indices.size() << endl;
+  cout << "goodE_plus_reco_indices: " << goodE_plus_reco_indices.size() << endl;
+  cout << "goodMu_min_reco_indices: " << goodMu_min_reco_indices.size() << endl;
+  cout << "goodMu_plus_reco_indices: " << goodMu_plus_reco_indices.size() << endl;
+
+  TLorentzVector emin1_reco, eplus1_reco, mmin1_reco, mplus1_reco;
+  cout << " ------------------------ " << endl;
+  
+  if (goodE_min_reco_indices.size()>0) {
+    emin1_reco = ((Electron *) branchElectron->At(goodE_min_reco_indices[0]))->P4();
+    cout << "emin1_reco Pt: " << emin1_reco.Pt() << " emin1_reco Eta: " << emin1_reco.Eta() << endl;
+  }
+  if (goodE_plus_reco_indices.size()>0) {
+    eplus1_reco = ((Electron *) branchElectron->At(goodE_plus_reco_indices[0]))->P4();
+    cout << "eplus1_reco Pt: " << eplus1_reco.Pt() << " eplus1_reco Eta: " << eplus1_reco.Eta() << endl;
+  }
+  if (goodMu_min_reco_indices.size()>0) {
+    mmin1_reco = ((Muon *) branchMuon->At(goodMu_min_reco_indices[0]))->P4();
+    cout << "mmin1_reco Pt: " << mmin1_reco.Pt() << " mmin1_reco Eta: " << mmin1_reco.Eta() << endl;
+  }
+  if (goodMu_plus_reco_indices.size()>0) {
+    mplus1_reco = ((Muon *) branchMuon->At(goodMu_plus_reco_indices[0]))->P4();
+    cout << "mplus1_reco Pt: " << mplus1_reco.Pt() << " mplus1_reco Eta: " << mplus1_reco.Eta() << endl;
+  } 
+
+
+  // e = e+ & e- , mu = mu+ & mu- 
+  vector<int> goodE_reco_indices;
+  vector<int> goodMu_reco_indices;
+  ConcatenateIndices(goodE_min_reco_indices, goodE_reco_indices);
+  ConcatenateIndices(goodE_plus_reco_indices, goodE_reco_indices);
+  ConcatenateIndices(goodMu_min_reco_indices, goodMu_reco_indices);
+  ConcatenateIndices(goodMu_plus_reco_indices, goodMu_reco_indices);
+
+  if(enableCutReco["lep pT & eta cut - reco"]){
+      if(switchVal_reco == 0 && ((goodE_reco_indices.size() + goodMu_reco_indices.size()) > 0)) increaseCount(cutFlowMap_reco,"lep pT & eta cut - reco",weight);
+      else switchVal_reco = 1;
+  }
+
+  // re-sort
+  sort_by_pT(goodE_reco_indices, branchElectron, "Electron"); 
+  sort_by_pT(goodMu_reco_indices, branchMuon, "Muon");
 
   goodE_size_reco->Fill(goodE_reco_indices.size(),weight);
   goodMu_size_reco->Fill(goodMu_reco_indices.size(),weight);
 
   // lep details
+
   if (goodE_reco_indices.size()>0) e1_reco = ((Electron *) branchElectron->At(goodE_reco_indices[0]))->P4();
   if (goodE_reco_indices.size()>1) e2_reco = ((Electron *) branchElectron->At(goodE_reco_indices[1]))->P4();
   if (goodMu_reco_indices.size()>0) m1_reco = ((Muon *) branchMuon->At(goodMu_reco_indices[0]))->P4();
@@ -1296,18 +1341,11 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 // V details
 
   vector<pair<int,pair<int,int>>> ZRecoPairIndices;
-  vector<pair<pair<int,int>,int>> WRecoPairIndices;
+  //vector<pair<pair<int,int>,int>> WRecoPairIndices;
+  vector <int> wleps;
 
   if(analysis == "HZZJJ"){
-
-    if(enableCutReco["lep pT > 15 & eta < 2.5 - reco"]){
-      if (switchVal_reco==0) {
-       if (goodE_reco_indices.size() > 0 || goodMu_reco_indices.size() > 0) increaseCount(cutFlowMap_reco,"lep pT > 5 & eta < 2.5 - reco",weight);
-      } 
-      else  switchVal_reco=1;
-    }
-   
-    
+  
     // form pairs for each flavour
     vector< pair<int,int>> elecZRecoPairIndices=GetelecRecoPairIndices(branchElectron,goodE_reco_indices); 
     vector< pair<int,int>> muZRecoPairIndices=GetmuRecoPairIndices(branchMuon,goodMu_reco_indices);
@@ -1328,7 +1366,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       else if( ZRecoPairIndices[0].first == 0 && ZRecoPairIndices[1].first == 1) thisRecoEventType=3;
     }
 
-    recoET->Fill(thisRecoEventType,weight);
+    recoET->Fill(thisRecoEventType, weight);
 
     getRecoZLeps(thisRecoEventType, ZRecoPairIndices, branchElectron, branchMuon, l1_reco, l2_reco, l3_reco, l4_reco, q1_reco, q2_reco, q3_reco, q4_reco);
 
@@ -1383,47 +1421,61 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     // WW 
 
    } else if(analysis == "HWWJJ") {
-
-      if(enableCutReco["lep pT > 15 & eta < 2.5 - reco"]){
-        if (switchVal_reco==0) {
-          if (goodE_reco_indices.size() + goodMu_reco_indices.size()  > 1) increaseCount(cutFlowMap_reco,"lep pT > 15 & eta < 2.5 - reco",weight); 
-          else switchVal_reco=1;
-        }
-      }
       
-      WRecoPairIndices = GetWRecoPairIndices(goodE_reco_indices, goodMu_reco_indices, branchElectron, branchMuon, branchMissingET);
+      // FOR OSOF SWITCH mu mu / e e EVENT TYPE TO -1
 
-      // FOR OFOS SWITCH mu mu / e e EVENT TYPE TO -1
-      if( switchVal_reco==0 && WRecoPairIndices.size()>=2){
-          if( WRecoPairIndices[0].first.first == 1 && WRecoPairIndices[1].first.first == 1) thisRecoEventType=0; // mu mu
-          else if( WRecoPairIndices[0].first.first == 0 && WRecoPairIndices[1].first.first == 0) thisRecoEventType=1; // e e
-          else if( WRecoPairIndices[0].first.first == 1 && WRecoPairIndices[1].first.first == 0) thisRecoEventType=2; // mu e
-          else if( WRecoPairIndices[0].first.first == 0 && WRecoPairIndices[1].first.first == 1) thisRecoEventType=3; // e mu
-      }
+      if((goodE_reco_indices.size() + goodMu_reco_indices.size()) >= 2 ){
+        if (goodMu_min_reco_indices.size() > 0 && goodMu_plus_reco_indices.size() > 0) { // case mu- mu+
+            thisRecoEventType = 0;
+            wleps.push_back(goodMu_min_reco_indices[0]);
+            wleps.push_back(goodMu_plus_reco_indices[0]);
+            sort2_by_pT(wleps, branchElectron, branchMuon, "Muon", "Muon");
+            l1_reco = ((Muon *) branchMuon->At(wleps[0]))->P4();
+            l2_reco = ((Muon *) branchMuon->At(wleps[1]))->P4();
+        } else if (goodE_min_reco_indices.size() > 0 && goodE_plus_reco_indices.size() > 0) {  // case e- e+ 
+            thisRecoEventType = 1; 
+            wleps.push_back(goodE_min_reco_indices[0]);
+            wleps.push_back(goodE_plus_reco_indices[0]);
+            sort2_by_pT(wleps, branchElectron, branchMuon, "Electron", "Electron");
+            l1_reco = ((Electron *) branchElectron->At(wleps[0]))->P4();
+            l2_reco = ((Electron *) branchElectron->At(wleps[1]))->P4();
+        } else if (goodMu_min_reco_indices.size() > 0 && goodE_plus_reco_indices.size() > 0) { // case mu- e+
+            thisRecoEventType = 2;
+            wleps.push_back(goodMu_min_reco_indices[0]);
+            wleps.push_back(goodE_plus_reco_indices[0]);
+            sort2_by_pT(wleps, branchElectron, branchMuon, "Muon", "Electron");
+            l1_reco = ((Muon *) branchMuon->At(wleps[0]))->P4();
+            l2_reco = ((Electron *) branchElectron->At(wleps[1]))->P4();
+        } else if (goodE_min_reco_indices.size() > 0 && goodMu_plus_reco_indices.size() > 0) {  // case e- mu+
+            thisRecoEventType = 3; 
+            wleps.push_back(goodE_min_reco_indices[0]);
+            wleps.push_back(goodMu_plus_reco_indices[0]);
+            sort2_by_pT(wleps, branchElectron, branchMuon, "Electron", "Muon");
+            l1_reco = ((Electron *) branchElectron->At(wleps[0]))->P4();
+            l2_reco = ((Muon *) branchMuon->At(wleps[1]))->P4();
+        }
+    }
 
-    recoET->Fill(thisRecoEventType,weight);
-
-    //cout << "reco event type: " << thisRecoEventType << " event number "<< entry << endl; 
-    //cout << "Electron size " << branchElectron->GetEntries()<<endl;
-    //cout << " Good electron size "<<goodE_reco_indices.size()<<endl;
-    //cout << " Muon size " << branchMuon->GetEntries()<<endl;
-    //cout << " Good muon size "<<goodMu_reco_indices.size()<<endl;
+      recoET->Fill(thisRecoEventType);
 
       if(enableCutReco["OSOF - reco"]){
         if (switchVal_reco==0 && thisRecoEventType != -1) increaseCount(cutFlowMap_reco, "OSOF - reco", weight);
         else switchVal_reco=1;
       }
 
-      getWReco(thisRecoEventType, WRecoPairIndices, branchElectron, branchMuon, branchMissingET, l1_reco, l2_reco, q1_reco, q2_reco, met1, met2);
+      hmll_0_15_reco->Fill((l1_reco+l2_reco).M(),weight);
 
-      //cout << "mll_reco: " << (l1_reco+l2_reco).M() << endl;
-
-      hllm_0_15_reco->Fill((l1_reco+l2_reco).M(),weight);
-
-      if(enableCutReco["mll > 10 - reco"]) {
+     if(enableCutReco["mll > 10 - reco"]) {
           if(switchVal_reco == 0 && (l1_reco+l2_reco).M() >= 10) increaseCount(cutFlowMap_reco,"mll > 10 - reco",weight);
           else switchVal_reco = 1;
       }
+
+      met = ((MissingET*)branchMissingET->At(0))->P4();
+
+      double w1mass = calculate_mT(l1_reco.Pt(), met.Pt(), l1_reco.Phi() - met.Phi());
+      double w2mass = calculate_mT(l2_reco.Pt(), met.Pt(), l2_reco.Phi() - met.Phi());
+      hw1mreco->Fill(w1mass,weight);
+      hw2mreco->Fill(w2mass,weight);
 
     if( switchVal_reco == 0){
 
@@ -1615,34 +1667,54 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   int thisParticleEventType=-1;
-#ifdef MDEBUG
-  cout<<"Debug"<<endl;
-#endif
-  double lepPTRegFid=15;
-  double lepEtaFid=4.0;
-  // get e+e- mu+mu-
-  vector <int> goodE_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, lepEtaFid, analysis, 11);
-  vector <int> goodE_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle,lepPTRegFid, lepEtaFid, analysis, -11);
-  vector <int> goodMu_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, lepEtaFid, analysis, 13);
-  vector <int> goodMu_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTRegFid, lepEtaFid, analysis, -13);
 
-   // e = e+ & e- , mu = mu+ & mu- 
-  //vector<int> goodE_particle_indices(goodE_min_particle_indices);
-  ////goodE_particle_indices.insert(goodE_particle_indices.end(), goodE_plus_particle_indices.begin(), goodE_plus_particle_indices.end());
-  //vector<int> goodMu_particle_indices(goodMu_min_particle_indices);
-  ////goodMu_particle_indices.insert(goodMu_particle_indices.end(), goodMu_plus_particle_indices.begin(), goodMu_plus_particle_indices.end());
-  
-  
+  double lepPTMinFid = 15.0;
+  double lepEtaMaxFid = 2.5;
+
+  // get e+e- mu+mu-
+  vector <int> goodE_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTMinFid, lepEtaMaxFid, analysis, 11);
+  vector <int> goodE_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle,lepPTMinFid, lepEtaMaxFid, analysis, -11);
+  vector <int> goodMu_min_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTMinFid, lepEtaMaxFid, analysis, 13);
+  vector <int> goodMu_plus_particle_indices = get_good_particle_lepton_indices(branchGenParticle, lepPTMinFid, lepEtaMaxFid, analysis, -13);
+
+  cout << " ------------------------ " << endl;
+  cout << "goodE_min_particle_indices: " << goodE_min_particle_indices.size() << endl;
+  cout << "goodE_plus_particle_indices: " << goodE_plus_particle_indices.size() << endl;
+  cout << "goodMu_min_particle_indices: " << goodMu_min_particle_indices.size() << endl;
+  cout << "goodMu_plus_particle_indices: " << goodMu_plus_particle_indices.size() << endl;
+
+  TLorentzVector emin1_particle, eplus1_particle, mmin1_particle, mplus1_particle;
+  cout << " ------------------------ " << endl;
+
+  if (goodE_min_particle_indices.size()>0) {
+    emin1_particle = ((GenParticle *) branchGenParticle->At(goodE_min_particle_indices[0]))->P4();
+    cout << "emin1_particle Pt: " << emin1_particle.Pt() << " emin1_particle Eta: " << emin1_particle.Eta() << endl;
+  }
+  if (goodE_plus_particle_indices.size()>0) {
+    eplus1_particle = ((GenParticle *) branchGenParticle->At(goodE_plus_particle_indices[0]))->P4();
+    cout << "eplus1_particle Pt: " << eplus1_particle.Pt() << " eplus1_particle Eta: " << eplus1_particle.Eta() << endl;
+  }
+  if (goodMu_min_particle_indices.size()>0) {
+    mmin1_particle = ((GenParticle *) branchGenParticle->At(goodMu_min_particle_indices[0]))->P4();
+    cout << "mmin1_particle Pt: " << mmin1_particle.Pt() << " mmin1_particle Eta: " << mmin1_particle.Eta() << endl;
+  }
+  if (goodMu_plus_particle_indices.size()>0) {
+    mplus1_particle = ((GenParticle *) branchGenParticle->At(goodMu_plus_particle_indices[0]))->P4();
+    cout << "mplus1_particle Pt: " << mplus1_particle.Pt() << " mplus1_particle Eta: " << mplus1_particle.Eta() << endl;
+  } 
+
+  // e = e+ & e- , mu = mu+ & mu- 
   vector<int> goodE_particle_indices;
   vector<int> goodMu_particle_indices;
-  
   ConcatenateIndices( goodE_min_particle_indices,goodE_particle_indices);
   ConcatenateIndices( goodE_plus_particle_indices,goodE_particle_indices);
   ConcatenateIndices( goodMu_min_particle_indices,goodMu_particle_indices);
   ConcatenateIndices( goodMu_plus_particle_indices,goodMu_particle_indices);
+
   vector<int> goodLep_particle_indices;
   ConcatenateIndices( goodE_particle_indices,goodLep_particle_indices);
   ConcatenateIndices( goodMu_particle_indices,goodLep_particle_indices);
+
 #ifdef MDEBUG
   // Debug 
   cout<<" After selection  particle:"<<endl;
@@ -1652,13 +1724,11 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   }
   // lep details
   cout << "E/Mu: " << goodE_particle_indices.size() << "/" << goodMu_particle_indices.size() << endl;
-#endif
   //end debug 
+#endif 
   
   goodE_size_particle->Fill(goodE_particle_indices.size(),weight);
   goodMu_size_particle->Fill(goodMu_particle_indices.size(),weight);
-
-  
 
   if (goodE_particle_indices.size()>0) e1_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[0]))->P4();
   if (goodE_particle_indices.size()>1) e2_particle = ((GenParticle *) branchGenParticle->At(goodE_particle_indices[1]))->P4();
@@ -1684,14 +1754,13 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   vector<pair<int,pair<int,int>>> ZParticlePairIndices;
   vector<pair<pair<int,int>,int>> WParticlePairIndices;
 
-  if(analysis == "HZZJJ"){
+  if(enableCutParticle["lep pT & eta cut - particle"]){
+    if (switchVal_particle==0) {
+      if (goodE_particle_indices.size() > 0 || goodMu_particle_indices.size() > 0) increaseCount(cutFlowMap_particle,"lep pT & eta cut - particle",weight);
+    } else  switchVal_particle=1;
+  }
 
-    if(enableCutParticle["lep pT > 15 & eta < 2.5 - particle"]){
-      if (switchVal_particle==0) {
-       if (goodE_particle_indices.size() > 0 || goodMu_particle_indices.size() > 0) increaseCount(cutFlowMap_particle,"lep pT > 5 & eta < 2.5 - particle",weight);
-      } 
-      else  switchVal_particle=1;
-    }
+  if(analysis == "HZZJJ"){
 
     // form pairs for each flavour
     vector< pair<int,int>> elecZParticlePairIndices=GetelecParticlePairIndices(branchGenParticle,goodE_particle_indices); 
@@ -1711,7 +1780,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       else if( ZParticlePairIndices[0].first == 0 && ZParticlePairIndices[1].first == 1) thisParticleEventType=3;
     }
 
-    particleET->Fill(thisParticleEventType,weight);
+    particleET->Fill(thisParticleEventType, weight);
     
     getParticleZLeps(thisParticleEventType, ZParticlePairIndices, branchGenParticle, l1_particle, l2_particle, l3_particle, l4_particle, q1_particle, q2_particle, q3_particle, q4_particle);
 
@@ -1767,57 +1836,43 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
    } else if(analysis == "HWWJJ") {
 
-    // E + mu > 1
-#ifdef MDEBUG
-      cout<<" switch val before "<<switchVal_particle<<endl;
-#endif     
+    WParticlePairIndices = GetWParticlePairIndices(goodE_particle_indices, goodMu_particle_indices, branchGenParticle, branchMissingET);
+
+    #ifdef MDEBUG
+    cout<<" switch val "<<switchVal_particle<<endl;
+    #endif     
+    // if( switchVal_particle==0 && (goodE_particle_indices.size() + goodMu_particle_indices.size() >= 2) ){
     
-      if(enableCutParticle["lep pT > 15 & eta < 2.5 - particle"]){
-        if (switchVal_particle==0) {
-          if (goodE_particle_indices.size() + goodMu_particle_indices.size()  > 1) increaseCount(cutFlowMap_particle,"lep pT > 15 & eta < 2.5 - particle",weight);
-          else  switchVal_particle=1; 
-        } 
-      }
+    // FOR OFOS SWITCH mu mu / e e EVENT TYPE TO -1
+    if((goodE_particle_indices.size() + goodMu_particle_indices.size()) >= 2 ){
 
-      // WParticlePairIndices = GetWParticlePairIndices(goodE_particle_indices, goodMu_particle_indices, branchGenParticle, branchMissingET);
-      // FOR OFOS SWITCH mu mu / e e EVENT TYPE TO -1
-#ifdef MDEBUG
-      cout<<" switch val "<<switchVal_particle<<endl;
-#endif     
-      //      if( switchVal_particle==0 && (goodE_particle_indices.size() + goodMu_particle_indices.size() >= 2) ){
-      if((goodE_particle_indices.size() + goodMu_particle_indices.size() >= 2) ){
-#ifdef MDEBUG
-	cout<<" Mumin "	<<goodMu_min_particle_indices.size()<<" Muplus "<<goodMu_plus_particle_indices.size()<<" Emin "<<goodE_min_particle_indices.size()<<" Eplus "<<goodE_plus_particle_indices.size()<<endl;
-#endif
-        if (goodMu_min_particle_indices.size() > 0 && goodMu_plus_particle_indices.size() > 0) thisParticleEventType = 0;
-        if (goodE_min_particle_indices.size() > 0 && goodE_plus_particle_indices.size() > 0) thisParticleEventType = 1;
-        if (goodMu_min_particle_indices.size() > 0 && goodE_plus_particle_indices.size() > 0) thisParticleEventType = 2;
-        if (goodE_min_particle_indices.size() > 0 && goodMu_plus_particle_indices.size() > 0) thisParticleEventType = 3;
+    #ifdef MDEBUG
+    cout<<" Mumin "	<<goodMu_min_particle_indices.size()<<" Muplus "<<goodMu_plus_particle_indices.size()<<" Emin "<<goodE_min_particle_indices.size()<<" Eplus "<<goodE_plus_particle_indices.size()<<endl;
+    #endif
 
-          // if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 0; // mu mu
-          // else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 1; // e e
-          // else if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 2; // mu e
-          // else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 3; // e mu
-      }
-#ifdef MDEBUG
-      cout << thisParticleEventType << endl;
-#endif
-      particleET->Fill(thisParticleEventType,weight);
+    if (goodMu_min_particle_indices.size() > 0 && goodMu_plus_particle_indices.size() > 0) thisParticleEventType = 0;
+    if (goodE_min_particle_indices.size() > 0 && goodE_plus_particle_indices.size() > 0) thisParticleEventType = 1;
+    if (goodMu_min_particle_indices.size() > 0 && goodE_plus_particle_indices.size() > 0) thisParticleEventType = 2;
+    if (goodE_min_particle_indices.size() > 0 && goodMu_plus_particle_indices.size() > 0) thisParticleEventType = 3;
 
-      //cout << "-------------------------------------------------------------------------"<< endl;
+      // if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 0; // mu mu
+      // else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 1; // e e
+      // else if( WParticlePairIndices[0].first.first == 1 && WParticlePairIndices[1].first.first == 0) thisParticleEventType = 2; // mu e
+      // else if( WParticlePairIndices[0].first.first == 0 && WParticlePairIndices[1].first.first == 1) thisParticleEventType = 3; // e mu
+    }
 
-      //cout << "PARTICLE event type: " << thisParticleEventType << " event number "<< entry << endl;
-      //cout << " PARTICLE Good electron size "<< goodE_particle_indices.size() << endl;
-      //cout << " PARTICLE Good muon size "<< goodMu_particle_indices.size() << endl;
+    #ifdef MDEBUG
+    cout << thisParticleEventType << endl;
+    #endif
 
-      //cout << "-------------------------------------------------------------------------"<< endl;
+      particleET->Fill(thisParticleEventType);
 
       if(enableCutParticle["OSOF - particle"]){
         if (switchVal_particle==0 && thisParticleEventType != -1) increaseCount(cutFlowMap_particle,"OSOF - particle",weight);
         else switchVal_particle=1;
       }
 
-      //getWParticle(thisParticleEventType, WParticlePairIndices, branchGenParticle,branchMissingET, l1_particle, l2_particle, q1_particle, q2_particle, met1, met2);
+      getWParticle(thisParticleEventType, WParticlePairIndices, branchGenParticle,branchMissingET, l1_particle, l2_particle, q1_particle, q2_particle, met1, met2);
 
       hllm_0_15_particle->Fill((l1_particle+l2_particle).M(),weight);
 
@@ -2068,13 +2123,13 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
     // w - reco
     if(switchVal_reco==0){
-      if(thisRecoEventType!=-1 && WRecoPairIndices.size()>=2){
+      if(thisRecoEventType!=-1 && wleps.size()>=2){
         hllpTreco->Fill((l1_reco+l2_reco).Pt(),weight);
         hllmreco->Fill((l1_reco+l2_reco).M(),weight);
         hw1pTreco->Fill(w1_reco.Pt(),weight);
-        hw1mreco->Fill(w1_reco.M(),weight);
+        //hw1mreco->Fill(w1_reco.M(),weight);
         hw2pTreco->Fill(w2_reco.Pt(),weight);
-        hw2mreco->Fill(w2_reco.M(),weight);
+        //hw2mreco->Fill(w2_reco.M(),weight);
         hwwpTreco->Fill((w1_reco + w2_reco).Pt(),weight);
         hwwmreco->Fill((w1_reco + w2_reco).M(),weight);
 
@@ -2086,16 +2141,16 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
     // w ET- reco 
     if(switchVal_reco==0){
-      if(thisRecoEventType==0 && WRecoPairIndices.size()>=2){
+      if(thisRecoEventType==0 && wleps.size()>=2){
         hllpTET0reco->Fill((l1_reco+l2_reco).Pt(),weight);
         hllmET0reco->Fill((l1_reco+l2_reco).M(),weight);
-      } else if(thisRecoEventType==1 && WRecoPairIndices.size()>=2){
+      } else if(thisRecoEventType==1 && wleps.size()>=2){
         hllpTET1reco->Fill((l1_reco+l2_reco).Pt(),weight);
         hllmET1reco->Fill((l1_reco+l2_reco).M(),weight);
-      } else if(thisRecoEventType==2 && WRecoPairIndices.size()>=2){
+      } else if(thisRecoEventType==2 && wleps.size()>=2){
         hllpTET2reco->Fill((l1_reco+l2_reco).Pt(),weight);
         hllmET2reco->Fill((l1_reco+l2_reco).M(),weight);
-      } else if(thisRecoEventType==3 && WRecoPairIndices.size()>=2){
+      } else if(thisRecoEventType==3 && wleps.size()>=2){
         hllpTET3reco->Fill((l1_reco+l2_reco).Pt(),weight);
         hllmET3reco->Fill((l1_reco+l2_reco).M(),weight);
       }
