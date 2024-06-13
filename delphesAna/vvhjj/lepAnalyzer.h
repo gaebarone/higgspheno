@@ -649,10 +649,6 @@ void getPartonZLeps(int thisPartonEventType, vector <int> ZPartonIndices, TClone
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-  double calculate_mT(double pT_lepton, double pT_miss, double deltaPhi) {
-      return std::sqrt(2 * pT_lepton * pT_miss * (1 - std::cos(deltaPhi)));
-  }
-
 /*
    vector< pair<int,int>> GetWRecoIndices(TClonesArray *branchElectron=nullptr, TClonesArray *branchMuon=nullptr, vector<int> goodE_reco_indices=vector<int>(0), vector<int> goodMu_reco_indices=vector<int>(0)){
  
