@@ -1824,84 +1824,84 @@ cout << thisParticleEventType << endl;
     // z
     if(switchVal_reco==0){
       if(thisRecoEventType!=-1 && ZRecoPairIndices.size()>=2){
-        hz1pTreco->Fill(z1_reco.Pt(),weight);
-        hz2pTreco->Fill(z2_reco.Pt(),weight);
-        hz1mreco->Fill(z1_reco.M(),weight);
-        hz2mreco->Fill(z2_reco.M(),weight);
-        hzzdeltaPhireco->Fill(zzdeltaPhireco,weight); 
-        hzzdeltaEtareco->Fill(zzdeltaEtareco, weight);
-        hzzdeltaRreco -> Fill(zzdeltaRreco,weight);
+        hZ1pTreco->Fill(z1_reco.Pt(),weight);
+        hZ2pTreco->Fill(z2_reco.Pt(),weight);
+        hZ1mreco->Fill(z1_reco.M(),weight);
+        hZ2mreco->Fill(z2_reco.M(),weight);
+        hZZdeltaPhireco->Fill(zzdeltaPhireco,weight); 
+        hZZdeltaEtareco->Fill(zzdeltaEtareco, weight);
+        hZZdeltaRreco -> Fill(zzdeltaRreco,weight);
       }
     }
 
     if(switchVal_particle==0){
       if(thisParticleEventType!=-1 && ZParticlePairIndices.size()>=2){
-        hz1pTparticle->Fill(z1_particle.Pt(),weight);
-        hz2pTparticle->Fill(z2_particle.Pt(),weight);
-        hz1mparticle->Fill(z1_particle.M(),weight);
-        hz2mparticle->Fill(z2_particle.M(),weight);
-        hzzdeltaPhiparticle->Fill(zzdeltaPhiparticle,weight); 
-        hzzdeltaEtaparticle->Fill(zzdeltaEtaparticle, weight);
-        hzzdeltaRparticle -> Fill(zzdeltaRparticle,weight);
+        hZ1pTparticle->Fill(z1_particle.Pt(),weight);
+        hZ2pTparticle->Fill(z2_particle.Pt(),weight);
+        hZ1mparticle->Fill(z1_particle.M(),weight);
+        hZ2mparticle->Fill(z2_particle.M(),weight);
+        hZZdeltaPhiparticle->Fill(zzdeltaPhiparticle,weight); 
+        hZZdeltaEtaparticle->Fill(zzdeltaEtaparticle, weight);
+        hZZdeltaRparticle -> Fill(zzdeltaRparticle,weight);
       }
     }
 
     if(switchVal_parton==0 ){
       if(foundZZ){
-        hz1pTparton->Fill(z1_parton.Pt(),weight);
-        hz2pTparton->Fill(z2_parton.Pt(),weight);
-        hz1mparton->Fill(z1_parton.M(),weight);
-        hz2mparton->Fill(z2_parton.M(),weight);
-        hzzdeltaPhiparton->Fill(zzdeltaPhiparton,weight); 
-        hzzdeltaEtaparton->Fill(zzdeltaEtaparton, weight);
-        hzzdeltaRparton -> Fill(zzdeltaRparton,weight);
+        hZ1pTparton->Fill(z1_parton.Pt(),weight);
+        hZ2pTparton->Fill(z2_parton.Pt(),weight);
+        hZ1mparton->Fill(z1_parton.M(),weight);
+        hZ2mparton->Fill(z2_parton.M(),weight);
+        hZZdeltaPhiparton->Fill(zzdeltaPhiparton,weight); 
+        hZZdeltaEtaparton->Fill(zzdeltaEtaparton, weight);
+        hZZdeltaRparton -> Fill(zzdeltaRparton,weight);
       }
     }
 
     // w 
     if(switchVal_reco==0){
       if(thisRecoEventType!=-1 && wleps.size()>=2){
-        hllpTreco->Fill((l1_reco+l2_reco).Pt(),weight);
-        hllmreco->Fill((l1_reco+l2_reco).M(),weight);
-        hw1pTreco->Fill(w1_reco.Pt(),weight);
-        hw1mreco->Fill(massTransverse(l1_reco, met),weight);
-        hw2pTreco->Fill(w2_reco.Pt(),weight);
-        hw2mreco->Fill(massTransverse(l2_reco, met),weight);
-        hwwpTreco->Fill((w1_reco + w2_reco).Pt(),weight);
-        hwwmreco->Fill((w1_reco + w2_reco).M(),weight);
+        //hllpTreco->Fill((l1_reco+l2_reco).Pt(),weight);
+        //hllmreco->Fill((l1_reco+l2_reco).M(),weight);
+        hW1pTreco->Fill(w1_reco.Pt(),weight);
+        hW1mreco->Fill(massTransverse(l1_reco, met),weight);
+        hW2pTreco->Fill(w2_reco.Pt(),weight);
+        hW2mreco->Fill(massTransverse(l2_reco, met),weight);
+        hWWpTreco->Fill((w1_reco + w2_reco).Pt(),weight);
+        hWWmreco->Fill((w1_reco + w2_reco).M(),weight);
 
-        hwwdeltaPhireco->Fill(wwdeltaPhireco,weight); 
-        hwwdeltaEtareco->Fill(wwdeltaEtareco, weight);
-        hwwdeltaRreco -> Fill(wwdeltaRreco,weight);
+        hWWdeltaPhireco->Fill(wwdeltaPhireco,weight); 
+        hWWdeltaEtareco->Fill(wwdeltaEtareco, weight);
+        hWWdeltaRreco -> Fill(wwdeltaRreco,weight);
       }
     }
 
     if(switchVal_particle==0){
       if(thisParticleEventType!=-1 && WParticlePairIndices.size()>=2){
-        hllpTparticle->Fill((l1_particle+l2_particle).Pt(),weight);
-        hllmparticle->Fill((l1_particle+l2_particle).M(),weight);
-        hw1pTparticle->Fill(w1_particle.Pt(),weight);
-        hw1mparticle->Fill(massTransverse(l1_particle, met),weight);
-        hw2pTparticle->Fill(w2_particle.Pt(),weight);
-        hw2mparticle->Fill(massTransverse(l2_particle, met),weight);
-        hwwpTparticle->Fill((w1_particle + w2_sparticle).Pt(),weight);
-        hwwmparticle->Fill((w1_particle + w2_particle).M(),weight);
+        //hllpTparticle->Fill((l1_particle+l2_particle).Pt(),weight);
+        //hllmparticle->Fill((l1_particle+l2_particle).M(),weight);
+        hW1pTparticle->Fill(w1_particle.Pt(),weight);
+        hW1mparticle->Fill(massTransverse(l1_particle, met),weight);
+        hW2pTparticle->Fill(w2_particle.Pt(),weight);
+        hW2mparticle->Fill(massTransverse(l2_particle, met),weight);
+        hWWpTparticle->Fill((w1_particle + w2_sparticle).Pt(),weight);
+        hWWmparticle->Fill((w1_particle + w2_particle).M(),weight);
 
-        hwwdeltaPhiparticle->Fill(wwdeltaPhiparticle,weight); 
-        hwwdeltaEtaparticle->Fill(wwdeltaEtaparticle, weight);
-        hwwdeltaRparticle -> Fill(wwdeltaRparticle,weight);
+        hWWdeltaPhiparticle->Fill(wwdeltaPhiparticle,weight); 
+        hWWdeltaEtaparticle->Fill(wwdeltaEtaparticle, weight);
+        hWWdeltaRparticle -> Fill(wwdeltaRparticle,weight);
       }
     }
 
     if(switchVal_parton==0 ){
       if(foundWW){
-        hw1pTparton->Fill(w1_parton.Pt(),weight);
-        hw2pTparton->Fill(w2_parton.Pt(),weight);
-        hw1mparton->Fill(w1_parton.M(),weight);
-        hw2mparton->Fill(w2_parton.M(),weight);
-        hwwdeltaPhiparton->Fill(wwdeltaPhiparton,weight); 
-        hwwdeltaEtaparton->Fill(wwdeltaEtaparton, weight);
-        hwwdeltaRparton -> Fill(wwdeltaRparton,weight);
+        hW1pTparton->Fill(w1_parton.Pt(),weight);
+        hW2pTparton->Fill(w2_parton.Pt(),weight);
+        hW1mparton->Fill(w1_parton.M(),weight);
+        hW2mparton->Fill(w2_parton.M(),weight);
+        hWWdeltaPhiparton->Fill(wwdeltaPhiparton,weight); 
+        hWWdeltaEtaparton->Fill(wwdeltaEtaparton, weight);
+        hWWdeltaRparton -> Fill(wwdeltaRparton,weight);
       }
     }
 
