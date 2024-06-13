@@ -616,7 +616,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   // w
   TLorentzVector w1_reco, w1_particle,  w1_parton;
   TLorentzVector w2_reco, w2_particle,  w2_parton;
-  TLorentzVector met;
+  TLorentzVector met, met1, met2;
 
   // leptons
   TLorentzVector l1_reco, l1_particle,  l1_parton;
@@ -635,7 +635,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TLorentzVector m4_reco, m4_particle,  m4_parton;
 
 // kinematic quantities
-/*
+
   // higgs
   double bbdeltaPhireco = 9999;
   double bbdeltaEtareco = 9999;
@@ -771,7 +771,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   double wwdeltaPhiparton=-9999;
   double wwdeltaEtaparton=-9999;
   double wwdeltaRparton=-9999;
-*/
+
 
   // lep charge
   int q1_reco=0;
@@ -1353,7 +1353,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     int switchVal_particle = 0;
-    bool foundBjetParticle = false;
+    bool foundHiggs_particle = false;
 
     if(enableCutParticle["initial - particle"]){
       increaseCount(cutFlowMap_particle,"initial - particle",weight);
@@ -1389,15 +1389,14 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     if(enableCutParticle["1 bb PAIReD jet - particle"]) {
       if(switchVal_particle == 0 && pairedJetBParticle.size()>0){
         increaseCount(cutFlowMap_particle,"1 bb PAIReD jet - particle",weight);
-        foundBjetParticle = true;
+        foundHiggs_particle = true;
       } else switchVal_particle = 1;
     }
 
     std::map<TString, float> paired_jet_particle;
 
-    if (switchVal_particle == 0 && pairedJetBParticle.size()>0){
+    if (switchVal_particle == 0 && foundHiggs_particle){
 
-      foundBjetParticle = true;
       paired_jet_particle = pairedJetBParticle.at(0).first;
 
       btagIndexParticle.push_back(paired_jet_particle["jet1_index"]);

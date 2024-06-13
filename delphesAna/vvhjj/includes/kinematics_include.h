@@ -2,6 +2,7 @@
 #define KINEMATICS_INCLUDE_H
 
 
+#include <cmath>
 
 double deltaPhi(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) {
 
@@ -17,9 +18,9 @@ double deltaEta(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) 
 
 double deltaR(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) {
 
-    double deltaPhi = lorentzvector1.Phi() - lorentzvector2.Phi();
-    double deltaEta = lorentzvector1.Eta() - lorentzvector2.Eta();
-    return std::sqrt(deltaPhi*deltaPhi + deltaEta*deltaEta);
+    double dPhi = lorentzvector1.Phi() - lorentzvector2.Phi();
+    double dEta = lorentzvector1.Eta() - lorentzvector2.Eta();
+    return std::sqrt(dPhi*dPhi + dEta*dEta);
     
 }
 
@@ -28,8 +29,8 @@ double massTransverse(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvec
 
     double pT_lepton = lorentzvector1.Pt();
     double pT_miss = lorentzvector2.Pt();
-    double deltaPhi = deltaPhi(lorentzvector1, lorentzvector2);
-    return std::sqrt(2 * pT_lepton * pT_miss * (1 - std::cos(deltaPhi)));
+    double dPhi = deltaPhi(lorentzvector1, lorentzvector2);
+    return std::sqrt(2 * pT_lepton * pT_miss * (1 - std::cos(dPhi)));
 
 }
 
