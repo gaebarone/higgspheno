@@ -19,7 +19,7 @@ double deltaR(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) {
 
     double deltaPhi = lorentzvector1.Phi() - lorentzvector2.Phi();
     double deltaEta = lorentzvector1.Eta() - lorentzvector2.Eta();
-    return std::sqrt(deltaPhi**2 + deltaEta**2);
+    return std::sqrt(deltaPhi*deltaPhi + deltaEta*deltaEta);
     
 }
 

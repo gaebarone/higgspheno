@@ -886,9 +886,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       h_reco = b1_reco + b2_reco; // dijet
 
-      bbdeltaPhireco = deltaPhi(b1_reco, b2_reco)
-      bbdeltaEtareco = deltaEta(b1_reco, b2_reco)
-      bbdeltaRreco = deltaR(b1_reco, b2_reco)
+      double bbdeltaPhireco = deltaPhi(b1_reco, b2_reco)
+      double bbdeltaEtareco = deltaEta(b1_reco, b2_reco)
+      double bbdeltaRreco = deltaR(b1_reco, b2_reco)
 
     }
 
@@ -1150,9 +1150,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       j1_reco=jet1->P4();
       j2_reco=jet2->P4();
 
-      jjdeltaPhireco = deltaPhi(j1_reco, j2_reco)
-      jjdeltaEtareco = deltaEta(j1_reco, j2_reco)
-      jjdeltaRreco = deltaR(j1_reco, j2_reco)
+      double jjdeltaPhireco = deltaPhi(j1_reco, j2_reco)
+      double jjdeltaEtareco = deltaEta(j1_reco, j2_reco)
+      double jjdeltaRreco = deltaR(j1_reco, j2_reco)
 
     }
 
@@ -1340,9 +1340,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       if( switchVal_reco == 0){
         w1_reco=l1_reco + met;
         w2_reco=l2_reco + met;
-        wwdeltaPhireco = deltaPhi(w1_reco, w2_reco)
-        wwdeltaEtareco = deltaEta(w1_reco, w2_reco)
-        wwdeltaRreco = deltaR(w1_reco, w2_reco)
+        double wwdeltaPhireco = deltaPhi(w1_reco, w2_reco)
+        double wwdeltaEtareco = deltaEta(w1_reco, w2_reco)
+        double wwdeltaRreco = deltaR(w1_reco, w2_reco)
       }
 
     }
@@ -1407,9 +1407,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
       h_particle = b1_particle + b2_particle; // dijet
 
-      bbdeltaPhiparticle = deltaPhi(b1_particle, b2_particle)
-      bbdeltaEtarparticle = deltaEta(b1_particle, b2_particle)
-      bbdeltaRrparticle = deltaR(b1_particle, b2_particle)
+      double bbdeltaPhiparticle = deltaPhi(b1_particle, b2_particle)
+      double bbdeltaEtarparticle = deltaEta(b1_particle, b2_particle)
+      double bbdeltaRrparticle = deltaR(b1_particle, b2_particle)
  
     }
  
@@ -1471,9 +1471,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       j1_particle=jet1_particle->P4();
       j2_particle=jet2_particle->P4();
 
-      jjdeltaPhiparticle = deltaPhi(j1_particle, j2_particle)
-      jjdeltaEtarparticle = deltaEta(j1_particle, j2_particle)
-      jjdeltaRrparticle = deltaR(j1_particle, j2_particle)
+      double jjdeltaPhiparticle = deltaPhi(j1_particle, j2_particle)
+      double jjdeltaEtarparticle = deltaEta(j1_particle, j2_particle)
+      double jjdeltaRrparticle = deltaR(j1_particle, j2_particle)
   
     }
 
@@ -1605,9 +1605,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     if( switchVal_particle == 0 && thisParticleEventType != -1 && ZParticlePairIndices.size() >= 2 ){
       z1_particle=l1_particle + l2_particle;
       z2_particle=l3_particle + l4_particle;
-      zzdeltaPhiparticle = deltaPhi(z1_particle, z2_particle)
-      zzdeltaEtarparticle = deltaEta(z1_particle, z2_particle)
-      zzdeltaRrparticle = deltaR(z1_particle, z2_particle)
+      double zzdeltaPhiparticle = deltaPhi(z1_particle, z2_particle)
+      double zzdeltaEtarparticle = deltaEta(z1_particle, z2_particle)
+      double zzdeltaRrparticle = deltaR(z1_particle, z2_particle)
     }
 
     // WW 
@@ -1657,9 +1657,9 @@ cout << thisParticleEventType << endl;
 
         w1_particle=l1_particle + met1;
         w2_particle=l2_particle + met2;
-        wwdeltaPhiparticle = deltaPhi(w1_particle, w2_particle)
-        wwdeltaEtarparticle = deltaEta(w1_particle, w2_particle)
-        wwdeltaRrparticle = deltaR(w1_particle, w2_particle)
+        double wwdeltaPhiparticle = deltaPhi(w1_particle, w2_particle)
+        double wwdeltaEtarparticle = deltaEta(w1_particle, w2_particle)
+        double wwdeltaRrparticle = deltaR(w1_particle, w2_particle)
 
       }
 
@@ -1683,9 +1683,9 @@ cout << thisParticleEventType << endl;
     }
 
     if(HiggsRecord){
-      bbdeltaPhiparton = deltaPhi(b1_parton, b2_parton)
-      bbdeltaEtarparton = deltaEta(b1_parton, b2_parton)
-      bbdeltaRrparton = deltaR(b1_parton, b2_parton)
+      double bbdeltaPhiparton = deltaPhi(b1_parton, b2_parton)
+      double bbdeltaEtarparton = deltaEta(b1_parton, b2_parton)
+      double bbdeltaRrparton = deltaR(b1_parton, b2_parton)
     }
 
     //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1718,9 +1718,9 @@ cout << thisParticleEventType << endl;
       if(switchVal_parton == 0) getPartonZLeps(thisPartonEventType, ZPartonIndices, branchGenParticle, z1_parton, z2_parton, l1_parton, l2_parton, l3_parton, l4_parton, q1_parton, q2_parton, q3_parton, q4_parton);
 
       if(foundZZ){
-        zzdeltaPhiparton = deltaPhi(z1_parton, z2_parton)
-        zzdeltaEtarparton = deltaEta(z1_parton, z2_parton)
-        zzdeltaRrparton = deltaR(z1_parton, z2_parton)
+        double zzdeltaPhiparton = deltaPhi(z1_parton, z2_parton)
+        double zzdeltaEtarparton = deltaEta(z1_parton, z2_parton)
+        double zzdeltaRrparton = deltaR(z1_parton, z2_parton)
       }
 
 
@@ -1741,9 +1741,9 @@ cout << thisParticleEventType << endl;
 
       if(foundWW) {
 	
-        wwdeltaPhiparton = deltaPhi(w1_parton, w2_parton)
-        wwdeltaEtarparton = deltaEta(w1_parton, w2_parton)
-        wwdeltaRrparton = deltaR(w1_parton, w2_parton)
+        double wwdeltaPhiparton = deltaPhi(w1_parton, w2_parton)
+        double wwdeltaEtarparton = deltaEta(w1_parton, w2_parton)
+        double wwdeltaRrparton = deltaR(w1_parton, w2_parton)
 
         lepPT_partonV.at(0)->Fill(l1_parton.Pt());
         lepPT_partonV.at(1)->Fill(l2_parton.Pt());
