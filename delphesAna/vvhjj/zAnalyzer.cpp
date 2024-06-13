@@ -1095,7 +1095,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   // RECO - VBF JETS
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    bool foundVBF_reco = False;
+    //bool foundVBF_reco = False;
 
     vector <int> nonHiggsJet;
     vector<pair<int,int>> vbfJetIndex;
@@ -1134,7 +1134,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     if(enableCutReco["2.5 deltaEta VBF jet - reco"]) {
       if(switchVal_reco==0 && vbfJetIndex_dEta.size()>0) {
         increaseCount(cutFlowMap_reco,"2.5 deltaEta VBF jet - reco",weight);
-        foundVBF_reco = True;
+        //foundVBF_reco = True;
       } else switchVal_reco=1;
     }
 
@@ -1144,7 +1144,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     Jet *jet1 =nullptr;
     Jet *jet2 =nullptr;
   
-    if(switchVal_reco==0 && foundVBF_reco) {
+    if(switchVal_reco==0 && vbfJetIndex_dEta.size()>0) {
 
       jet1 = (Jet*) branchJet->At(vbfJetIndex_dEta[0].first);
       jet2 = (Jet*) branchJet->At(vbfJetIndex_dEta[0].second);
@@ -1334,7 +1334,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       }
 
       met = ((MissingET*)branchMissingET->At(0))->P4();
-      
+
       if( switchVal_reco == 0){
         w1_reco=l1_reco + met;
         w2_reco=l2_reco + met;
@@ -1789,7 +1789,7 @@ cout << thisParticleEventType << endl;
     }
 
     if(switchVal_parton==0){
-      if(foundHiggs_parton){
+      if(HiggsRecord){
         hHpTparton -> Fill(h_parton.Pt(),weight);
         hHmparton -> Fill(h_parton.M(),weight); 
 	      hbbdeltaPhiparton -> Fill(deltaPhi(b1_parton, b2_parton),weight);
