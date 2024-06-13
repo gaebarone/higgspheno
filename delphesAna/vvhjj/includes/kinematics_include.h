@@ -26,9 +26,9 @@ double deltaR(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) {
 double massTransverse(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) {
 
 
-    double pT_lepton = lorentzvector1.Pt()
-    double pT_miss = lorentzvector2.Pt()
-    double deltaPhi = deltaPhi(lorentzvector1, lorentzvector2)
+    double pT_lepton = lorentzvector1.Pt();
+    double pT_miss = lorentzvector2.Pt();
+    double deltaPhi = deltaPhi(lorentzvector1, lorentzvector2);
     return std::sqrt(2 * pT_lepton * pT_miss * (1 - std::cos(deltaPhi)));
 
 }
