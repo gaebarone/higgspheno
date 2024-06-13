@@ -1334,10 +1334,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       }
 
       met = ((MissingET*)branchMissingET->At(0))->P4();
-
-      double w1mass = calculate_mT(l1_reco.Pt(), met.Pt(), l1_reco.Phi() - met.Phi());
-      double w2mass = calculate_mT(l2_reco.Pt(), met.Pt(), l2_reco.Phi() - met.Phi());
-
+      
       if( switchVal_reco == 0){
         w1_reco=l1_reco + met;
         w2_reco=l2_reco + met;
@@ -1861,14 +1858,15 @@ cout << thisParticleEventType << endl;
     // w 
     if(switchVal_reco==0){
       if(thisRecoEventType!=-1 && wleps.size()>=2){
-        //hllpTreco->Fill((l1_reco+l2_reco).Pt(),weight);
-        //hllmreco->Fill((l1_reco+l2_reco).M(),weight);
         hW1pTreco->Fill(w1_reco.Pt(),weight);
         hW1mreco->Fill(massTransverse(l1_reco, met),weight);
         hW2pTreco->Fill(w2_reco.Pt(),weight);
         hW2mreco->Fill(massTransverse(l2_reco, met),weight);
-        hWWpTreco->Fill((w1_reco + w2_reco).Pt(),weight);
-        hWWmreco->Fill((w1_reco + w2_reco).M(),weight);
+
+        //hWWpTreco->Fill((w1_reco + w2_reco).Pt(),weight);
+        //hWWmreco->Fill((w1_reco + w2_reco).M(),weight);
+        //hllpTreco->Fill((l1_reco+l2_reco).Pt(),weight);
+        //hllmreco->Fill((l1_reco+l2_reco).M(),weight);
 
         hWWdeltaPhireco->Fill(wwdeltaPhireco,weight); 
         hWWdeltaEtareco->Fill(wwdeltaEtareco, weight);
@@ -1878,14 +1876,15 @@ cout << thisParticleEventType << endl;
 
     if(switchVal_particle==0){
       if(thisParticleEventType!=-1 && WParticlePairIndices.size()>=2){
-        //hllpTparticle->Fill((l1_particle+l2_particle).Pt(),weight);
-        //hllmparticle->Fill((l1_particle+l2_particle).M(),weight);
         hW1pTparticle->Fill(w1_particle.Pt(),weight);
         hW1mparticle->Fill(massTransverse(l1_particle, met),weight);
         hW2pTparticle->Fill(w2_particle.Pt(),weight);
         hW2mparticle->Fill(massTransverse(l2_particle, met),weight);
-        hWWpTparticle->Fill((w1_particle + w2_sparticle).Pt(),weight);
-        hWWmparticle->Fill((w1_particle + w2_particle).M(),weight);
+
+        //hllpTparticle->Fill((l1_particle+l2_particle).Pt(),weight);
+        //hllmparticle->Fill((l1_particle+l2_particle).M(),weight);
+        //hWWpTparticle->Fill((w1_particle + w2_sparticle).Pt(),weight);
+        //hWWmparticle->Fill((w1_particle + w2_particle).M(),weight);
 
         hWWdeltaPhiparticle->Fill(wwdeltaPhiparticle,weight); 
         hWWdeltaEtaparticle->Fill(wwdeltaEtaparticle, weight);
