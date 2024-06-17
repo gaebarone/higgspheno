@@ -89,6 +89,11 @@ void PrintCutFlow(std::map<std::string, std::pair<int, double>> cutFlowMap, std:
     printLine();
 }
 
+void update_cft(std::map<string, std::pair<int,double>> & cft_event, std::map<string, std::pair<int,double>> & cft_total, string cut_name, double weight) {
+    cft_event[cut_name] = make_pair(1,weight);
+    cft_total[cut_name] = make_pair(cft_total[cut_name].first+1,cft_total[cut_name].second+weight);
+}
+
 void increaseCount(std::map<string, std::pair<int,double>> & cutFlowMap, string cutName, double weight) {
     cutFlowMap[cutName]=make_pair(cutFlowMap[cutName].first+1,cutFlowMap[cutName].second+weight);
 }

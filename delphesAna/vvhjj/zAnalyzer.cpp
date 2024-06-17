@@ -101,6 +101,11 @@ int calculate_product(const std::vector<int64_t>& v) {
 // Z ANALYZER
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+void printMap(const std::map<std::string, std::pair<int, double>>& map) {
+    for (const auto& pair : map) {
+        std::cout << " CUT: " << pair.first << " PASS/FAIL: " << pair.second.first << std::endl;
+    }
+}
 
 // void zAnalyzer(const char *inputFile,const char *outputFile, int kappaVal = 8) {
 void zAnalyzer(const char *inputFile, const char *outputFile, const char *process_name, string analysis="HZZJJ"){
@@ -135,14 +140,21 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     enableCutParton[ (*it)] = hasCut(cutList_parton, (*it));
   }
 
+  // new reco cft
+
   int cutVal_reco = 0;
   double cutValW_reco = 0;
- 
-  std::map<string, std::pair<int,double>> cutFlowMap_reco;
+
+  std::map<string, std::pair<int,double>> cft_total_reco;
+
+  std::vector<std::map<std::string, std::pair<int, double>>> cft_allevents_reco;
+
   for(int i=0; i<(int) cutList_reco.size(); i++) { 
-    cutFlowMap_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
+    cft_total_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
   }
  
+  // new reco cft
+  
   int cutVal_particle = 0;
   double cutValW_particle = 0;
  
@@ -170,7 +182,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
   std::map<string, cutFlowMapDef* > cutFlowMapAll;
-    cutFlowMapAll["reco"] =  & cutFlowMap_reco;
+    cutFlowMapAll["reco"] =  & cft_total_reco;
     cutFlowMapAll["particle"] = & cutFlowMap_particle;
     cutFlowMapAll["parton"] = & cutFlowMap_parton;
   
@@ -428,10 +440,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     TH1F *goodMu_size_parton = new TH1F("goodMu_size_parton", "size", 5, 0, 5); listOfTH1.push_back(goodMu_size_parton);
 
 // 2D - parton(1) particle(2) reco(3)
-
-  // paired
-    TH2F *hPJsize23Comp = new TH2F("PAIReD_jet_size_comp_23", "size", 5, 0, 5, 5, 0, 5); listOfTH2.push_back(hPJsize23Comp);
-    TH2F *hPJBsize23Comp = new TH2F("PAIReD_b_jet_size_comp_23", "size", 5, 0, 5, 5, 0, 5); listOfTH2.push_back(hPJBsize23Comp);
 
   // higgs
     TH2F *hHpT12Comp = new TH2F("H_pT_comp_12", "p_{T}^{hbb} Parton vs. Particle", pTBins, hpTmin, hpTmax, pTBins, hpTmin, hpTmax); listOfTH2.push_back(hHpT12Comp);
@@ -817,13 +825,12 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 // EVENT LOOP
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// new cutflow map
-  std::map<std::string, int> cft_map_reco;
-
 
 #ifdef MDEBUG
     numberOfEntries=1000;
 #endif 
+
+  numberOfEntries=5;
 
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
 
@@ -833,84 +840,26 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     Float_t test_weight = event->Weight*cross_section*numberOfEntries/(numEntries*totalWeight);
     hWeight -> Fill(event->Weight, test_weight);
 
-
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // RECO - HIGGS 
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    // int switchVal_reco = 0;
     // if(enableCutReco["initial - reco"]) increaseCount(cutFlowMap_reco,"initial - reco",weight);
-    
-    cft_map_reco["initial"] = 1;
-    increaseCount(cutFlowMap_reco,"initial - reco",weight);
 
-    bool foundHiggs_reco = false;
-
-    vector <int> goodJetIndex=GoodJetIndices(branchJet);
-
-    //if(enableCutReco["jet pT > 20 - reco"]) {
-    //  if(switchVal_reco == 0 && goodJetIndex.size() > 0) increaseCount(cutFlowMap_reco,"jet pT > 20 - reco", weight);
-    //  else switchVal_reco = 1;
-    // }
-    
-    if (goodJetIndex.size() > 0){
-      cft_map_reco["jet pT > 20 - reco"] = 1;
-      increaseCount(cutFlowMap_reco,"jet pT > 20 - reco", weight);
-    } else cft_map_reco["jet pT > 20 - reco"] = 0;
-
-    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,true,1.0,false);
-    //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
-    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetB;
-
-    if(enableCutReco["1 PAIReD jet - reco"]) {
-      if(switchVal_reco == 0 && pairedJet.size() > 0) increaseCount(cutFlowMap_reco,"1 PAIReD jet - reco",weight);
-      else switchVal_reco = 1;
+    std::map<string, std::pair<int,double>> cft_event_reco;
+    for(int i=0; i<(int) cutList_reco.size(); i++) { 
+      cft_event_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
     }
 
-    for(int i=0; i<(int)pairedJet.size(); i++){
-      std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> thisPaired=pairedJet.at(i);
-      if( thisPaired.first["isbtagged"] > 0) pairedJetB.push_back(thisPaired);
-    }
+    update_cft(cft_event_reco, cft_total_reco, "initial - reco", weight);
 
-    vector <int> btagIndex;
-    int pairedJetSize_reco = pairedJet.size();
-    int pairedBJetSize_reco = pairedJetB.size();
-
-    if(enableCutReco["1 bb PAIReD jet - reco"]) {
-        if(switchVal_reco == 0 && pairedJetB.size()>0){
-          increaseCount(cutFlowMap_reco,"1 bb PAIReD jet - reco",weight);
-          foundHiggs_reco = true;
-        } else switchVal_reco = 1;
-    }
-
-    std::map<TString, float> paired_jet;
-
-    if (switchVal_reco == 0 && foundHiggs_reco){
-
-      paired_jet = pairedJetB.at(0).first;
-
-      btagIndex.push_back(paired_jet["jet1_index"]);
-      btagIndex.push_back(paired_jet["jet2_index"]);
-
-      b1_reco.SetPtEtaPhiM(paired_jet["jet1_pt"],paired_jet["jet1_eta"],paired_jet["jet1_phi"],paired_jet["jet1_mass"]);
-      b2_reco.SetPtEtaPhiM(paired_jet["jet2_pt"],paired_jet["jet2_eta"],paired_jet["jet2_phi"],paired_jet["jet2_mass"]);
-
-      h_reco = b1_reco + b2_reco; // dijet
-
-      double bbdeltaPhireco = deltaPhi(b1_reco, b2_reco);
-      double bbdeltaEtareco = deltaEta(b1_reco, b2_reco);
-      double bbdeltaRreco = deltaR(b1_reco, b2_reco);
-
-    }
+    int switchVal_reco = 0; // remove this later
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // ONNX - WORK IN PROGRESS
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
     bool doONNX=true;
-    #ifdef ONNXRUN
+
+#ifdef ONNXRUN
+
     if(doONNX){
       // onnxruntime setup
     //string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/delphesModel.onnx";
@@ -1098,14 +1047,33 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       std::cout << "*********************************** test onnx ok  ***************************************" << endl;
     }
 
-    #endif
+#endif
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // RECO - VBF JETS
+  // RECO - selection
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    //bool foundVBF_reco = False;
+    bool foundHiggs_reco = false;
+    bool foundVBF_reco = false;
+    bool foundZZ_reco = false;
+    bool foundWW_reco = false;
+
+
+    vector <int> goodJetIndex=GoodJetIndices(branchJet);
+
+    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet = paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,true,1.0,false);
+    //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
+    
+    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> pairedJetB;
+
+    for(int i=0; i<(int)pairedJet.size(); i++){
+      std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> thisPaired = pairedJet.at(i);
+      if( thisPaired.first["isbtagged"] > 0 ) pairedJetB.push_back(thisPaired);
+    }
+
+    vector <int> btagIndex;
+    std::map<TString, float> paired_jet;
 
     vector <int> nonHiggsJet;
     vector<pair<int,int>> vbfJetIndex;
@@ -1120,15 +1088,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     SortByPtIndices(nonHiggsJet,branchJet);
     }
 
-    // check that there are at least two + make combinations
-    if(enableCutReco["2 VBF jet - reco"]) {
-      if(switchVal_reco==0 && nonHiggsJet.size() > 1 ) {
-	      increaseCount(cutFlowMap_reco,"2 VBF jet - reco",weight);
-	      vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
-      }
-      else switchVal_reco=1;
-    }
-
     // convert vector of vector of ints to vector of pairs of ints
     vbfJetIndex=GetvbfJetIndex(vbfJetIndexComb);
 
@@ -1141,35 +1100,11 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
       }
     }
 
-    if(enableCutReco["2.5 deltaEta VBF jet - reco"]) {
-      if(switchVal_reco==0 && vbfJetIndex_dEta.size()>0) {
-        increaseCount(cutFlowMap_reco,"2.5 deltaEta VBF jet - reco",weight);
-        //foundVBF_reco = True;
-      } else switchVal_reco=1;
-    }
+  // sort them again by eta for leading/subleading
+  SortByEtaIndices(vbfJetIndex_dEta,branchJet); 
 
-    // sort them again by eta for leading/subleading
-    SortByEtaIndices(vbfJetIndex_dEta,branchJet); 
-
-    Jet *jet1 =nullptr;
-    Jet *jet2 =nullptr;
-  
-    if(switchVal_reco==0 && vbfJetIndex_dEta.size()>0) {
-
-      jet1 = (Jet*) branchJet->At(vbfJetIndex_dEta[0].first);
-      jet2 = (Jet*) branchJet->At(vbfJetIndex_dEta[0].second);
-      j1_reco=jet1->P4();
-      j2_reco=jet2->P4();
-
-      double jjdeltaPhireco = deltaPhi(j1_reco, j2_reco);
-      double jjdeltaEtareco = deltaEta(j1_reco, j2_reco);
-      double jjdeltaRreco = deltaR(j1_reco, j2_reco);
-
-    }
-
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // RECO - LEPTONS
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Jet *jet1 =nullptr;
+  Jet *jet2 =nullptr;
 
   int thisRecoEventType=-1;
 
@@ -1219,13 +1154,138 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   ConcatenateIndices(goodE_plus_reco_indices, goodE_reco_indices);
   ConcatenateIndices(goodMu_min_reco_indices, goodMu_reco_indices);
   ConcatenateIndices(goodMu_plus_reco_indices, goodMu_reco_indices);
+      
+    // VV
 
-  if(enableCutReco["lep pT & eta cut - reco"]){
-      if(switchVal_reco == 0 && ((goodE_reco_indices.size() + goodMu_reco_indices.size()) > 0)) increaseCount(cutFlowMap_reco,"lep pT & eta cut - reco",weight);
-      else switchVal_reco = 1;
+    vector<pair<int,pair<int,int>>> ZRecoPairIndices;
+    vector <int> wleps;
+
+    // ZZ
+
+    if((goodE_reco_indices.size() + goodMu_reco_indices.size()) >= 4){
+
+      foundZZ_reco = true;
+      
+      // form pairs for each flavour
+      vector< pair<int,int>> elecZRecoPairIndices=GetelecRecoPairIndices(branchElectron,goodE_reco_indices); 
+      vector< pair<int,int>> muZRecoPairIndices=GetmuRecoPairIndices(branchMuon,goodMu_reco_indices);
+      
+      ZRecoPairIndices=GetRecoPairIndices(elecZRecoPairIndices,muZRecoPairIndices,branchElectron,branchMuon); // 0 for electron 1 for muon
+
+      if( switchVal_reco==0 && ZRecoPairIndices.size()>=2){
+        if( ZRecoPairIndices[0].first == 1 && ZRecoPairIndices[1].first == 1) thisRecoEventType=0;
+        else if( ZRecoPairIndices[0].first == 0 && ZRecoPairIndices[1].first == 0) thisRecoEventType=1;
+        else if( ZRecoPairIndices[0].first == 1 && ZRecoPairIndices[1].first == 0) thisRecoEventType=2;
+        else if( ZRecoPairIndices[0].first == 0 && ZRecoPairIndices[1].first == 1) thisRecoEventType=3;
+      }
+
+      recoET->Fill(thisRecoEventType, weight);
+
+      getRecoZLeps(thisRecoEventType, ZRecoPairIndices, branchElectron, branchMuon, l1_reco, l2_reco, l3_reco, l4_reco, q1_reco, q2_reco, q3_reco, q4_reco);
+
+    // WW 
+
+    } else {
+
+        foundWW_reco = true;  
+
+        if((goodE_reco_indices.size() + goodMu_reco_indices.size()) >= 2 ){
+          if (goodMu_min_reco_indices.size() > 0 && goodMu_plus_reco_indices.size() > 0) { // case mu- mu+
+              thisRecoEventType = 0;
+              wleps.push_back(goodMu_min_reco_indices[0]);
+              wleps.push_back(goodMu_plus_reco_indices[0]);
+              sort2_by_pT(wleps, branchElectron, branchMuon, "Muon", "Muon");
+              l1_reco = ((Muon *) branchMuon->At(wleps[0]))->P4();
+              l2_reco = ((Muon *) branchMuon->At(wleps[1]))->P4();
+          } else if (goodE_min_reco_indices.size() > 0 && goodE_plus_reco_indices.size() > 0) {  // case e- e+ 
+              thisRecoEventType = 1; 
+              wleps.push_back(goodE_min_reco_indices[0]);
+              wleps.push_back(goodE_plus_reco_indices[0]);
+              sort2_by_pT(wleps, branchElectron, branchMuon, "Electron", "Electron");
+              l1_reco = ((Electron *) branchElectron->At(wleps[0]))->P4();
+              l2_reco = ((Electron *) branchElectron->At(wleps[1]))->P4();
+          } else if (goodMu_min_reco_indices.size() > 0 && goodE_plus_reco_indices.size() > 0) { // case mu- e+
+              thisRecoEventType = 2;
+              wleps.push_back(goodMu_min_reco_indices[0]);
+              wleps.push_back(goodE_plus_reco_indices[0]);
+              sort2_by_pT(wleps, branchElectron, branchMuon, "Muon", "Electron");
+              l1_reco = ((Muon *) branchMuon->At(wleps[0]))->P4();
+              l2_reco = ((Electron *) branchElectron->At(wleps[1]))->P4();
+          } else if (goodE_min_reco_indices.size() > 0 && goodMu_plus_reco_indices.size() > 0) {  // case e- mu+
+              thisRecoEventType = 3; 
+              wleps.push_back(goodE_min_reco_indices[0]);
+              wleps.push_back(goodMu_plus_reco_indices[0]);
+              sort2_by_pT(wleps, branchElectron, branchMuon, "Electron", "Muon");
+              l1_reco = ((Electron *) branchElectron->At(wleps[0]))->P4();
+              l2_reco = ((Muon *) branchMuon->At(wleps[1]))->P4();
+          }
+      }
+
+    recoET->Fill(thisRecoEventType);
+
+    }
+
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // RECO - cuts
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+  if (!goodJetIndex.empty()) update_cft(cft_event_reco, cft_total_reco, "jet pT > 20 - reco", weight); // CUT
+  if (!pairedJet.empty()) update_cft(cft_event_reco, cft_total_reco, "1 PAIReD jet - reco", weight); // CUT
+  if (!pairedJetB.empty()) { // CUT
+    update_cft(cft_event_reco, cft_total_reco, "1 bb PAIReD jet - reco", weight);
+    foundHiggs_reco = true;
+  }
+  if (nonHiggsJet.size() > 1){ // CUT
+    update_cft(cft_event_reco, cft_total_reco, "2 VBF jet - reco", weight);
+    vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
+  }
+  if (!vbfJetIndex_dEta.empty()){ // CUT
+     update_cft(cft_event_reco, cft_total_reco, "2.5 deltaEta VBF jet - reco", weight); 
+     foundVBF_reco = true;
+  }
+  if ((goodE_reco_indices.size() + goodMu_reco_indices.size()) > 0) update_cft(cft_event_reco, cft_total_reco, "lep pT & eta cut - reco", weight); // CUT
+  if ((l1_reco+l2_reco).M() >= 10) update_cft(cft_event_reco, cft_total_reco, "mll > 10 - reco", weight); // CUT
+
+  
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // RECO - plots
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  // higgs
+  if (foundHiggs_reco){
+
+    paired_jet = pairedJetB.at(0).first;
+
+    btagIndex.push_back(paired_jet["jet1_index"]);
+    btagIndex.push_back(paired_jet["jet2_index"]);
+
+    b1_reco.SetPtEtaPhiM(paired_jet["jet1_pt"],paired_jet["jet1_eta"],paired_jet["jet1_phi"],paired_jet["jet1_mass"]);
+    b2_reco.SetPtEtaPhiM(paired_jet["jet2_pt"],paired_jet["jet2_eta"],paired_jet["jet2_phi"],paired_jet["jet2_mass"]);
+
+    h_reco = b1_reco + b2_reco; // dijet
+
+    double bbdeltaPhireco = deltaPhi(b1_reco, b2_reco);
+    double bbdeltaEtareco = deltaEta(b1_reco, b2_reco);
+    double bbdeltaRreco = deltaR(b1_reco, b2_reco);
+
+  }
+  
+  // vbf
+  if(foundVBF_reco) {
+
+    jet1 = (Jet*) branchJet->At(vbfJetIndex_dEta[0].first);
+    jet2 = (Jet*) branchJet->At(vbfJetIndex_dEta[0].second);
+    j1_reco=jet1->P4();
+    j2_reco=jet2->P4();
+
+    double jjdeltaPhireco = deltaPhi(j1_reco, j2_reco);
+    double jjdeltaEtareco = deltaEta(j1_reco, j2_reco);
+    double jjdeltaRreco = deltaR(j1_reco, j2_reco);
+
   }
 
-  // re-sort
+  // leps
   sort_by_pT(goodE_reco_indices, branchElectron, "Electron"); 
   sort_by_pT(goodMu_reco_indices, branchMuon, "Muon");
 
@@ -1251,109 +1311,35 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   sublead_mu_pt_reco->Fill(m2_reco.Pt(),weight);
   sublead_mu_eta_reco->Fill(m2_reco.Eta(),weight);
   sublead_mu_phi_reco->Fill(m2_reco.Phi(),weight);
-  
-// V details
 
-  vector<pair<int,pair<int,int>>> ZRecoPairIndices;
-  vector <int> wleps;
+  // zz
+  if( foundZZ_reco ){
 
-  if(analysis == "HZZJJ"){
-  
-    // form pairs for each flavour
-    vector< pair<int,int>> elecZRecoPairIndices=GetelecRecoPairIndices(branchElectron,goodE_reco_indices); 
-    vector< pair<int,int>> muZRecoPairIndices=GetmuRecoPairIndices(branchMuon,goodMu_reco_indices);
-    
-    //increaseCount(cutFlowMap_reco,"at least two lep pairs",weight); 
-    
-    ZRecoPairIndices=GetRecoPairIndices(elecZRecoPairIndices,muZRecoPairIndices,branchElectron,branchMuon); // 0 for electron 1 for muon
+    z1_reco=l1_reco + l2_reco;
+    z2_reco=l3_reco + l4_reco;
 
-    if(enableCutReco["OSSF - reco"]){
-      if (switchVal_reco==0 && ZRecoPairIndices.size()>=2) increaseCount(cutFlowMap_reco,"OSSF - reco",weight);
-      else switchVal_reco=1;
-    }
+    double zzdeltaPhireco = deltaPhi(z1_reco, z2_reco);
+    double zzdeltaEtareco = deltaEta(z1_reco, z2_reco);
+    double zzdeltaRreco = deltaR(z1_reco, z2_reco);
 
-    if( switchVal_reco==0 && ZRecoPairIndices.size()>=2){
-      if( ZRecoPairIndices[0].first == 1 && ZRecoPairIndices[1].first == 1) thisRecoEventType=0;
-      else if( ZRecoPairIndices[0].first == 0 && ZRecoPairIndices[1].first == 0) thisRecoEventType=1;
-      else if( ZRecoPairIndices[0].first == 1 && ZRecoPairIndices[1].first == 0) thisRecoEventType=2;
-      else if( ZRecoPairIndices[0].first == 0 && ZRecoPairIndices[1].first == 1) thisRecoEventType=3;
-    }
+  }
 
-    recoET->Fill(thisRecoEventType, weight);
+  // ww
+  if(foundWW_reco){
 
-    getRecoZLeps(thisRecoEventType, ZRecoPairIndices, branchElectron, branchMuon, l1_reco, l2_reco, l3_reco, l4_reco, q1_reco, q2_reco, q3_reco, q4_reco);
+    hmll_0_15_reco->Fill((l1_reco+l2_reco).M(),weight);
 
-    if( switchVal_reco == 0 && thisRecoEventType != -1 && ZRecoPairIndices.size() >= 2 ){
-      z1_reco=l1_reco + l2_reco;
-      z2_reco=l3_reco + l4_reco;
-      double zzdeltaPhireco = deltaPhi(z1_reco, z2_reco);
-      double zzdeltaEtareco = deltaEta(z1_reco, z2_reco);
-      double zzdeltaRreco = deltaR(z1_reco, z2_reco);
-    }
+    met = ((MissingET*)branchMissingET->At(0))->P4();
 
-    // WW 
+    w1_reco=l1_reco + met;
+    w2_reco=l2_reco + met;
 
-   } else if(analysis == "HWWJJ") {
-      
-      // FOR OSOF SWITCH mu mu / e e EVENT TYPE TO -1
+    double wwdeltaPhireco = deltaPhi(w1_reco, w2_reco);
+    double wwdeltaEtareco = deltaEta(w1_reco, w2_reco);
+    double wwdeltaRreco = deltaR(w1_reco, w2_reco);
 
-      if((goodE_reco_indices.size() + goodMu_reco_indices.size()) >= 2 ){
-        if (goodMu_min_reco_indices.size() > 0 && goodMu_plus_reco_indices.size() > 0) { // case mu- mu+
-            thisRecoEventType = 0;
-            wleps.push_back(goodMu_min_reco_indices[0]);
-            wleps.push_back(goodMu_plus_reco_indices[0]);
-            sort2_by_pT(wleps, branchElectron, branchMuon, "Muon", "Muon");
-            l1_reco = ((Muon *) branchMuon->At(wleps[0]))->P4();
-            l2_reco = ((Muon *) branchMuon->At(wleps[1]))->P4();
-        } else if (goodE_min_reco_indices.size() > 0 && goodE_plus_reco_indices.size() > 0) {  // case e- e+ 
-            thisRecoEventType = 1; 
-            wleps.push_back(goodE_min_reco_indices[0]);
-            wleps.push_back(goodE_plus_reco_indices[0]);
-            sort2_by_pT(wleps, branchElectron, branchMuon, "Electron", "Electron");
-            l1_reco = ((Electron *) branchElectron->At(wleps[0]))->P4();
-            l2_reco = ((Electron *) branchElectron->At(wleps[1]))->P4();
-        } else if (goodMu_min_reco_indices.size() > 0 && goodE_plus_reco_indices.size() > 0) { // case mu- e+
-            thisRecoEventType = 2;
-            wleps.push_back(goodMu_min_reco_indices[0]);
-            wleps.push_back(goodE_plus_reco_indices[0]);
-            sort2_by_pT(wleps, branchElectron, branchMuon, "Muon", "Electron");
-            l1_reco = ((Muon *) branchMuon->At(wleps[0]))->P4();
-            l2_reco = ((Electron *) branchElectron->At(wleps[1]))->P4();
-        } else if (goodE_min_reco_indices.size() > 0 && goodMu_plus_reco_indices.size() > 0) {  // case e- mu+
-            thisRecoEventType = 3; 
-            wleps.push_back(goodE_min_reco_indices[0]);
-            wleps.push_back(goodMu_plus_reco_indices[0]);
-            sort2_by_pT(wleps, branchElectron, branchMuon, "Electron", "Muon");
-            l1_reco = ((Electron *) branchElectron->At(wleps[0]))->P4();
-            l2_reco = ((Muon *) branchMuon->At(wleps[1]))->P4();
-        }
-    }
+  }
 
-      recoET->Fill(thisRecoEventType);
-
-      if(enableCutReco["OSOF - reco"]){
-        if (switchVal_reco==0 && thisRecoEventType != -1) increaseCount(cutFlowMap_reco, "OSOF - reco", weight);
-        else switchVal_reco=1;
-      }
-
-      hmll_0_15_reco->Fill((l1_reco+l2_reco).M(),weight);
-
-     if(enableCutReco["mll > 10 - reco"]) {
-          if(switchVal_reco == 0 && (l1_reco+l2_reco).M() >= 10) increaseCount(cutFlowMap_reco,"mll > 10 - reco",weight);
-          else switchVal_reco = 1;
-      }
-
-      met = ((MissingET*)branchMissingET->At(0))->P4();
-
-      if( switchVal_reco == 0){
-        w1_reco=l1_reco + met;
-        w2_reco=l2_reco + met;
-        double wwdeltaPhireco = deltaPhi(w1_reco, w2_reco);
-        double wwdeltaEtareco = deltaEta(w1_reco, w2_reco);
-        double wwdeltaRreco = deltaR(w1_reco, w2_reco);
-      }
-
-    }
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // PARTICLE - HIGGS
@@ -1765,7 +1751,7 @@ cout << thisParticleEventType << endl;
 
   if( entry % 1000 == 0 ){
       cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
-      PrintCutFlow(cutFlowMap_reco,cutList_reco,"Reco");
+      PrintCutFlow(cft_total_reco,cutList_reco,"Reco");
       PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
       PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
     }
@@ -1920,9 +1906,6 @@ cout << thisParticleEventType << endl;
 
 
   // 2D - parton(1) particle(2) reco(3)
-
-  hPJsize23Comp -> Fill(pairedJetSize_particle, pairedJetSize_reco, weight);
-  hPJBsize23Comp -> Fill(pairedBJetSize_particle, pairedBJetSize_reco, weight);
 
     if(switchVal_parton==0 && switchVal_particle==0 ){
       hHpT12Comp -> Fill(h_parton.Pt(), h_particle.Pt(), weight);
@@ -2082,8 +2065,19 @@ cout << thisParticleEventType << endl;
     cutVal_particle++; cutValW_particle+=weight;
     cutVal_parton++; cutValW_parton+=weight;
 
+    cout << "EVENT " << entry+1 << endl;
+    printMap(cft_event_reco);
+
+    cft_allevents_reco.push_back(cft_event_reco);
+
   }
-    
+
+  int i = 2;
+  cout << "------------------------------" << endl;
+  cout << "PROOF OF CONCEPT" << endl;
+  cout << "EVENT " << i + 1 << endl;
+  printMap(cft_allevents_reco[i]);
+  cout << "------------------------------" << endl;
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FILL+PRINT CUTFLOW
@@ -2092,7 +2086,7 @@ cout << thisParticleEventType << endl;
 
   cout << " " << endl;
   cout << "RECO CUT FLOW" << endl;
-    PrintCutFlow(cutFlowMap_reco,cutList_reco,  "Reco");
+    PrintCutFlow(cft_total_reco,cutList_reco,  "Reco");
   cout << "PARTICLE CUT FLOW" << endl;
     PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
   cout << "PARTON CUT FLOW" << endl;
