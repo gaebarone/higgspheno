@@ -817,6 +817,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 // EVENT LOOP
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+// new cutflow map
+  std::map<std::string, int> cft_map_reco;
+
 
 #ifdef MDEBUG
     numberOfEntries=1000;
@@ -835,19 +838,26 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   // RECO - HIGGS 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    int switchVal_reco = 0;
-    if(enableCutReco["initial - reco"]) increaseCount(cutFlowMap_reco,"initial - reco",weight);
+    // int switchVal_reco = 0;
+    // if(enableCutReco["initial - reco"]) increaseCount(cutFlowMap_reco,"initial - reco",weight);
     
+    cft_map_reco["initial"] = 1;
+    increaseCount(cutFlowMap_reco,"initial - reco",weight);
 
     bool foundHiggs_reco = false;
 
     vector <int> goodJetIndex=GoodJetIndices(branchJet);
 
-    if(enableCutReco["jet pT > 20 - reco"]) {
-      if(switchVal_reco == 0 && goodJetIndex.size() > 0) increaseCount(cutFlowMap_reco,"jet pT > 20 - reco", weight);
-      else switchVal_reco = 1;
-    }
+    //if(enableCutReco["jet pT > 20 - reco"]) {
+    //  if(switchVal_reco == 0 && goodJetIndex.size() > 0) increaseCount(cutFlowMap_reco,"jet pT > 20 - reco", weight);
+    //  else switchVal_reco = 1;
+    // }
     
+    if (goodJetIndex.size() > 0){
+      cft_map_reco["jet pT > 20 - reco"] = 1;
+      increaseCount(cutFlowMap_reco,"jet pT > 20 - reco", weight);
+    } else cft_map_reco["jet pT > 20 - reco"] = 0;
+
     std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet=paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,true,1.0,false);
     //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
     std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJetB;
