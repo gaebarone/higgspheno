@@ -1054,182 +1054,35 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   // RECO - selection
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    bool foundHiggs_reco = false;
-    bool foundVBF_reco = false;
-    bool foundZZ_reco = false;
-    bool foundWW_reco = false;
+
+    vector<int> all_jets = get_all_jets( branchJet, 20, 0 )
+    vector<int> all_leptons = get_all_leptons( "reco", branchElectron, branchMuon, 15, 2.5 )
+
+    number_of_jets = all_jets.size();
+    number_of_leps = all_leptons.size();
+
+    TLorentzVector h_reco, b1_reco, b2_reco, j1_reco, j2_reco,  z1_reco, z2_reco, w1_reco, w2_reco;
+
+    pair< TLorentzVector, TLorentzVector> b_jets_reco; // pair of vbf jets
+    pair< TLorentzVector, TLorentzVector> vbf_jets_reco; // pair of vbf jets
+    pair< int, pair< TLorentzVector, TLorentzVector >> zz_reco; // event type and pair of leading subleading z
+    pair< int, pair< TLorentzVector, TLorentzVector >> ww_reco; // event type and pair of leading subleading w
 
 
-    vector <int> goodJetIndex=GoodJetIndices(branchJet);
+    b_jets_reco = get_higgs( branchJet, branchGenParticle, branchPFCand);
+    vbf_jets_reco = get_vbf_jets( branchJet );
+    if (number_of_leps >= 4 ) zz_reco = get_z_leptonic("reco", branchElectron, branchMuon );
+    else if (number_of_leps < 4 ) ww_reco = get_w_leptonic("reco", branchElectron, branchMuon );
 
-    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  pairedJet = paired::PAIReDjointEvent(branchGenParticle,branchPFCand,branchJet,0.4,false,false,true,1.0,false);
-    //cout<<"PAIRED lables bb "<<pairedJet.first["label_bb"]<<" cc "<<pairedJet.first["label_cc"]<<" ll "<<pairedJet.first["label_ll"]<<" indices 1: "<<pairedJet.first["jet1_index"]<<" 2: "<<pairedJet.first["jet1_index"]<<endl;
-    
-    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> pairedJetB;
 
-    for(int i=0; i<(int)pairedJet.size(); i++){
-      std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> thisPaired = pairedJet.at(i);
-      if( thisPaired.first["isbtagged"] > 0 ) pairedJetB.push_back(thisPaired);
-    }
-
-    vector <int> btagIndex;
-    std::map<TString, float> paired_jet;
-
-    vector <int> nonHiggsJet;
-    vector<pair<int,int>> vbfJetIndex;
-    vector<vector <int>> vbfJetIndexComb;
-    vector<pair<int,int>> vbfJetIndex_dEta;
-    int vbfJetIndexCandidate = -1;
-
-    // check that they do not belong to higgs + sort by pT
-    for(int i=0; i<(int)branchJet->GetEntries(); i++) {
-      if( goodJetIndex[i] == paired_jet["jet1_index"] || goodJetIndex[i] == paired_jet["jet2_index"] ) continue;
-    nonHiggsJet.push_back(goodJetIndex[i]);
-    SortByPtIndices(nonHiggsJet,branchJet);
-    }
-
-    // convert vector of vector of ints to vector of pairs of ints
-    vbfJetIndex=GetvbfJetIndex(vbfJetIndexComb);
-
-    // loop and take those w dEta > 2.5
-    for (int i=0; i<(int)vbfJetIndex.size(); i++) {
-      if( fabs((((Jet*)branchJet->At(vbfJetIndex[i].first))->Eta - ((Jet*)branchJet->At(vbfJetIndex[i].second))->Eta)) <= 2.5 ) continue; 
-      else { 
-	      vbfJetIndex_dEta.push_back(vbfJetIndex.at(i));
-	      vbfJetIndexCandidate = i;
-      }
-    }
-
-  // sort them again by eta for leading/subleading
-  SortByEtaIndices(vbfJetIndex_dEta,branchJet); 
-
-  Jet *jet1 =nullptr;
-  Jet *jet2 =nullptr;
-
-  int thisRecoEventType=-1;
-
-  double e_pT_min = 15.0;
-  double e_eta_max = 2.5;
-  double mu_pT_min = 15.0;
-  double mu_eta_max = 2.5;
-    
-  // get e+e- mu+mu-
-  vector <int> goodE_min_reco_indices = get_good_reco_lepton_indices(branchElectron, e_pT_min, e_eta_max, analysis, "electron", -1);
-  vector <int> goodE_plus_reco_indices = get_good_reco_lepton_indices(branchElectron, e_pT_min, e_eta_max, analysis, "electron", 1);
-  vector <int> goodMu_min_reco_indices = get_good_reco_lepton_indices(branchMuon, mu_pT_min, mu_eta_max, analysis, "muon", -1);
-  vector <int> goodMu_plus_reco_indices = get_good_reco_lepton_indices(branchMuon, mu_pT_min, mu_eta_max, analysis, "muon", 1);
-
-#ifdef MDEBUG
-  cout << " ------------------------ " << endl;
-  cout << "goodE_min_reco_indices: " << goodE_min_reco_indices.size() << endl;
-  cout << "goodE_plus_reco_indices: " << goodE_plus_reco_indices.size() << endl;
-  cout << "goodMu_min_reco_indices: " << goodMu_min_reco_indices.size() << endl;
-  cout << "goodMu_plus_reco_indices: " << goodMu_plus_reco_indices.size() << endl;
-
-  TLorentzVector emin1_reco, eplus1_reco, mmin1_reco, mplus1_reco;
-  cout << " ------------------------ " << endl;
-  
-  if (goodE_min_reco_indices.size()>0) {
-    emin1_reco = ((Electron *) branchElectron->At(goodE_min_reco_indices[0]))->P4();
-    cout << "emin1_reco Pt: " << emin1_reco.Pt() << " emin1_reco Eta: " << emin1_reco.Eta() << endl;
-  }
-  if (goodE_plus_reco_indices.size()>0) {
-    eplus1_reco = ((Electron *) branchElectron->At(goodE_plus_reco_indices[0]))->P4();
-    cout << "eplus1_reco Pt: " << eplus1_reco.Pt() << " eplus1_reco Eta: " << eplus1_reco.Eta() << endl;
-  }
-  if (goodMu_min_reco_indices.size()>0) {
-    mmin1_reco = ((Muon *) branchMuon->At(goodMu_min_reco_indices[0]))->P4();
-    cout << "mmin1_reco Pt: " << mmin1_reco.Pt() << " mmin1_reco Eta: " << mmin1_reco.Eta() << endl;
-  }
-  if (goodMu_plus_reco_indices.size()>0) {
-    mplus1_reco = ((Muon *) branchMuon->At(goodMu_plus_reco_indices[0]))->P4();
-    cout << "mplus1_reco Pt: " << mplus1_reco.Pt() << " mplus1_reco Eta: " << mplus1_reco.Eta() << endl;
-  } 
-#endif
-
-  // e = e+ & e- , mu = mu+ & mu- 
-  vector<int> goodE_reco_indices;
-  vector<int> goodMu_reco_indices;
-  ConcatenateIndices(goodE_min_reco_indices, goodE_reco_indices);
-  ConcatenateIndices(goodE_plus_reco_indices, goodE_reco_indices);
-  ConcatenateIndices(goodMu_min_reco_indices, goodMu_reco_indices);
-  ConcatenateIndices(goodMu_plus_reco_indices, goodMu_reco_indices);
-      
-    // VV
-
-    vector<pair<int,pair<int,int>>> ZRecoPairIndices;
-    vector <int> wleps;
-
-    // ZZ
-
-    if((goodE_reco_indices.size() + goodMu_reco_indices.size()) >= 4){
-
-      foundZZ_reco = true;
-      
-      // form pairs for each flavour
-      vector< pair<int,int>> elecZRecoPairIndices=GetelecRecoPairIndices(branchElectron,goodE_reco_indices); 
-      vector< pair<int,int>> muZRecoPairIndices=GetmuRecoPairIndices(branchMuon,goodMu_reco_indices);
-      
-      ZRecoPairIndices=GetRecoPairIndices(elecZRecoPairIndices,muZRecoPairIndices,branchElectron,branchMuon); // 0 for electron 1 for muon
-
-      if( switchVal_reco==0 && ZRecoPairIndices.size()>=2){
-        if( ZRecoPairIndices[0].first == 1 && ZRecoPairIndices[1].first == 1) thisRecoEventType=0;
-        else if( ZRecoPairIndices[0].first == 0 && ZRecoPairIndices[1].first == 0) thisRecoEventType=1;
-        else if( ZRecoPairIndices[0].first == 1 && ZRecoPairIndices[1].first == 0) thisRecoEventType=2;
-        else if( ZRecoPairIndices[0].first == 0 && ZRecoPairIndices[1].first == 1) thisRecoEventType=3;
-      }
-
-      recoET->Fill(thisRecoEventType, weight);
-
-      getRecoZLeps(thisRecoEventType, ZRecoPairIndices, branchElectron, branchMuon, l1_reco, l2_reco, l3_reco, l4_reco, q1_reco, q2_reco, q3_reco, q4_reco);
-
-    // WW 
-
-    } else {
-
-        foundWW_reco = true;  
-
-        if((goodE_reco_indices.size() + goodMu_reco_indices.size()) >= 2 ){
-          if (goodMu_min_reco_indices.size() > 0 && goodMu_plus_reco_indices.size() > 0) { // case mu- mu+
-              thisRecoEventType = 0;
-              wleps.push_back(goodMu_min_reco_indices[0]);
-              wleps.push_back(goodMu_plus_reco_indices[0]);
-              sort2_by_pT(wleps, branchElectron, branchMuon, "Muon", "Muon");
-              l1_reco = ((Muon *) branchMuon->At(wleps[0]))->P4();
-              l2_reco = ((Muon *) branchMuon->At(wleps[1]))->P4();
-          } else if (goodE_min_reco_indices.size() > 0 && goodE_plus_reco_indices.size() > 0) {  // case e- e+ 
-              thisRecoEventType = 1; 
-              wleps.push_back(goodE_min_reco_indices[0]);
-              wleps.push_back(goodE_plus_reco_indices[0]);
-              sort2_by_pT(wleps, branchElectron, branchMuon, "Electron", "Electron");
-              l1_reco = ((Electron *) branchElectron->At(wleps[0]))->P4();
-              l2_reco = ((Electron *) branchElectron->At(wleps[1]))->P4();
-          } else if (goodMu_min_reco_indices.size() > 0 && goodE_plus_reco_indices.size() > 0) { // case mu- e+
-              thisRecoEventType = 2;
-              wleps.push_back(goodMu_min_reco_indices[0]);
-              wleps.push_back(goodE_plus_reco_indices[0]);
-              sort2_by_pT(wleps, branchElectron, branchMuon, "Muon", "Electron");
-              l1_reco = ((Muon *) branchMuon->At(wleps[0]))->P4();
-              l2_reco = ((Electron *) branchElectron->At(wleps[1]))->P4();
-          } else if (goodE_min_reco_indices.size() > 0 && goodMu_plus_reco_indices.size() > 0) {  // case e- mu+
-              thisRecoEventType = 3; 
-              wleps.push_back(goodE_min_reco_indices[0]);
-              wleps.push_back(goodMu_plus_reco_indices[0]);
-              sort2_by_pT(wleps, branchElectron, branchMuon, "Electron", "Muon");
-              l1_reco = ((Electron *) branchElectron->At(wleps[0]))->P4();
-              l2_reco = ((Muon *) branchMuon->At(wleps[1]))->P4();
-          }
-      }
-
-    recoET->Fill(thisRecoEventType);
-
-    }
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // RECO - cuts
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+
+/*
   if (!goodJetIndex.empty()) update_cft(cft_event_reco, cft_total_reco, "jet pT > 20 - reco", weight); // CUT
   if (!pairedJet.empty()) update_cft(cft_event_reco, cft_total_reco, "1 PAIReD jet - reco", weight); // CUT
   if (!pairedJetB.empty()) { // CUT
@@ -1246,7 +1099,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   }
   if ((goodE_reco_indices.size() + goodMu_reco_indices.size()) > 0) update_cft(cft_event_reco, cft_total_reco, "lep pT & eta cut - reco", weight); // CUT
   if ((l1_reco+l2_reco).M() >= 10) update_cft(cft_event_reco, cft_total_reco, "mll > 10 - reco", weight); // CUT
-
+*/
   
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // RECO - plots
@@ -1340,6 +1193,58 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   }
 
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // reco lep stuf
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    int thisRecoEventType=-1;
+
+    double e_pT_min = 15.0;
+    double e_eta_max = 2.5;
+    double mu_pT_min = 15.0;
+    double mu_eta_max = 2.5;
+      
+    // get e+e- mu+mu-
+    vector <int> e_min_indices_reco = get_leptons( "reco", branchElectron, e_pT_min, e_eta_max, "electron", -1 );
+    vector <int> e_plus_indices_reco = get_leptons( "reco", branchElectron, e_pT_min, e_eta_max, "electron", 1 );
+    vector <int> mu_min_indices_reco = get_leptons( "reco", branchMuon, mu_pT_min, mu_eta_max, "muon", -1 );
+    vector <int> mu_plus_indices_reco = get_leptons( "reco", branchMuon, mu_pT_min, mu_eta_max, "muon", 1 );
+
+  #ifdef MDEBUG
+    cout << " ------------------------ " << endl;
+    cout << "goodE_min_reco_indices: " << goodE_min_reco_indices.size() << endl;
+    cout << "goodE_plus_reco_indices: " << goodE_plus_reco_indices.size() << endl;
+    cout << "goodMu_min_reco_indices: " << goodMu_min_reco_indices.size() << endl;
+    cout << "goodMu_plus_reco_indices: " << goodMu_plus_reco_indices.size() << endl;
+
+    TLorentzVector emin1_reco, eplus1_reco, mmin1_reco, mplus1_reco;
+    cout << " ------------------------ " << endl;
+    
+    if (goodE_min_reco_indices.size()>0) {
+      emin1_reco = ((Electron *) branchElectron->At(goodE_min_reco_indices[0]))->P4();
+      cout << "emin1_reco Pt: " << emin1_reco.Pt() << " emin1_reco Eta: " << emin1_reco.Eta() << endl;
+    }
+    if (goodE_plus_reco_indices.size()>0) {
+      eplus1_reco = ((Electron *) branchElectron->At(goodE_plus_reco_indices[0]))->P4();
+      cout << "eplus1_reco Pt: " << eplus1_reco.Pt() << " eplus1_reco Eta: " << eplus1_reco.Eta() << endl;
+    }
+    if (goodMu_min_reco_indices.size()>0) {
+      mmin1_reco = ((Muon *) branchMuon->At(goodMu_min_reco_indices[0]))->P4();
+      cout << "mmin1_reco Pt: " << mmin1_reco.Pt() << " mmin1_reco Eta: " << mmin1_reco.Eta() << endl;
+    }
+    if (goodMu_plus_reco_indices.size()>0) {
+      mplus1_reco = ((Muon *) branchMuon->At(goodMu_plus_reco_indices[0]))->P4();
+      cout << "mplus1_reco Pt: " << mplus1_reco.Pt() << " mplus1_reco Eta: " << mplus1_reco.Eta() << endl;
+    } 
+  #endif
+
+    // e = e+ & e- , mu = mu+ & mu- 
+    vector<int> goodE_reco_indices;
+    vector<int> goodMu_reco_indices;
+    concatenate_indices(goodE_min_reco_indices, goodE_reco_indices);
+    concatenate_indices(goodE_plus_reco_indices, goodE_reco_indices);
+    concatenate_indices(goodMu_min_reco_indices, goodMu_reco_indices);
+    concatenate_indices(goodMu_plus_reco_indices, goodMu_reco_indices);
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // PARTICLE - HIGGS
@@ -1762,6 +1667,9 @@ cout << thisParticleEventType << endl;
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   // 1D
+
+  if () recoET->Fill(ww.first);
+  if () recoET->Fill(zz.first);
 
     // higgs
     if(switchVal_reco==0){

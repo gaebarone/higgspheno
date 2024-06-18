@@ -42,7 +42,7 @@ using namespace std;
 // misc
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void ConcatenateIndices(vector<int> in, vector <int> & out){
+void concatenate_indices(vector<int> in, vector <int> & out){
   out.insert(out.end(), in.begin(), in.end());
 }
 
@@ -88,7 +88,7 @@ void sort_by_pT(vector<int> lep_indices, TClonesArray *branchElectron=nullptr, s
 
 //
 
-void sort2_by_pT(vector<int> wleps, TClonesArray *branchElectron=nullptr, TClonesArray *branchMuon=nullptr, string branch1Name="Electron" , string branch2Name="Electron"){
+void sort2_by_pT(vector<int> wleps, TClonesArray *branchElectron=nullptr, TClonesArray *branchMuon=nullptr, string branch1Name= "electron" , string branch2Name= "electron"){
 
   double lep1pT = 0;
   double lep2pT = 0;

@@ -4,6 +4,11 @@
 
 #include <cmath>
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// kinematics
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 double deltaPhi(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) {
 
     // return (lorentzvector1.Phi() > lorentzvector2.Phi() ? -1:+1)*TMath::Abs(lorentzvector2.Phi() - lorentzvector1.Phi());
@@ -33,5 +38,65 @@ double massTransverse(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvec
     return std::sqrt(2 * pT_lepton * pT_miss * (1 - std::cos(dPhi)));
 
 }
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// sorting
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+// sort a vector of same type
+void sort_by_pT( string analysis_type = "reco", vector<int> indices, TClonesArray *branchElectron = nullptr, string object = "electron"){
+
+    if ( analysis_type == "reco" && object == "electron" ) {
+
+        sort( indices.begin(), indices.end(), [ branchElectron ] ( const int& lhs, const int& rhs ) {
+        return ( (Electron*) branchElectron -> At( lhs )) -> PT > ( (Electron*) branchElectron -> At( rhs )) -> PT;
+        });
+
+    } else if ( analysis_type == "reco" && object == "muon" ) {
+
+        sort( indices.begin(), indices.end(), [ branchElectron ] ( const int& lhs, const int& rhs ) {
+        return ( (Muon*) branchElectron -> At( lhs )) -> PT > ( (Muon*) branchElectron -> At( rhs )) -> PT;
+        });
+
+    } else if ( analysis_type == "reco" && object == "jet" ) {
+
+        sort( indices.begin(), indices.end(), [ branchJet ] ( const int& lhs, const int& rhs ) {
+        return ( (Jet*) branchJet -> At( lhs )) -> PT > ( (Jet*) branchJet -> At( rhs )) -> PT;
+        });
+
+    } else if ( analysis_type == "particle" ) {
+
+        sort( indices.begin(), indices.end(), [ branchElectron ] ( const int& lhs, const int& rhs ) {
+        return ( (GenParticle*) branchElectron -> At( lhs )) -> PT > ( (GenParticle*) branchElectron -> At( rhs )) -> PT;
+        });
+
+    } else throw std::runtime_error( "unknown branch " );
+
+}
+
+// get leading and subleading given any two leps
+void get_leading_subleading(vector<int> leps, TClonesArray *branchElectron = nullptr, TClonesArray *branchMuon = nullptr, string branch1 = "electron" , string branch2 = "muon"){
+
+  double lep1_pT = 0;
+  double lep2_pT = 0;
+
+    if (branch1 == "Electron") {
+        lep1_pT = ((Electron*) branchElectron->At(leps[0]))->PT;
+    } else if (branch1 == "Muon") {
+        lep1_pT = ((Muon*) branchMuon->At(leps[0]))->PT;
+    }
+
+    if (branch2 == "Electron") {
+        lep2_pT = ((Electron*) branchElectron->At(leps[1]))->PT;
+    } else if (branch2 == "Muon") {
+        lep2_pT = ((Muon*) branchMuon->At(leps[1]))->PT;
+    }
+
+    if (lep1_pT > lep2_pT) return;
+    else swap(leps[0], leps[1]);
+
+}
+
+
 
 #endif
