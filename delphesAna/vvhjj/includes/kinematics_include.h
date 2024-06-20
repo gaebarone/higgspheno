@@ -44,7 +44,7 @@ double massTransverse(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvec
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // sort a vector of same type
-void sort_by_pT( string analysis_type = "reco", vector<int> indices, TClonesArray *branchElectron = nullptr, string object = "electron"){
+void sort_by_pT( string analysis_type = "reco", vector<int> indices = vector<int>(), TClonesArray *branchElectron = nullptr, string object = "electron"){
 
     if ( analysis_type == "reco" && object == "electron" ) {
 
@@ -60,8 +60,8 @@ void sort_by_pT( string analysis_type = "reco", vector<int> indices, TClonesArra
 
     } else if ( analysis_type == "reco" && object == "jet" ) {
 
-        sort( indices.begin(), indices.end(), [ branchJet ] ( const int& lhs, const int& rhs ) {
-        return ( (Jet*) branchJet -> At( lhs )) -> PT > ( (Jet*) branchJet -> At( rhs )) -> PT;
+        sort( indices.begin(), indices.end(), [ branchElectron ] ( const int& lhs, const int& rhs ) {
+        return ( (Jet*) branchElectron -> At( lhs )) -> PT > ( (Jet*) branchElectron -> At( rhs )) -> PT;
         });
 
     } else if ( analysis_type == "particle" ) {
@@ -70,27 +70,46 @@ void sort_by_pT( string analysis_type = "reco", vector<int> indices, TClonesArra
         return ( (GenParticle*) branchElectron -> At( lhs )) -> PT > ( (GenParticle*) branchElectron -> At( rhs )) -> PT;
         });
 
-    } else throw std::runtime_error( "unknown branch " );
+    } else throw std::runtime_error( "unknown branch" );
 
 }
 
 // get leading and subleading given any two leps
-void get_leading_subleading(vector<int> leps, TClonesArray *branchElectron = nullptr, TClonesArray *branchMuon = nullptr, string branch1 = "electron" , string branch2 = "muon"){
+void get_leading_subleading(string analysis_type = "reco", vector<int> leps = {-99}, TClonesArray *branchElectron = nullptr, TClonesArray *branchMuon = nullptr, string branch1 = "electron" , string branch2 = "muon"){
 
   double lep1_pT = 0;
   double lep2_pT = 0;
 
-    if (branch1 == "Electron") {
-        lep1_pT = ((Electron*) branchElectron->At(leps[0]))->PT;
-    } else if (branch1 == "Muon") {
-        lep1_pT = ((Muon*) branchMuon->At(leps[0]))->PT;
+    if ( analysis_type == "reco" ) {
+
+        if (branch1 == "electron") {
+            lep1_pT = ((Electron*) branchElectron->At(leps[0]))->PT;
+        } else if (branch1 == "muon") {
+            lep1_pT = ((Muon*) branchMuon->At(leps[0]))->PT;
+        }
+
+        if (branch2 == "electron") {
+            lep2_pT = ((Electron*) branchElectron->At(leps[1]))->PT;
+        } else if (branch2 == "muon") {
+            lep2_pT = ((Muon*) branchMuon->At(leps[1]))->PT;
+        }
+
+    } else if ( analysis_type == "particle" ) {
+
+        if (branch1 == "electron") {
+            lep1_pT = ((GenParticle*) branchElectron->At(leps[0]))->PT;
+        } else if (branch1 == "muon") {
+            lep1_pT = ((GenParticle*) branchMuon->At(leps[0]))->PT;
+        }
+
+        if (branch2 == "electron") {
+            lep2_pT = ((GenParticle*) branchElectron->At(leps[1]))->PT;
+        } else if (branch2 == "muon") {
+            lep2_pT = ((GenParticle*) branchMuon->At(leps[1]))->PT;
+        }
+
     }
 
-    if (branch2 == "Electron") {
-        lep2_pT = ((Electron*) branchElectron->At(leps[1]))->PT;
-    } else if (branch2 == "Muon") {
-        lep2_pT = ((Muon*) branchMuon->At(leps[1]))->PT;
-    }
 
     if (lep1_pT > lep2_pT) return;
     else swap(leps[0], leps[1]);

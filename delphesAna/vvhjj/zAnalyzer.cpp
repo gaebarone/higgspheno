@@ -56,12 +56,16 @@
 #include  <string.h>
 #include <cmath>
 
+#include "selections/leptonic.h"
+#include "selections/hadronic.h"
+
 #include "includes/cutflow_include.h"
 #include "includes/crossx_include.h"
 #include "includes/hist_include.h"
 #include "includes/weights_include.h"
 #include "includes/selections_include.h"
 #include "includes/kinematics_include.h"
+#include "includes/helperfunctions_include.h"
 
 #include "lepAnalyzer.h"
 
@@ -103,7 +107,7 @@ int calculate_product(const std::vector<int64_t>& v) {
 
 void printMap(const std::map<std::string, std::pair<int, double>>& map) {
     for (const auto& pair : map) {
-        std::cout << " CUT: " << pair.first << " PASS/FAIL: " << pair.second.first << std::endl;
+        std::cout << " CUT: " << pair.first << " = " << pair.second.first << std::endl;
     }
 }
 
@@ -122,9 +126,9 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
 
   DefineSelections();
   
-  cutList_reco=cutSelectionProcessReco[analysis];
-  cutList_particle=cutSelectionProcessParticle[analysis];
-  cutList_parton=cutSelectionProcessParton[analysis];
+  cutList_reco=cutSelectionProcessReco["all"];
+  cutList_particle=cutSelectionProcessParticle["all"];
+  cutList_parton=cutSelectionProcessParton["all"];
 
   std::map<string, bool> enableCutReco;
   std::map<string, bool> enableCutParticle;
@@ -140,29 +144,31 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     enableCutParton[ (*it)] = hasCut(cutList_parton, (*it));
   }
 
-  // new reco cft
+  // new cft
 
   int cutVal_reco = 0;
   double cutValW_reco = 0;
 
   std::map<string, std::pair<int,double>> cft_total_reco;
-
   std::vector<std::map<std::string, std::pair<int, double>>> cft_allevents_reco;
 
   for(int i=0; i<(int) cutList_reco.size(); i++) { 
     cft_total_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
   }
  
-  // new reco cft
-  
   int cutVal_particle = 0;
   double cutValW_particle = 0;
- 
-  std::map<string, std::pair<int,double>> cutFlowMap_particle;
+
+  std::map<string, std::pair<int,double>> cft_total_particle;
+  std::vector<std::map<std::string, std::pair<int, double>>> cft_allevents_particle;
+
   for(int i=0; i<(int) cutList_particle.size(); i++) { 
-    cutFlowMap_particle[cutList_particle.at(i)] = make_pair(0,0.0); 
+    cft_total_particle[cutList_particle.at(i)] = make_pair(0,0.0); 
   }
  
+
+  // new cft
+  
   int cutVal_parton = 0;
   double cutValW_parton = 0;
 
@@ -183,7 +189,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
   std::map<string, cutFlowMapDef* > cutFlowMapAll;
     cutFlowMapAll["reco"] =  & cft_total_reco;
-    cutFlowMapAll["particle"] = & cutFlowMap_particle;
+    cutFlowMapAll["particle"] = & cft_total_particle;
     cutFlowMapAll["parton"] = & cutFlowMap_parton;
   
   for(std::vector<string>::iterator it=selType.begin(); it!=selType.end(); it++){
@@ -216,7 +222,7 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   TClonesArray *branchGenJet = treeReader->UseBranch("GenJet");
   TClonesArray *branchMissingET = treeReader->UseBranch("MissingET");
   TClonesArray *branchGenMissingET = treeReader->UseBranch("GenMissingET");
-  TClonesArray *branchWeight   = treeReader->UseBranch("Weight");
+  TClonesArray *branchWeight  = treeReader->UseBranch("Weight");
 
   TClonesArray *branchPFCand = nullptr;
 
@@ -830,8 +836,6 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     numberOfEntries=1000;
 #endif 
 
-  numberOfEntries=5;
-
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
 
     treeReader->ReadEntry(entry);
@@ -840,363 +844,349 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     Float_t test_weight = event->Weight*cross_section*numberOfEntries/(numEntries*totalWeight);
     hWeight -> Fill(event->Weight, test_weight);
 
-    // if(enableCutReco["initial - reco"]) increaseCount(cutFlowMap_reco,"initial - reco",weight);
 
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // inititalize event cft
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+   
     std::map<string, std::pair<int,double>> cft_event_reco;
+    std::map<string, std::pair<int,double>> cft_event_particle;
+
     for(int i=0; i<(int) cutList_reco.size(); i++) { 
       cft_event_reco[cutList_reco.at(i)] = make_pair(0,0.0); 
     }
 
+    for(int i=0; i<(int) cutList_reco.size(); i++) { 
+      cft_event_particle[cutList_reco.at(i)] = make_pair(0,0.0); 
+    }
+
     update_cft(cft_event_reco, cft_total_reco, "initial - reco", weight);
-
-    int switchVal_reco = 0; // remove this later
+    update_cft(cft_event_particle, cft_total_particle, "initial - particle", weight);
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // ONNX - WORK IN PROGRESS
+  // inititalize physics objects
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    bool doONNX=true;
 
-#ifdef ONNXRUN
+  // reco
+    bool found_h_reco = false;
+    bool found_vbf_reco = false;
+    bool found_w_reco = false;
+    bool found_z_reco = false;
 
-    if(doONNX){
-      // onnxruntime setup
-    //string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/delphesModel.onnx";
-    string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/delphesModel_changed.onnx";
-    //string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/examples_sv_Jan.onnx";
-    
+    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> higgs_reco_i;        // paired b jets (higgs)
+    vector <int> vbfjets_reco_i;                                                                                  // pair of vbf jets
+    pair< int, pair< vector <int>, vector <int>>> zz_reco_i;                                                      // event type and pair of leading subleading z index
+    pair< int, vector <int>> ww_reco_i;                                                                           // event type and pair of leading subleading w index
 
-    auto providers = Ort::GetAvailableProviders();
-    for (auto provider : providers) {
-      std::cout << provider << std::endl;
-    }
-    // cout<<endl;
-    
-    Ort::Env env = Ort::Env(OrtLoggingLevel::ORT_LOGGING_LEVEL_VERBOSE, "Default");
-    Ort::SessionOptions sessionOptions;
-    sessionOptions.SetIntraOpNumThreads(1);
-    sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
-    // Optimization will take time and memory during startup
-    //sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
-    
-    Ort::Session session = Ort::Session(env, model_file.c_str(), sessionOptions);
-    Ort::AllocatorWithDefaultOptions allocator;
-    
-    // Demonstration of getting input node info by code
-    size_t num_input_nodes = 0;
-    std::vector<const char*>* input_node_names = nullptr; // Input node names
-    //std::vector<const char*>* output_node_names = new std::vector<const char*>();
-    std::vector<const char*> output_node_names;
-    std::vector<std::vector<int64_t>> input_node_dims;    // Input node dimension.
-    ONNXTensorElementDataType type;                       // Used to print input info
-    Ort::TypeInfo* type_info;
-    
-    num_input_nodes = session.GetInputCount();
-    input_node_names = new std::vector<const char*>;
-    for (int i = 0; i < num_input_nodes; i++) {
-      
-      char* tempstring = new char[strlen(session.GetInputNameAllocated(i, allocator).get()) + 1];
-      snprintf(tempstring, strlen(session.GetInputNameAllocated(i, allocator).get()) + 1, session.GetInputNameAllocated(i, allocator).get());
-      input_node_names->push_back(tempstring);
-      type_info = new Ort::TypeInfo(session.GetInputTypeInfo(i));
-      auto tensor_info = type_info->GetTensorTypeAndShapeInfo();
-      cout<<"tensor info "<< tensor_info<<endl;
-      cout<<"tensor size "<<VectorProduct(tensor_info.GetShape())<<endl;
-      cout<<"tensor shape "<<tensor_info.GetShape()<<endl;
-      ///cout<<"tensor element count "<<tensor_info.GetElementCount()<<endl;
-      //cout<<"tensor dimensions count "<<tensor_info.GetDimensionsCount()<<endl;
-      //star:vector<int64_t> input_dims
-      
-      
-      
-      type = tensor_info.GetElementType();
-      input_node_dims.push_back(tensor_info.GetShape());
+    pair< TLorentzVector, TLorentzVector> higgs_reco;                    // < b1, b2 >
+    pair< TLorentzVector, TLorentzVector> vbfjets_reco;                  // < j1, j2 >
+    pair< TLorentzVector, TLorentzVector> ww_reco;                       // < w1, w2 >
+    pair< TLorentzVector, TLorentzVector> zz_reco;                       // < z1, z2 >
 
-      //for (int j = 0; j < input_node_dims.size(); j++) {
-      //if (input_node_dims[j] == -1)
-      //{
-      //  input_node_dims[j] = 1;
-      //}
-      //printf("Input %d : dim %d=%jd\n", i, j, input_node_dims[j]);
-      //}
+  // particle
+    bool found_h_particle = false;
+    bool found_vbf_particle = false;
+    bool found_w_particle = false;
+    bool found_z_particle = false;
 
-      // print input shapes/dims
-      printf("Input %d : name=%s\n", i, input_node_names->back());
-      printf("Input %d : num_dims=%zu\n", i, input_node_dims.back().size());
-      for (int j = 0; j < input_node_dims.back().size(); j++)
-	printf("Input %d : dim %d=%jd\n", i, j, input_node_dims.back()[j]);
-      printf("Input %d : type=%d\n", i, type);
-      
-      delete(type_info);
-    }
-    
-    
-    
-    // Set output node name explicitly
-    output_node_names.push_back("output");
+    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> higgs_particle_i;    // paired b jets (higgs)
+    vector <int> vbfjets_particle_i;                                                                              // pair of vbf jets
+    pair< int, pair< vector <int>, vector <int>>> zz_particle_i;                                                  // event type and pair of leading subleading z index
+    pair< int, vector <int>> ww_particle_i;                                                                        // event type and pair of leading subleading w index
 
-    cout<<"------"<<endl;
-    size_t inputCount = session.GetInputCount();
-    for (int i = 0; i < inputCount; ++i) {
-        auto name = session.GetInputNameAllocated(i, allocator);
-        auto shape = session.GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
+    pair< TLorentzVector, TLorentzVector> higgs_particle;                // < b1, b2 >
+    pair< TLorentzVector, TLorentzVector> vbfjets_particle;              // < j1, j2 >
+    pair< TLorentzVector, TLorentzVector> ww_particle;                   // < w1, w2 >
+    pair< TLorentzVector, TLorentzVector> zz_particle;                   // < z1, z2 >
 
-        std::cout << "Input Number: " << i << std::endl;
-        std::cout << " Input Name: " << name.get() << std::endl;
-        std::cout << " Input Shape: " << shape << std::endl;
-    }
 
-    size_t outputCount = session.GetOutputCount();
-    for (int i = 0; i < outputCount; ++i) {
-        auto name = session.GetOutputNameAllocated(i, allocator);
-        auto shape = session.GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // reco selection
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-        std::cout << "Output Number: " << i << std::endl;
-        std::cout << " Output Name: " << name.get() << std::endl;
-        std::cout << " Output Shape: " << shape << std::endl;
+
+    vector<int> jets_reco = get_all_jets( "reco", branchJet, 20 );
+    vector<int> leps_reco = get_all_leptons( "reco", branchElectron, branchMuon, 15, 2.5 );
+    int njets_reco = jets_reco.size();
+    int nleps_reco = leps_reco.size();
+
+  // get
+    higgs_reco_i = get_higgs( "reco", branchJet, branchGenParticle);
+    vbfjets_reco_i = get_vbfjets( "reco", branchJet, branchGenParticle );
+
+    if ( nleps_reco < 4 )         ww_reco_i = get_w_leptonic( "reco", branchElectron, branchMuon );
+    else if ( nleps_reco >= 4 )   zz_reco_i = get_z_leptonic( "reco", branchElectron, branchMuon );
+
+  // set
+    if ( higgs_reco_i.size() >=2 ) found_h_reco = true;
+    if ( vbfjets_reco_i.size() >=2 ) found_vbf_reco = true;
+    if ( ww_reco_i.first != -1 && ww_reco_i.second.size() >= 2) found_w_reco = true;
+    if ( zz_reco_i.first != -1 && zz_reco_i.second.first.size() >= 2 && zz_reco_i.second.second.size() >= 2) found_z_reco = true;
+ 
+
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // particle selection
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    vector<int> jets_particle = get_all_jets( "particle", branchGenJet, 20 );
+    vector<int> leps_particle = get_all_leptons( "particle", branchGenParticle, branchGenParticle, 15, 2.5 );
+    int njets_particle = jets_particle.size();
+    int nleps_particle = leps_particle.size();
+
+  // get 
+    higgs_particle_i = get_higgs( "particle", branchGenJet, branchGenParticle);
+    vbfjets_particle_i = get_vbfjets( "particle", branchGenJet, branchGenParticle );
+
+    if ( nleps_particle < 4 )         ww_particle_i = get_w_leptonic( "particle", branchGenParticle, branchGenParticle );
+    else if ( nleps_particle >= 4 )   zz_particle_i = get_z_leptonic( "particle", branchGenParticle, branchGenParticle );
+
+  // set 
+    if ( higgs_particle_i.size() >= 2 ) found_h_particle = true;
+    if ( vbfjets_particle_i.size() >= 2) found_vbf_particle = true;
+    if ( ww_particle_i.first != -1 && ww_particle_i.second.size() >= 2) found_w_particle = true;
+    if ( zz_particle_i.first != -1 && zz_particle_i.second.first.size() >= 2 && zz_particle_i.second.second.size() >= 2) found_z_particle = true;
+
+
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // parton selection
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+  // higgs
+    int switchVal_parton = 0;
+  
+    if(enableCutParton["initial parton"]){
+      increaseCount(cutFlowMap_parton,"initial parton",weight);
     }
 
-    
+    bool HiggsRecord=FillHiggsTruthRecord(branchGenParticle,h_parton,b1_parton,b2_parton,j1_parton,j2_parton);
 
-
-    /*
-    std::vector<float>* input_tensor_values;    // Raw input
-    std::vector<Ort::Value> inputTensor;        // Onnxruntime allowed input
-    
-    // this will make the input into 1,3,640,640
-    cv::Mat blob = cv::dnn::blobFromImage(image, 1 / 255.0, cv::Size(640, 640), (0, 0, 0), false, false);
-    size_t input_tensor_size = blob.total();
-    input_tensor_values = new std::vector<float>((float*)blob.data, (float*)blob.data + input_tensor_size);
-    
-    try {
-      inputTensor.emplace_back(Ort::Value::CreateTensor<float>(memory_info, input_tensor_values->data(), input_tensor_size, input_node_dims[0].data(), input_node_dims[0].size()));
+    if(enableCutParton["Higgs Candidate"]){
+      if(switchVal_parton == 0 && HiggsRecord) increaseCount(cutFlowMap_parton,"Higgs Candidate",weight);
+      else  switchVal_parton = 1;
     }
-    catch (Ort::Exception oe) {
-      std::cout << "ONNX exception caught: " << oe.what() << ". Code: " << oe.GetOrtErrorCode() << ".\n";
-      return -1;
-      }*/
-    
-    
-    
-    cout<<"HERE"<<endl;
-   
-   
-    cout << "KABOOM "<<endl;
-    
-    auto memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtDeviceAllocator, OrtMemType::OrtMemTypeCPUOutput);
-    
 
-    
-      std::cout << "Start warming up" << endl;
-     
-     
-     
-      std::vector<Ort::Value> input_tensors;
-      std::vector<Ort::Value> output_tensors;
-      std::cout << "################### befor run:##############" << endl;
-      //std::cout << "input node name:" << inputNodeNames[0] << endl;
-      //std::cout << "output0 node name:" << outputNodeNames[0] << endl;
-      for (int i = 0; i < num_input_nodes; i++) {
+    if(HiggsRecord){
+      double bbdeltaPhiparton = deltaPhi(b1_parton, b2_parton);
+      double bbdeltaEtarparton = deltaEta(b1_parton, b2_parton);
+      double bbdeltaRrparton = deltaR(b1_parton, b2_parton);
+    }
 
-	auto name = session.GetInputNameAllocated(i, allocator);
-        auto shape = session.GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
-	size_t input_tensor_length = VectorProduct(shape);
-	cout<<"Tensor size "<<input_tensor_length<<endl;
-	float temp[input_tensor_length];
+    // leps
+    int thisPartonEventType=-1;
+
+    vector <int> goodE_parton_indices  = GoodElectronPartonIndices(branchGenParticle, analysis);
+    vector <int> goodMu_parton_indices = GoodMuonPartonIndices(branchGenParticle, analysis);
+    goodE_size_parton->Fill(goodE_parton_indices.size(),weight);
+    goodMu_size_parton->Fill(goodMu_parton_indices.size(),weight);
+
+    vector <int> ZPartonIndices;
+    vector <int> WPartonIndices;
+    bool foundZZ = false;
+    bool foundWW = false;
+
+    if(analysis == "HZZJJ"){
+
+      ZPartonIndices = GetZPartonIndices(branchGenParticle, analysis);
+      
+      if(ZPartonIndices.size() > 1) foundZZ = true;
+
+      if(enableCutParton["ZZ parton"]){
+        if(switchVal_parton == 0 && foundZZ) increaseCount(cutFlowMap_parton,"ZZ parton",weight);
+        else switchVal_parton = 1;
+      }
+  
+      if(switchVal_parton == 0) getPartonZLeps(thisPartonEventType, ZPartonIndices, branchGenParticle, z1_parton, z2_parton, l1_parton, l2_parton, l3_parton, l4_parton, q1_parton, q2_parton, q3_parton, q4_parton);
+
+      if(foundZZ){
+        double zzdeltaPhiparton = deltaPhi(z1_parton, z2_parton);
+        double zzdeltaEtarparton = deltaEta(z1_parton, z2_parton);
+        double zzdeltaRrparton = deltaR(z1_parton, z2_parton);
+      }
+
+
+    } if(analysis == "HWWJJ") { 
+
+      WPartonIndices = GetWPartonIndices(branchGenParticle, analysis);
+
+      if(WPartonIndices.size() > 1) foundWW = true;
+
+      if(enableCutParton["WW parton"]){
+        if(switchVal_parton == 0 && foundWW) increaseCount(cutFlowMap_parton,"WW parton",weight);
+        else switchVal_parton = 1;
+      }
+
+      if(switchVal_parton == 0) getPartonWLeps(thisPartonEventType, WPartonIndices, branchGenParticle, w1_parton, w2_parton, l1_parton, l2_parton, q1_parton, q2_parton);
+
+      partonET->Fill(thisPartonEventType,weight);
+
+      if(foundWW) {
 	
-	type_info = new Ort::TypeInfo(session.GetInputTypeInfo(i));
-	auto tensor_info = type_info->GetTensorTypeAndShapeInfo();
-	cout<<"tensor info "<< tensor_info<<endl;
-	cout<<"tensor size "<<VectorProduct(tensor_info.GetShape())<<endl;
-	cout<<"tensor shape "<<tensor_info.GetShape()<<endl;
+        double wwdeltaPhiparton = deltaPhi(w1_parton, w2_parton);
+        double wwdeltaEtarparton = deltaEta(w1_parton, w2_parton);
+        double wwdeltaRrparton = deltaR(w1_parton, w2_parton);
 
-	input_tensors.push_back(Ort::Value::CreateTensor<float>(
-							      memoryInfo, temp, input_tensor_length, tensor_info.GetShape().data(),
-							      tensor_info.GetShape().size()));
-      	
+        lepPT_partonV.at(0)->Fill(l1_parton.Pt());
+        lepPT_partonV.at(1)->Fill(l2_parton.Pt());
+	
+      }
     }
 
-      
-      
-      //input_tensors.push_back(Ort::Value::CreateTensor<float>(
-      //						      memoryInfo, temp, input_tensor_length, input_tensor_info.GetShape().data(),
-      //						      input_tensor_info.GetShape().size()));
 
-      cout<<" Loop "<<endl;
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // cuts
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-      //const int64_t shape=3; //inputTensorShape.data()
-      //input_tensors.push_back(Ort::Value::CreateTensor<float>(
-      //						       memoryInfo, temp, 1,&shape,
-      //						      1));
-      
-      //for (int i = 0; i < 1; i++) {
-      //output_tensors = session.Run(Ort::RunOptions{ nullptr },
-      //			     inputNodeNames.data(),
-      //			     input_tensors.data(),
-      //			     inputNodeNames.size(),
-      //			     outputNodeNames.data(),
-      //			     outputNodeNames.size());
-      //}
-      //std::cout << "################### after run:##############" << endl;
-      //std::cout << "input node name:" << inputNodeNames[0] << endl;
-      //std::cout << "output0 node name:" << outputNodeNames[0] << endl;
-      //std::cout << "output1 node name:" << outputNodeNames[1] << endl;
-    
-    
-      std::cout << "*********************************** test onnx ok  ***************************************" << endl;
+
+  if ( found_h_reco ) update_cft(cft_event_reco, cft_total_reco, "found higgs - reco", weight);
+  if ( found_vbf_reco ) update_cft(cft_event_reco, cft_total_reco, "found vbfjets - reco", weight);
+  if ( found_w_reco ) update_cft(cft_event_reco, cft_total_reco, "found ww - reco", weight);
+  if ( found_z_reco ) update_cft(cft_event_reco, cft_total_reco, "found zz - reco", weight);
+
+  if ( found_h_particle ) update_cft(cft_event_particle, cft_total_particle, "found higgs - particle", weight);
+  if ( found_vbf_particle ) update_cft(cft_event_particle, cft_total_particle, "found vbfjets - particle", weight);
+  if ( found_w_particle ) update_cft(cft_event_particle, cft_total_particle, "found ww - particle", weight);
+  if ( found_z_particle ) update_cft(cft_event_particle, cft_total_particle, "found zz - particle", weight);
+
+
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // get tlorentz vectors
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+  // make
+    if ( found_h_reco ) higgs_reco = make_higgs( "reco", higgs_reco_i );
+    if ( found_vbf_reco ) vbfjets_reco = make_vbfjets( "reco", vbfjets_reco_i, branchJet );
+    if ( found_w_reco ) ww_reco = make_w_leptonic( "reco", ww_reco_i, branchElectron, branchMuon, branchMissingET );
+    if ( found_z_reco ) zz_reco = make_z_leptonic( "reco", zz_reco_i , branchElectron, branchMuon );
+
+  // make
+    if ( found_h_particle ) higgs_particle = make_higgs( "particle", higgs_particle_i );
+    if ( found_vbf_particle ) vbfjets_particle = make_vbfjets( "particle", vbfjets_particle_i, branchGenJet );
+    if ( found_w_particle ) ww_particle = make_w_leptonic( "particle", ww_particle_i, branchGenParticle, branchGenParticle, branchMissingET );
+    if ( found_z_particle ) zz_particle = make_z_leptonic( "particle", zz_particle_i , branchElectron, branchMuon );
+
+
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // end of event loop
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    if( entry % 1000 == 0 ){
+      cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
+      PrintCutFlow(cft_total_reco,cutList_reco,"Reco");
+      PrintCutFlow(cft_total_particle,cutList_particle, "Particle");
+      PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
     }
 
-#endif
+    nPassed+=weight;
+    nPassedRaw++;
+
+    cutVal_reco++; cutValW_reco+=weight;
+    cutVal_particle++; cutValW_particle+=weight;
+    cutVal_parton++; cutValW_parton+=weight;
+
+    cout << "------------------------------" << endl;
+    cout << "Event: " << entry << endl;
+    printMap(cft_event_reco);
+    cout << "------------------------------" << endl;
+
+    cft_allevents_reco.push_back(cft_event_reco);
+
+  }
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// fill and print cft
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  cout << " " << endl;
+  cout << "RECO CUT FLOW" << endl;
+    PrintCutFlow(cft_total_reco,cutList_reco,  "Reco");
+  cout << "PARTICLE CUT FLOW" << endl;
+    PrintCutFlow(cft_total_particle,cutList_particle, "Particle");
+  cout << "PARTON CUT FLOW" << endl;
+    PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
+   
+  for(std::vector<string>::iterator it=selType.begin(); it!=selType.end(); it++){
+    FillCutFlow(cutFlowHists[(*it)],cutFlowEffs[(*it)],*cutFlowMapAll[(*it)],cutFlowMByType[(*it)], (*it));
+  }
+  
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// WRITE HISTOGRAMS
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+  hists->cd();
+
+  for(std::vector<TH1F*>::iterator h=listOfTH1.begin(); h!=listOfTH1.end(); h++){
+    ( *h)->Write();
+    delete (*h); 
+  }
+
+  for(std::vector<TH2F*>::iterator h=listOfTH2.begin(); h!=listOfTH2.end(); h++){
+    ( *h)->Write();
+    delete (*h); 
+  }
+
+  for(std::vector<TProfile*>::iterator h=listOfTProfiles.begin(); h!=listOfTProfiles.end(); h++){
+    ( *h)->Write();
+    delete (*h); 
+  }
+   
+  hists->Close();
+
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// MAIN
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+int main(int argc, char* argv[]){
+
+  const char *inputFileName = argv[1];
+  const char *outputFileName = argv[2];
+  const char *process_name = argv[3];
+  
+  string analysisType="HZZJJ";
+
+  // O: for ZZ H JJ, 1: (->H) ZZ  jj: 2: (->H) ZZ, 3: Hjj, 4: WW H JJ, 5: WW (->H) jj: 6: (->H) WW
+
+  if( argc > 2 )  analysisType=string(argv[4]);
+
+  cout << "RUNNING ANALYSIS: " << analysisType << endl;
+
+  zAnalyzer(inputFileName, outputFileName, process_name, analysisType);
+
+  return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// STUFF I AM AFRAID TO DELETE PERMANENTLY
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // RECO - selection
+  // reco lep debug stuf
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-    vector<int> all_jets = get_all_jets( branchJet, 20, 0 )
-    vector<int> all_leptons = get_all_leptons( "reco", branchElectron, branchMuon, 15, 2.5 )
-
-    number_of_jets = all_jets.size();
-    number_of_leps = all_leptons.size();
-
-    TLorentzVector h_reco, b1_reco, b2_reco, j1_reco, j2_reco,  z1_reco, z2_reco, w1_reco, w2_reco;
-
-    pair< TLorentzVector, TLorentzVector> b_jets_reco; // pair of vbf jets
-    pair< TLorentzVector, TLorentzVector> vbf_jets_reco; // pair of vbf jets
-    pair< int, pair< TLorentzVector, TLorentzVector >> zz_reco; // event type and pair of leading subleading z
-    pair< int, pair< TLorentzVector, TLorentzVector >> ww_reco; // event type and pair of leading subleading w
-
-
-    b_jets_reco = get_higgs( branchJet, branchGenParticle, branchPFCand);
-    vbf_jets_reco = get_vbf_jets( branchJet );
-    if (number_of_leps >= 4 ) zz_reco = get_z_leptonic("reco", branchElectron, branchMuon );
-    else if (number_of_leps < 4 ) ww_reco = get_w_leptonic("reco", branchElectron, branchMuon );
-
-
-
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // RECO - cuts
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 
 /*
-  if (!goodJetIndex.empty()) update_cft(cft_event_reco, cft_total_reco, "jet pT > 20 - reco", weight); // CUT
-  if (!pairedJet.empty()) update_cft(cft_event_reco, cft_total_reco, "1 PAIReD jet - reco", weight); // CUT
-  if (!pairedJetB.empty()) { // CUT
-    update_cft(cft_event_reco, cft_total_reco, "1 bb PAIReD jet - reco", weight);
-    foundHiggs_reco = true;
-  }
-  if (nonHiggsJet.size() > 1){ // CUT
-    update_cft(cft_event_reco, cft_total_reco, "2 VBF jet - reco", weight);
-    vbfJetIndexComb=combinationsNoRepetitionAndOrderDoesNotMatter(2,nonHiggsJet);
-  }
-  if (!vbfJetIndex_dEta.empty()){ // CUT
-     update_cft(cft_event_reco, cft_total_reco, "2.5 deltaEta VBF jet - reco", weight); 
-     foundVBF_reco = true;
-  }
-  if ((goodE_reco_indices.size() + goodMu_reco_indices.size()) > 0) update_cft(cft_event_reco, cft_total_reco, "lep pT & eta cut - reco", weight); // CUT
-  if ((l1_reco+l2_reco).M() >= 10) update_cft(cft_event_reco, cft_total_reco, "mll > 10 - reco", weight); // CUT
-*/
-  
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // RECO - plots
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-  // higgs
-  if (foundHiggs_reco){
-
-    paired_jet = pairedJetB.at(0).first;
-
-    btagIndex.push_back(paired_jet["jet1_index"]);
-    btagIndex.push_back(paired_jet["jet2_index"]);
-
-    b1_reco.SetPtEtaPhiM(paired_jet["jet1_pt"],paired_jet["jet1_eta"],paired_jet["jet1_phi"],paired_jet["jet1_mass"]);
-    b2_reco.SetPtEtaPhiM(paired_jet["jet2_pt"],paired_jet["jet2_eta"],paired_jet["jet2_phi"],paired_jet["jet2_mass"]);
-
-    h_reco = b1_reco + b2_reco; // dijet
-
-    double bbdeltaPhireco = deltaPhi(b1_reco, b2_reco);
-    double bbdeltaEtareco = deltaEta(b1_reco, b2_reco);
-    double bbdeltaRreco = deltaR(b1_reco, b2_reco);
-
-  }
-  
-  // vbf
-  if(foundVBF_reco) {
-
-    jet1 = (Jet*) branchJet->At(vbfJetIndex_dEta[0].first);
-    jet2 = (Jet*) branchJet->At(vbfJetIndex_dEta[0].second);
-    j1_reco=jet1->P4();
-    j2_reco=jet2->P4();
-
-    double jjdeltaPhireco = deltaPhi(j1_reco, j2_reco);
-    double jjdeltaEtareco = deltaEta(j1_reco, j2_reco);
-    double jjdeltaRreco = deltaR(j1_reco, j2_reco);
-
-  }
-
-  // leps
-  sort_by_pT(goodE_reco_indices, branchElectron, "Electron"); 
-  sort_by_pT(goodMu_reco_indices, branchMuon, "Muon");
-
-  goodE_size_reco->Fill(goodE_reco_indices.size(),weight);
-  goodMu_size_reco->Fill(goodMu_reco_indices.size(),weight);
-
-  // lep details
-  if (goodE_reco_indices.size()>0) e1_reco = ((Electron *) branchElectron->At(goodE_reco_indices[0]))->P4();
-  if (goodE_reco_indices.size()>1) e2_reco = ((Electron *) branchElectron->At(goodE_reco_indices[1]))->P4();
-  if (goodMu_reco_indices.size()>0) m1_reco = ((Muon *) branchMuon->At(goodMu_reco_indices[0]))->P4();
-  if (goodMu_reco_indices.size()>1) m2_reco = ((Muon *) branchMuon->At(goodMu_reco_indices[1]))->P4();
-
-  lead_e_pt_reco->Fill(e1_reco.Pt(),weight);
-  lead_e_eta_reco->Fill(e1_reco.Eta(),weight);
-  lead_e_phi_reco->Fill(e1_reco.Phi(),weight);
-  sublead_e_pt_reco->Fill(e2_reco.Pt(),weight);
-  sublead_e_eta_reco->Fill(e2_reco.Eta(),weight);
-  sublead_e_phi_reco->Fill(e2_reco.Phi(),weight);
-
-  lead_mu_pt_reco->Fill(m1_reco.Pt(),weight);
-  lead_mu_eta_reco->Fill(m1_reco.Eta(),weight);
-  lead_mu_phi_reco->Fill(m1_reco.Phi(),weight);
-  sublead_mu_pt_reco->Fill(m2_reco.Pt(),weight);
-  sublead_mu_eta_reco->Fill(m2_reco.Eta(),weight);
-  sublead_mu_phi_reco->Fill(m2_reco.Phi(),weight);
-
-  // zz
-  if( foundZZ_reco ){
-
-    z1_reco=l1_reco + l2_reco;
-    z2_reco=l3_reco + l4_reco;
-
-    double zzdeltaPhireco = deltaPhi(z1_reco, z2_reco);
-    double zzdeltaEtareco = deltaEta(z1_reco, z2_reco);
-    double zzdeltaRreco = deltaR(z1_reco, z2_reco);
-
-  }
-
-  // ww
-  if(foundWW_reco){
-
-    hmll_0_15_reco->Fill((l1_reco+l2_reco).M(),weight);
-
-    met = ((MissingET*)branchMissingET->At(0))->P4();
-
-    w1_reco=l1_reco + met;
-    w2_reco=l2_reco + met;
-
-    double wwdeltaPhireco = deltaPhi(w1_reco, w2_reco);
-    double wwdeltaEtareco = deltaEta(w1_reco, w2_reco);
-    double wwdeltaRreco = deltaR(w1_reco, w2_reco);
-
-  }
-
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // reco lep stuf
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
     int thisRecoEventType=-1;
 
     double e_pT_min = 15.0;
@@ -1245,11 +1235,12 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
     concatenate_indices(goodE_plus_reco_indices, goodE_reco_indices);
     concatenate_indices(goodMu_min_reco_indices, goodMu_reco_indices);
     concatenate_indices(goodMu_plus_reco_indices, goodMu_reco_indices);
+*/
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // PARTICLE - HIGGS
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+/*
     int switchVal_particle = 0;
     bool foundHiggs_particle = false;
 
@@ -1422,14 +1413,14 @@ void zAnalyzer(const char *inputFile, const char *outputFile, const char *proces
   // e = e+ & e- , mu = mu+ & mu- 
   vector<int> goodE_particle_indices;
   vector<int> goodMu_particle_indices;
-  ConcatenateIndices( goodE_min_particle_indices,goodE_particle_indices);
-  ConcatenateIndices( goodE_plus_particle_indices,goodE_particle_indices);
-  ConcatenateIndices( goodMu_min_particle_indices,goodMu_particle_indices);
-  ConcatenateIndices( goodMu_plus_particle_indices,goodMu_particle_indices);
+  concatenate_indices( goodE_min_particle_indices,goodE_particle_indices);
+  concatenate_indices( goodE_plus_particle_indices,goodE_particle_indices);
+  concatenate_indices( goodMu_min_particle_indices,goodMu_particle_indices);
+  concatenate_indices( goodMu_plus_particle_indices,goodMu_particle_indices);
 
   vector<int> goodLep_particle_indices;
-  ConcatenateIndices( goodE_particle_indices,goodLep_particle_indices);
-  ConcatenateIndices( goodMu_particle_indices,goodLep_particle_indices);
+  concatenate_indices( goodE_particle_indices,goodLep_particle_indices);
+  concatenate_indices( goodMu_particle_indices,goodLep_particle_indices);
 
 #ifdef MDEBUG
   // Debug 
@@ -1562,112 +1553,17 @@ cout << thisParticleEventType << endl;
       }
 
     }
-
-    //------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // PARTON - HIGGS + JETS
-    //------------------------------------------------------------------------------------------------------------------------------------------------------------
- 
-    int switchVal_parton = 0;
-  
-    if(enableCutParton["initial parton"]){
-      increaseCount(cutFlowMap_parton,"initial parton",weight);
-    }
-
-    bool HiggsRecord=FillHiggsTruthRecord(branchGenParticle,h_parton,b1_parton,b2_parton,j1_parton,j2_parton);
-
-    if(enableCutParton["Higgs Candidate"]){
-      if(switchVal_parton == 0 && HiggsRecord) increaseCount(cutFlowMap_parton,"Higgs Candidate",weight);
-      else  switchVal_parton = 1;
-    }
-
-    if(HiggsRecord){
-      double bbdeltaPhiparton = deltaPhi(b1_parton, b2_parton);
-      double bbdeltaEtarparton = deltaEta(b1_parton, b2_parton);
-      double bbdeltaRrparton = deltaR(b1_parton, b2_parton);
-    }
-
-    //------------------------------------------------------------------------------------------------------------------------------------------------------------
-    // PARTON - LEPTONS
-    //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    int thisPartonEventType=-1;
-
-    vector <int> goodE_parton_indices  = GoodElectronPartonIndices(branchGenParticle, analysis);
-    vector <int> goodMu_parton_indices = GoodMuonPartonIndices(branchGenParticle, analysis);
-    goodE_size_parton->Fill(goodE_parton_indices.size(),weight);
-    goodMu_size_parton->Fill(goodMu_parton_indices.size(),weight);
-
-    vector <int> ZPartonIndices;
-    vector <int> WPartonIndices;
-    bool foundZZ = false;
-    bool foundWW = false;
-
-    if(analysis == "HZZJJ"){
-
-      ZPartonIndices = GetZPartonIndices(branchGenParticle, analysis);
-      
-      if(ZPartonIndices.size() > 1) foundZZ = true;
-
-      if(enableCutParton["ZZ parton"]){
-        if(switchVal_parton == 0 && foundZZ) increaseCount(cutFlowMap_parton,"ZZ parton",weight);
-        else switchVal_parton = 1;
-      }
-  
-      if(switchVal_parton == 0) getPartonZLeps(thisPartonEventType, ZPartonIndices, branchGenParticle, z1_parton, z2_parton, l1_parton, l2_parton, l3_parton, l4_parton, q1_parton, q2_parton, q3_parton, q4_parton);
-
-      if(foundZZ){
-        double zzdeltaPhiparton = deltaPhi(z1_parton, z2_parton);
-        double zzdeltaEtarparton = deltaEta(z1_parton, z2_parton);
-        double zzdeltaRrparton = deltaR(z1_parton, z2_parton);
-      }
+*/
 
 
-    } if(analysis == "HWWJJ") { 
-
-      WPartonIndices = GetWPartonIndices(branchGenParticle, analysis);
-
-      if(WPartonIndices.size() > 1) foundWW = true;
-
-      if(enableCutParton["WW parton"]){
-        if(switchVal_parton == 0 && foundWW) increaseCount(cutFlowMap_parton,"WW parton",weight);
-        else switchVal_parton = 1;
-      }
-
-      if(switchVal_parton == 0) getPartonWLeps(thisPartonEventType, WPartonIndices, branchGenParticle, w1_parton, w2_parton, l1_parton, l2_parton, q1_parton, q2_parton);
-
-      partonET->Fill(thisPartonEventType,weight);
-
-      if(foundWW) {
-	
-        double wwdeltaPhiparton = deltaPhi(w1_parton, w2_parton);
-        double wwdeltaEtarparton = deltaEta(w1_parton, w2_parton);
-        double wwdeltaRrparton = deltaR(w1_parton, w2_parton);
-
-        lepPT_partonV.at(0)->Fill(l1_parton.Pt());
-        lepPT_partonV.at(1)->Fill(l2_parton.Pt());
-	
-      }
-    }
-
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // PRINT CFT 
-  //------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-  if( entry % 1000 == 0 ){
-      cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
-      PrintCutFlow(cft_total_reco,cutList_reco,"Reco");
-      PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
-      PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
-    }
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // FILL HISTOGRAMS - RECO
+  // HISTOGRAMS - RECO
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   // 1D
-
+/*
   if () recoET->Fill(ww.first);
   if () recoET->Fill(zz.first);
 
@@ -1720,7 +1616,6 @@ cout << thisParticleEventType << endl;
         hjjdeltaRparticle -> Fill(deltaR(j1_particle, j2_particle),weight);
       }
     }
-
 
     // z
     if(switchVal_reco==0){
@@ -1881,7 +1776,7 @@ cout << thisParticleEventType << endl;
       hl1pT13Comp->Fill(l1_parton.Pt(), l1_reco.Pt(), weight);
       hl2pT13Comp->Fill(l2_parton.Pt(), l2_reco.Pt(), weight);
     }
-    
+   
     if(switchVal_reco==0){
       hbbjjdeltaPhicompreco->Fill(bbdeltaPhireco,jjdeltaPhireco,weight);
       hbbdeltaEtajjdeltaPhicompreco->Fill(bbdeltaEtareco,jjdeltaPhireco,weight);
@@ -1895,6 +1790,7 @@ cout << thisParticleEventType << endl;
       hbbzzdeltaPhicompreco->Fill(bbdeltaPhireco, zzdeltaPhireco, weight);
       hbbzzdeltaEtacompreco->Fill(bbdeltaEtareco, zzdeltaEtareco, weight);   
     }
+
     if(switchVal_particle==0){
       hbbjjdeltaPhicompparticle->Fill(bbdeltaPhiparticle,jjdeltaPhiparticle,weight);
       hbbdeltaEtajjdeltaPhicompparticle->Fill(bbdeltaEtaparticle,jjdeltaPhiparticle,weight);
@@ -1908,6 +1804,7 @@ cout << thisParticleEventType << endl;
       hbbzzdeltaPhicompparticle->Fill(bbdeltaPhiparticle, zzdeltaPhiparticle, weight);
       hbbzzdeltaEtacompparticle->Fill(bbdeltaEtaparticle, zzdeltaEtaparticle, weight);
     }
+
     if(switchVal_parton){
       hbbjjdeltaPhicompparton->Fill(bbdeltaPhiparton,jjdeltaPhiparton,weight);
       hbbdeltaEtajjdeltaPhicompparton->Fill(bbdeltaEtaparton,jjdeltaPhiparton,weight);
@@ -1926,6 +1823,7 @@ cout << thisParticleEventType << endl;
 // FILL HISTOGRAMS - MISC
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
     // w ET- reco 
     if(switchVal_reco==0){
       if(thisRecoEventType==0 && wleps.size()>=2){
@@ -1943,6 +1841,7 @@ cout << thisParticleEventType << endl;
       }
     }
 
+
     // w ET- particle 
     if(switchVal_particle==0){
       if(thisParticleEventType==0 && WParticlePairIndices.size()>=2){
@@ -1959,99 +1858,205 @@ cout << thisParticleEventType << endl;
         hllmET3particle->Fill((l1_particle+l2_particle).M(),weight);
       }
     }
+*/
 
 
+
+/*
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // END OF EVENT LOOP
+  // ONNX - WORK IN PROGRESS
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    bool doONNX=true;
 
-    nPassed+=weight;
-    nPassedRaw++;
+#ifdef ONNXRUN
 
-    cutVal_reco++; cutValW_reco+=weight;
-    cutVal_particle++; cutValW_particle+=weight;
-    cutVal_parton++; cutValW_parton+=weight;
+    if(doONNX){
+      // onnxruntime setup
+    //string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/delphesModel.onnx";
+    string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/delphesModel_changed.onnx";
+    //string model_file="/Users/gaetano/Documents/universita/SnowMass2020/Analysis/brown-cern/higgsandmore/delphesAna/vvhjj/examples_sv_Jan.onnx";
+    
 
-    cout << "EVENT " << entry+1 << endl;
-    printMap(cft_event_reco);
+    auto providers = Ort::GetAvailableProviders();
+    for (auto provider : providers) {
+      std::cout << provider << std::endl;
+    }
+    // cout<<endl;
+    
+    Ort::Env env = Ort::Env(OrtLoggingLevel::ORT_LOGGING_LEVEL_VERBOSE, "Default");
+    Ort::SessionOptions sessionOptions;
+    sessionOptions.SetIntraOpNumThreads(1);
+    sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+    // Optimization will take time and memory during startup
+    //sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+    
+    Ort::Session session = Ort::Session(env, model_file.c_str(), sessionOptions);
+    Ort::AllocatorWithDefaultOptions allocator;
+    
+    // Demonstration of getting input node info by code
+    size_t num_input_nodes = 0;
+    std::vector<const char*>* input_node_names = nullptr; // Input node names
+    //std::vector<const char*>* output_node_names = new std::vector<const char*>();
+    std::vector<const char*> output_node_names;
+    std::vector<std::vector<int64_t>> input_node_dims;    // Input node dimension.
+    ONNXTensorElementDataType type;                       // Used to print input info
+    Ort::TypeInfo* type_info;
+    
+    num_input_nodes = session.GetInputCount();
+    input_node_names = new std::vector<const char*>;
+    for (int i = 0; i < num_input_nodes; i++) {
+      
+      char* tempstring = new char[strlen(session.GetInputNameAllocated(i, allocator).get()) + 1];
+      snprintf(tempstring, strlen(session.GetInputNameAllocated(i, allocator).get()) + 1, session.GetInputNameAllocated(i, allocator).get());
+      input_node_names->push_back(tempstring);
+      type_info = new Ort::TypeInfo(session.GetInputTypeInfo(i));
+      auto tensor_info = type_info->GetTensorTypeAndShapeInfo();
+      cout<<"tensor info "<< tensor_info<<endl;
+      cout<<"tensor size "<<VectorProduct(tensor_info.GetShape())<<endl;
+      cout<<"tensor shape "<<tensor_info.GetShape()<<endl;
+      ///cout<<"tensor element count "<<tensor_info.GetElementCount()<<endl;
+      //cout<<"tensor dimensions count "<<tensor_info.GetDimensionsCount()<<endl;
+      //star:vector<int64_t> input_dims
+      
+      
+      
+      type = tensor_info.GetElementType();
+      input_node_dims.push_back(tensor_info.GetShape());
 
-    cft_allevents_reco.push_back(cft_event_reco);
+      //for (int j = 0; j < input_node_dims.size(); j++) {
+      //if (input_node_dims[j] == -1)
+      //{
+      //  input_node_dims[j] = 1;
+      //}
+      //printf("Input %d : dim %d=%jd\n", i, j, input_node_dims[j]);
+      //}
 
-  }
+      // print input shapes/dims
+      printf("Input %d : name=%s\n", i, input_node_names->back());
+      printf("Input %d : num_dims=%zu\n", i, input_node_dims.back().size());
+      for (int j = 0; j < input_node_dims.back().size(); j++)
+	printf("Input %d : dim %d=%jd\n", i, j, input_node_dims.back()[j]);
+      printf("Input %d : type=%d\n", i, type);
+      
+      delete(type_info);
+    }
+    
+    
+    
+    // Set output node name explicitly
+    output_node_names.push_back("output");
 
-  int i = 2;
-  cout << "------------------------------" << endl;
-  cout << "PROOF OF CONCEPT" << endl;
-  cout << "EVENT " << i + 1 << endl;
-  printMap(cft_allevents_reco[i]);
-  cout << "------------------------------" << endl;
+    cout<<"------"<<endl;
+    size_t inputCount = session.GetInputCount();
+    for (int i = 0; i < inputCount; ++i) {
+        auto name = session.GetInputNameAllocated(i, allocator);
+        auto shape = session.GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-// FILL+PRINT CUTFLOW
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
+        std::cout << "Input Number: " << i << std::endl;
+        std::cout << " Input Name: " << name.get() << std::endl;
+        std::cout << " Input Shape: " << shape << std::endl;
+    }
+
+    size_t outputCount = session.GetOutputCount();
+    for (int i = 0; i < outputCount; ++i) {
+        auto name = session.GetOutputNameAllocated(i, allocator);
+        auto shape = session.GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
+
+        std::cout << "Output Number: " << i << std::endl;
+        std::cout << " Output Name: " << name.get() << std::endl;
+        std::cout << " Output Shape: " << shape << std::endl;
+    }
+
+    
 
 
-  cout << " " << endl;
-  cout << "RECO CUT FLOW" << endl;
-    PrintCutFlow(cft_total_reco,cutList_reco,  "Reco");
-  cout << "PARTICLE CUT FLOW" << endl;
-    PrintCutFlow(cutFlowMap_particle,cutList_particle, "Particle");
-  cout << "PARTON CUT FLOW" << endl;
-    PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
+    /*
+    std::vector<float>* input_tensor_values;    // Raw input
+    std::vector<Ort::Value> inputTensor;        // Onnxruntime allowed input
+    
+    // this will make the input into 1,3,640,640
+    cv::Mat blob = cv::dnn::blobFromImage(image, 1 / 255.0, cv::Size(640, 640), (0, 0, 0), false, false);
+    size_t input_tensor_size = blob.total();
+    input_tensor_values = new std::vector<float>((float*)blob.data, (float*)blob.data + input_tensor_size);
+    
+    try {
+      inputTensor.emplace_back(Ort::Value::CreateTensor<float>(memory_info, input_tensor_values->data(), input_tensor_size, input_node_dims[0].data(), input_node_dims[0].size()));
+    }
+    catch (Ort::Exception oe) {
+      std::cout << "ONNX exception caught: " << oe.what() << ". Code: " << oe.GetOrtErrorCode() << ".\n";
+      return -1;
+      }
+    
+    
+    
+    cout<<"HERE"<<endl;
    
-  for(std::vector<string>::iterator it=selType.begin(); it!=selType.end(); it++){
-    FillCutFlow(cutFlowHists[(*it)],cutFlowEffs[(*it)],*cutFlowMapAll[(*it)],cutFlowMByType[(*it)], (*it));
-  }
-  
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-// WRITE HISTOGRAMS
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-  hists->cd();
-
-  for(std::vector<TH1F*>::iterator h=listOfTH1.begin(); h!=listOfTH1.end(); h++){
-    ( *h)->Write();
-    delete (*h); 
-  }
-
-  for(std::vector<TH2F*>::iterator h=listOfTH2.begin(); h!=listOfTH2.end(); h++){
-    ( *h)->Write();
-    delete (*h); 
-  }
-
-  for(std::vector<TProfile*>::iterator h=listOfTProfiles.begin(); h!=listOfTProfiles.end(); h++){
-    ( *h)->Write();
-    delete (*h); 
-  }
-  
-  //kappaLambda -> Write();
-  //delete kappaLambda;
    
-  hists->Close();
+    cout << "KABOOM "<<endl;
+    
+    auto memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtDeviceAllocator, OrtMemType::OrtMemTypeCPUOutput);
+    
 
-}
+    
+      std::cout << "Start warming up" << endl;
+     
+     
+     
+      std::vector<Ort::Value> input_tensors;
+      std::vector<Ort::Value> output_tensors;
+      std::cout << "################### befor run:##############" << endl;
+      //std::cout << "input node name:" << inputNodeNames[0] << endl;
+      //std::cout << "output0 node name:" << outputNodeNames[0] << endl;
+      for (int i = 0; i < num_input_nodes; i++) {
 
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-// MAIN
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
+	auto name = session.GetInputNameAllocated(i, allocator);
+        auto shape = session.GetInputTypeInfo(i).GetTensorTypeAndShapeInfo().GetShape();
+	size_t input_tensor_length = VectorProduct(shape);
+	cout<<"Tensor size "<<input_tensor_length<<endl;
+	float temp[input_tensor_length];
+	
+	type_info = new Ort::TypeInfo(session.GetInputTypeInfo(i));
+	auto tensor_info = type_info->GetTensorTypeAndShapeInfo();
+	cout<<"tensor info "<< tensor_info<<endl;
+	cout<<"tensor size "<<VectorProduct(tensor_info.GetShape())<<endl;
+	cout<<"tensor shape "<<tensor_info.GetShape()<<endl;
 
+	input_tensors.push_back(Ort::Value::CreateTensor<float>(
+							      memoryInfo, temp, input_tensor_length, tensor_info.GetShape().data(),
+							      tensor_info.GetShape().size()));
+      	
+    }
 
-int main(int argc, char* argv[]){
+      
+      
+      //input_tensors.push_back(Ort::Value::CreateTensor<float>(
+      //						      memoryInfo, temp, input_tensor_length, input_tensor_info.GetShape().data(),
+      //						      input_tensor_info.GetShape().size()));
 
-  const char *inputFileName = argv[1];
-  const char *outputFileName = argv[2];
-  const char *process_name = argv[3];
-  
-  string analysisType="HZZJJ";
+      cout<<" Loop "<<endl;
 
-  // O: for ZZ H JJ, 1: (->H) ZZ  jj: 2: (->H) ZZ, 3: Hjj, 4: WW H JJ, 5: WW (->H) jj: 6: (->H) WW
+      //const int64_t shape=3; //inputTensorShape.data()
+      //input_tensors.push_back(Ort::Value::CreateTensor<float>(
+      //						       memoryInfo, temp, 1,&shape,
+      //						      1));
+      
+      //for (int i = 0; i < 1; i++) {
+      //output_tensors = session.Run(Ort::RunOptions{ nullptr },
+      //			     inputNodeNames.data(),
+      //			     input_tensors.data(),
+      //			     inputNodeNames.size(),
+      //			     outputNodeNames.data(),
+      //			     outputNodeNames.size());
+      //}
+      //std::cout << "################### after run:##############" << endl;
+      //std::cout << "input node name:" << inputNodeNames[0] << endl;
+      //std::cout << "output0 node name:" << outputNodeNames[0] << endl;
+      //std::cout << "output1 node name:" << outputNodeNames[1] << endl;
+    
+    
+      std::cout << "*********************************** test onnx ok  ***************************************" << endl;
+    }
 
-  if( argc > 2 )  analysisType=string(argv[4]);
-
-  cout << "RUNNING ANALYSIS: " << analysisType << endl;
-
-  zAnalyzer(inputFileName, outputFileName, process_name, analysisType);
-
-  return 0;
-}
+#endif
+*/

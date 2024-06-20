@@ -42,12 +42,6 @@ using namespace std;
 // misc
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void concatenate_indices(vector<int> in, vector <int> & out){
-  out.insert(out.end(), in.begin(), in.end());
-}
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 void dumpParticle(GenParticle *particle=nullptr,int index=-1){
   cout<<"Particle "<<particle->PID<<" status "<<particle->Status<<" pT "<<particle->PT<<" eta "<<particle->Eta<<" phi "<<particle->Phi<< " M1 "<< particle->M1<<" M2 "<<
     particle->M2<<" TLorenz pT "<<particle->P4().Pt()<<" "
@@ -115,7 +109,7 @@ void sort2_by_pT(vector<int> wleps, TClonesArray *branchElectron=nullptr, TClone
 // leps
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-vector<int> get_good_reco_lepton_indices(TClonesArray *branchElectron=nullptr, double pTmin=15, double etaMax=2.5, string analysis="HZZJJ", string lepType="electron", int charge=-1) {
+vector<int> get_good_reco_lepton_indices( TClonesArray *branchElectron = nullptr, double pTmin = 15, double etaMax = 2.5, string analysis = "HZZJJ", string lepType = "electron", int charge = -1 ) {
 
 vector <int> lep_indices;
 
