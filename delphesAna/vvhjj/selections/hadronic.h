@@ -44,42 +44,111 @@ bool is_my_b_tag(Jet *jet, TClonesArray *branchGenParticle = nullptr, int seed =
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
-// jets
+// all jets
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-vector <int> get_all_jets( string analysis_type = "reco", TClonesArray *branchJet = nullptr, double j_pT_min = 20 ) {
+vector <int> get_all_jets( string analysis_type = "reco", vector<int> leps = {0}, TClonesArray *branchJet = nullptr, TClonesArray *branchElectron = nullptr , TClonesArray *branchMuon = nullptr, double j_pT_min = 20 , bool debug_bool = false ) {
 
     vector <int> all_jet_indices;
 
-    for( int i = 0; i<(int)branchJet->GetEntries(); i++ ) {
+    if ( analysis_type == "reco" ) {
 
-        Jet *jet = (Jet*) branchJet->At(i);
-        if( jet->PT > j_pT_min )  all_jet_indices.push_back(i); 
+        for( int i = 0; i<(int)branchJet->GetEntries(); i++ ) {
 
+            Jet *jet = (Jet*) branchJet->At(i);
+
+            if( jet->PT > j_pT_min ) {
+                
+                all_jet_indices.push_back(i);
+                debug_print( debug_bool, analysis_type + " jet : pt = " + to_string(jet->PT) + " , eta = " + to_string(jet->Eta) + " , phi = " + to_string(jet->Phi));
+
+            }
+
+        }
+
+    } else if ( analysis_type == "particle" ) {
+
+        for( int i = 0; i<(int)branchJet->GetEntries(); i++ ) {
+
+            Jet *genjet = (Jet*) branchJet->At(i);
+
+            if( genjet->PT > j_pT_min ) all_jet_indices.push_back(i);
+
+        }
+
+        rm_jetlep_overlap( all_jet_indices, leps, branchJet, branchElectron, branchMuon );
+
+        for( int i = 0; i<all_jet_indices.size(); i++ ) {
+
+            Jet *genjet_ = (Jet*) branchJet->At( all_jet_indices[i] );
+            debug_print( debug_bool, analysis_type + " jet : pt = " + to_string(genjet_->PT) + " , eta = " + to_string(genjet_->Eta) + " , phi = " + to_string(genjet_->Phi));
+        
+        }
+    
     }
 
     return all_jet_indices;
 
 }
 
+/*
+vector <int> get_all_genjets( string analysis_type = "reco",  vector<int> leps_particle = {0}, TClonesArray *branchGenParticle = nullptr, TClonesArray *branchJet = nullptr, double j_pT_min = 20 , bool debug_bool = false ) {
+
+    vector <int> all_genjet_indices;
+
+    if ( analysis_type == "particle" ) {
+
+        for( int i = 0; i<(int)branchJet->GetEntries(); i++ ) {
+
+            Jet *genjet = (Jet*) branchJet->At(i);
+
+            if( genjet->PT > j_pT_min ) all_genjet_indices.push_back(i);
+
+        }
+
+        rm_gen_jetlep_overlap( all_genjet_indices, leps_particle, branchJet, branchGenParticle );
+
+        for( int i = 0; i<all_genjet_indices.size(); i++ ) {
+
+            Jet *genjet_ = (Jet*) branchJet->At( all_genjet_indices[i] );
+            debug_print( debug_bool, analysis_type + " jet " + " : pt = " + to_string(genjet_->PT) + " , eta = " + to_string(genjet_->Eta) + " , phi = " + to_string(genjet_->Phi));
+        
+        }
+    
+    }
+
+    return all_genjet_indices;
+
+}
+*/
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // higgs - paired
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
 // returns higgs
-std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> get_higgs( string analysis_type = "reco", TClonesArray *branchJet = nullptr, TClonesArray *branchGenParticle = nullptr, TClonesArray *branchPFCand = nullptr ){
+std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> get_bb( string analysis_type = "reco", pair<int, int> vbf_jets = {0,0}, TClonesArray *branchJet = nullptr, TClonesArray *branchGenParticle = nullptr, TClonesArray *branchPFCand = nullptr ){
 
     std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> paired_b_jets;
+    std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> skimmed_paired_b_jets;
+
     std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>  paired_jets = paired::PAIReDjointEvent( branchGenParticle, branchPFCand, branchJet, 0.4, false, false, true, 1.0, false );
 
-    for(int i=0; i<(int)paired_jets.size(); i++){
+    for(int i=0; i<(int)paired_jets.size(); i++) {
 
       std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>> paired_jet = paired_jets.at(i);
 
-      if( paired_jet.first["isbtagged"] > 0 ) paired_b_jets.push_back(paired_jet);
+        if( paired_jet.first["isbtagged"] > 0 ) {
+
+             
+            if ( vbf_jets.first == paired_jet.first["jet1_index"] || vbf_jets.second == paired_jet.first["jet1_index"] || vbf_jets.first ==  paired_jet.first["jet2_index"] || vbf_jets.second ==  paired_jet.first["jet2_index"]) continue; // check if already taken as vbf jet
+            else paired_b_jets.push_back(paired_jet);
+            
+
+            // paired_b_jets.push_back(paired_jet);
+
+        }
 
     }
 
@@ -87,14 +156,13 @@ std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<f
 
 }
 
-pair< TLorentzVector, TLorentzVector> make_higgs( string analysis_type = "reco", std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> paired_b_jets = {} ) {
+pair< TLorentzVector, TLorentzVector> make_bb( string analysis_type = "reco", std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> paired_b_jets = {} ) {
 
     TLorentzVector b1, b2;
 
-    std::map<TString, float> b_jet;
-    vector <int> b_jets;
+    vector < int > b_jets;
 
-    b_jet = paired_b_jets.at(0).first;
+    std::map<TString, float> b_jet = paired_b_jets.at(0).first;
 
     b_jets.push_back(b_jet["jet1_index"]);
     b_jets.push_back(b_jet["jet2_index"]);
@@ -106,13 +174,15 @@ pair< TLorentzVector, TLorentzVector> make_higgs( string analysis_type = "reco",
 
 }
 
-/*
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // higgs - pseudo b tagging
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+/* 
+
 // returns vec containing b jets
-vector <int> get_higgs( string analysis_type = "reco", TClonesArray *branchJet = nullptr, TClonesArray *branchGenParticle = nullptr ){
+vector <int> get_bb( string analysis_type = "reco", TClonesArray *branchJet = nullptr, TClonesArray *branchGenParticle = nullptr ){
     
     double j_pT_min = 20.0;
 
@@ -127,7 +197,8 @@ vector <int> get_higgs( string analysis_type = "reco", TClonesArray *branchJet =
         Jet *jet = (Jet*)branchJet->At(i);
         if( jet->PT < j_pT_min) continue;
 
-        if( is_my_b_tag( jet, branchGenParticle, 0, 0.4, eff, fake_eff) ) b_jets.push_back(i); 
+        // if( is_my_b_tag( jet, branchGenParticle, 0, 0.4, eff, fake_eff) ) b_jets.push_back(i); 
+        if( jet->BTag == 1) b_jets.push_back(i);
         else not_b_jets.push_back(i);
         
     }
@@ -138,7 +209,7 @@ vector <int> get_higgs( string analysis_type = "reco", TClonesArray *branchJet =
 
 }
 
-pair< TLorentzVector, TLorentzVector> make_higgs( string analysis_type = "reco",  vector <int> b_jets = {-99}, TClonesArray *branchJet = nullptr ) {
+pair< TLorentzVector, TLorentzVector> make_bb( string analysis_type = "reco",  vector <int> b_jets = {-99}, TClonesArray *branchJet = nullptr ) {
 
     Jet *b1jet = (Jet*) branchJet->At( b_jets[0] );
     Jet *b2jet = (Jet*) branchJet->At( b_jets[1] );
@@ -156,38 +227,48 @@ pair< TLorentzVector, TLorentzVector> make_higgs( string analysis_type = "reco",
 
 
 // returns vec containing vbf jet candidates
-vector <int> get_vbfjets( string analysis_type = "reco", TClonesArray *branchJet = nullptr, TClonesArray *branchGenParticle = nullptr ){
-    
-    double j_pT_min = 20.0;
+pair<int, int> get_jj( string analysis_type = "reco", vector<int> jets = {0}, TClonesArray *branchJet = nullptr ) {
 
-    double eff = 1; //0.85;
-    double fake_eff = 0; //0.02;
+    double deta_max = 0.0;
 
-    vector <int> b_jets;
-    vector <int> not_b_jets;
+    pair<int, int> vbf_pair = make_pair( -1, -1 );
 
-    // ADD ETA SEP REQ
+    if ( jets.size() > 1) {
 
-    for( int i = 0; i<(int)branchJet->GetEntries(); i++ ) {
+        for (int i = 0; i < jets.size(); ++i) {
 
-        Jet *jet = (Jet*)branchJet->At(i);
-        if( jet->PT < j_pT_min) continue;
+            Jet* j1 = (Jet*)branchJet->At(jets[i]);
 
-        if( is_my_b_tag( jet, branchGenParticle, 0, 0.4, eff, fake_eff) ) b_jets.push_back(i); 
-        else not_b_jets.push_back(i);
-        
+            for (int j = i + 1; j < jets.size(); ++j) {
+
+                Jet* j2 = (Jet*)branchJet->At(jets[j]);
+
+                double deta = abs(j1->Eta - j2->Eta);
+
+                if ( deta < 2.5 ) continue;
+                else if ( deta > deta_max ) {
+
+                    deta_max = deta;
+
+                    if (j1->PT > j2->PT) vbf_pair = make_pair(jets[i], jets[j]);
+                    else vbf_pair = make_pair(jets[j], jets[i]);
+
+                }
+
+            }
+
+        }
+
     }
 
-    sort_by_pT( analysis_type, not_b_jets, branchJet, "jet");
-
-    return not_b_jets;
+    return vbf_pair;
 
 }
 
-pair< TLorentzVector, TLorentzVector> make_vbfjets( string analysis_type = "reco", vector <int> not_b_jets = {-99}, TClonesArray *branchJet = nullptr) {
+pair< TLorentzVector, TLorentzVector> make_jj( string analysis_type = "reco", pair<int, int> vbf_pair = {-99, -99}, TClonesArray *branchJet = nullptr) {
 
-    Jet *jet1 = (Jet*) branchJet->At( not_b_jets[0] );
-    Jet *jet2 = (Jet*) branchJet->At( not_b_jets[1] );
+    Jet *jet1 = (Jet*) branchJet->At( vbf_pair.first );
+    Jet *jet2 = (Jet*) branchJet->At( vbf_pair.second );
     TLorentzVector vbf_jet1 = jet1 -> P4();
     TLorentzVector vbf_jet2 = jet2 -> P4();
     

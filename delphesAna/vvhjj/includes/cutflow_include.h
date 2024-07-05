@@ -3,20 +3,25 @@
 
 // typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
 
-std::vector <string> cutList_reco;  
-std::vector <string> cutList_particle;  
+std::vector <string> cut_list_reco;  
+std::vector <string> cut_list_particle;  
 std::vector <string> cutList_parton;  
 
-std::map<std::string, std::vector<string> > cutSelectionProcessReco;
-std::map<std::string, std::vector<string> > cutSelectionProcessParticle;
-std::map<std::string, std::vector<string> > cutSelectionProcessParton;
+std::map<std::string, std::vector<string> > cut_sel_process_reco;
+std::map<std::string, std::vector<string> > cut_sel_process_particle;
+std::map<std::string, std::vector<string> > cut_sel_process_parton;
 
 void DefineSelections(){
 
-    cutSelectionProcessReco["all"]={"initial - reco", "found higgs - reco", "found vbfjets - reco", "found ww - reco", "found zz - reco"};
-    cutSelectionProcessParticle["all"]={"initial - particle", "found higgs - particle", "found vbfjets - particle", "found ww - particle", "found zz - particle"};
+    cut_sel_process_reco["all"]={"initial - reco", "found bb - reco", "found jj - reco", "found ww - reco", "found zz - reco"};
+    cut_sel_process_particle["all"]={"initial - particle", "found bb - particle", "found jj - particle", "found ww - particle", "found zz - particle"};
+    cut_sel_process_parton["all"]={"initial parton", "Higgs Candidate", "ZZ parton", "WW parton"};
 
-    cutSelectionProcessParton["all"]={"initial parton", "Higgs Candidate", "ZZ parton", "WW parton"};
+    cut_sel_process_reco["HWWJJ"]={"initial - reco", "found bb - reco", "found jj - reco", "found ww - reco"};
+    cut_sel_process_particle["HWWJJ"]={"initial - particle", "found bb - particle", "found jj - particle", "found ww - particle"};
+
+    cut_sel_process_reco["WWJJ"]={"initial - reco", "found jj - reco", "found ww - reco"};
+    cut_sel_process_particle["WWJJ"]={"initial - particle", "found jj - particle", "found ww - particle"};
 
 }
 
@@ -101,7 +106,6 @@ class Histograms {
     writeHists 
 
 } 
-
 
 
 class Selection : public bla {
