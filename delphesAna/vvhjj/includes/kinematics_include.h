@@ -11,21 +11,21 @@
 
 double delta_phi(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) {
 
-    // return (lorentzvector1.Phi() > lorentzvector2.Phi() ? -1:+1)*TMath::Abs(lorentzvector2.Phi() - lorentzvector1.Phi());
-    return (lorentzvector1.Phi() - lorentzvector2.Phi());
-}
+    return lorentzvector1.Phi() - lorentzvector2.Phi();
 
+}
+ 
 double delta_eta(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) {
 
-    return (lorentzvector1.Eta() - lorentzvector2.Eta());
+    return lorentzvector1.Eta() - lorentzvector2.Eta();
 
 }
 
 double delta_r(TLorentzVector &lorentzvector1, TLorentzVector &lorentzvector2) {
 
-    double dPhi = lorentzvector1.Phi() - lorentzvector2.Phi();
-    double dEta = lorentzvector1.Eta() - lorentzvector2.Eta();
-    return std::sqrt(dPhi*dPhi + dEta*dEta);
+    double dphi = delta_phi(lorentzvector1,lorentzvector2);
+    double deta = delta_eta(lorentzvector1,lorentzvector2);
+    return std::sqrt(dphi*dphi + deta*deta);
     
 }
 
@@ -64,7 +64,7 @@ void sort_by_pT( string analysis_type = "reco", vector<int> indices = vector<int
         return ( (Jet*) branchElectron -> At( lhs )) -> PT > ( (Jet*) branchElectron -> At( rhs )) -> PT;
         });
 
-    } else if ( analysis_type == "particle" ) {
+    } else if ( analysis_type == "particle" || analysis_type == "parton") {
 
         sort( indices.begin(), indices.end(), [ branchElectron ] ( const int& lhs, const int& rhs ) {
         return ( (GenParticle*) branchElectron -> At( lhs )) -> PT > ( (GenParticle*) branchElectron -> At( rhs )) -> PT;

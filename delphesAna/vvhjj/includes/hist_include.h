@@ -1,12 +1,10 @@
 #ifndef HIST_INCLUDE_H
 #define HIST_INCLUDE_H
 
-// #include "TH1F.h"
- #include "TH2F.h"
-
 #include <map>
 #include <string>
 #include <TH1F.h>
+#include <TH2F.h>
 #include <TMath.h>
 
 using namespace std;
@@ -22,190 +20,810 @@ public:
   std::map<std::string, TH1F*> jjhists;
   std::map<std::string, TH1F*> wwhists;
   std::map<std::string, TH1F*> zzhists;
+  std::map<std::string, TH1F*> lephists;
+
+  std::map<std::string, TH2F*> bbhists2D;
+  std::map<std::string, TH2F*> jjhists2D;
+  std::map<std::string, TH2F*> wwhists2D;
+  std::map<std::string, TH2F*> zzhists2D;
+  std::map<std::string, TH2F*> lephists2D;
 
   void initialize_bb() {
 
-    bbhists[sel_name + "_bb_pT_reco"] = new TH1F( (sel_name + "_bb_pT_reco").c_str() , "p^{T}_{bb} Reco", 10, 0, 250);
-    bbhists[sel_name + "_bb_m_reco"] = new TH1F( (sel_name + "_bb_m_reco").c_str() , "m_{bb} Reco", 10, 0, 500);
+  // 1D
+
+    bbhists[sel_name + "_bb_pT_reco"] = new TH1F( (sel_name + "_bb_pT_reco").c_str() , "p^{T}_{bb} Reco", 20, 0, 500);
+    bbhists[sel_name + "_bb_m_reco"] = new TH1F( (sel_name + "_bb_m_reco").c_str() , "m_{bb} Reco", 20, 0, 500);
     bbhists[sel_name + "_bb_dphi_reco"] = new TH1F( (sel_name + "_bb_dphi_reco").c_str() , "#Delta#phi_{bb} Reco", 10, -TMath::Pi(), +TMath::Pi());
     bbhists[sel_name + "_bb_deta_reco"] = new TH1F( (sel_name + "_bb_deta_reco").c_str() , "#Delta#eta_{bb} Reco", 10, -10, 10);
     bbhists[sel_name + "_bb_dr_reco"] = new TH1F( (sel_name + "_bb_dr_reco").c_str() , "#DeltaR_{bb} Reco", 10, 0, 5);
 
-    bbhists[sel_name + "_bb_pT_particle"] = new TH1F( (sel_name + "_bb_pT_particle").c_str() , "p^{T}_{bb} Particle", 10, 0, 250);
-    bbhists[sel_name + "_bb_m_particle"] = new TH1F( (sel_name + "_bb_m_particle").c_str() , "m_{bb} Particle", 10, 0, 500);
+    bbhists[sel_name + "_bb_pT_particle"] = new TH1F( (sel_name + "_bb_pT_particle").c_str() , "p^{T}_{bb} Particle", 20, 0, 500);
+    bbhists[sel_name + "_bb_m_particle"] = new TH1F( (sel_name + "_bb_m_particle").c_str() , "m_{bb} Particle", 20, 0, 500);
     bbhists[sel_name + "_bb_dphi_particle"] = new TH1F( (sel_name + "_bb_dphi_particle").c_str() , "#Delta#phi_{bb} Particle", 10, -TMath::Pi(), +TMath::Pi());
     bbhists[sel_name + "_bb_deta_particle"] = new TH1F( (sel_name + "_bb_deta_particle").c_str() , "#Delta#eta_{bb} Particle", 10, -10, 10);
     bbhists[sel_name + "_bb_dr_particle"] = new TH1F( (sel_name + "_bb_dr_particle").c_str() , "#DeltaR_{bb} Particle", 10, 0, 5);
+
+    bbhists[sel_name + "_bb_pT_parton"] = new TH1F( (sel_name + "_bb_pT_parton").c_str() , "p^{T}_{bb} Parton", 20, 0, 500);
+    bbhists[sel_name + "_bb_m_parton"] = new TH1F( (sel_name + "_bb_m_parton").c_str() , "m_{bb} Parton", 20, 0, 500);
+    bbhists[sel_name + "_bb_dphi_parton"] = new TH1F( (sel_name + "_bb_dphi_parton").c_str() , "#Delta#phi_{bb} Parton", 10, -TMath::Pi(), +TMath::Pi());
+    bbhists[sel_name + "_bb_deta_parton"] = new TH1F( (sel_name + "_bb_deta_parton").c_str() , "#Delta#eta_{bb} Parton", 10, -10, 10);
+    bbhists[sel_name + "_bb_dr_parton"] = new TH1F( (sel_name + "_bb_dr_parton").c_str() , "#DeltaR_{bb} Parton", 10, 0, 5);
+  
+  // 2D
+
+    bbhists2D[sel_name + "_bb_pT_reco_particle"] = new TH2F( (sel_name + "_bb_pT_reco_particle").c_str() , "p^{T}_{bb} Reco Particle", 20, 0, 500, 20, 0, 500);
+    bbhists2D[sel_name + "_bb_m_reco_particle"] = new TH2F( (sel_name + "_bb_m_reco_particle").c_str() , "m_{bb} Reco Particle", 20, 0, 500, 20, 0, 500);
+    bbhists2D[sel_name + "_bb_dphi_reco_particle"] = new TH2F( (sel_name + "_bb_dphi_reco_particle").c_str() , "#Delta#phi_{bb} Reco Particle", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    bbhists2D[sel_name + "_bb_deta_reco_particle"] = new TH2F( (sel_name + "_bb_deta_reco_particle").c_str() , "#Delta#eta_{bb} Reco Particle", 10, -10, 10, 10, -10, 10);
+    bbhists2D[sel_name + "_bb_dr_reco_particle"] = new TH2F( (sel_name + "_bb_dr_reco_particle").c_str() , "#DeltaR_{bb} Reco Particle", 10, 0, 5, 10, 0, 5);
+
+    bbhists2D[sel_name + "_bb_pT_particle_parton"] = new TH2F( (sel_name + "_bb_pT_particle_parton").c_str() , "p^{T}_{bb} Particle Parton", 20, 0, 500, 20, 0, 500);
+    bbhists2D[sel_name + "_bb_m_particle_parton"] = new TH2F( (sel_name + "_bb_m_particle_parton").c_str() , "m_{bb} Particle Parton", 20, 0, 500, 20, 0, 500);
+    bbhists2D[sel_name + "_bb_dphi_particle_parton"] = new TH2F( (sel_name + "_bb_dphi_particle_parton").c_str() , "#Delta#phi_{bb} Particle Parton", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    bbhists2D[sel_name + "_bb_deta_particle_parton"] = new TH2F( (sel_name + "_bb_deta_particle_parton").c_str() , "#Delta#eta_{bb} Particle Parton", 10, -10, 10, 10, -10, 10);
+    bbhists2D[sel_name + "_bb_dr_particle_parton"] = new TH2F( (sel_name + "_bb_dr_particle_parton").c_str() , "#DeltaR_{bb} Particle Parton", 10, 0, 5, 10, 0, 5);
 
   }
 
   void initialize_jj() {
 
-    jjhists[sel_name + "_jj_pT_reco"] = new TH1F( (sel_name + "_jj_pT_reco").c_str() , "p^{T}_{jj} Reco", 10, 0, 250);
-    jjhists[sel_name + "_jj_m_reco"] = new TH1F( (sel_name + "_jj_m_reco").c_str() , "m_{jj} Reco", 10, 0, 500);
+    jjhists[sel_name + "_jj_pT_reco"] = new TH1F( (sel_name + "_jj_pT_reco").c_str() , "p^{T}_{jj} Reco", 20, 0, 500);
+    jjhists[sel_name + "_jj_m_reco"] = new TH1F( (sel_name + "_jj_m_reco").c_str() , "m_{jj} Reco", 20, 0, 2000);
     jjhists[sel_name + "_jj_dphi_reco"] = new TH1F( (sel_name + "_jj_dphi_reco").c_str() , "#Delta#phi_{jj} Reco", 10, -TMath::Pi(), +TMath::Pi());
     jjhists[sel_name + "_jj_deta_reco"] = new TH1F( (sel_name + "_jj_deta_reco").c_str() , "#Delta#eta_{jj} Reco", 10, -10, 10);
     jjhists[sel_name + "_jj_dr_reco"] = new TH1F( (sel_name + "_jj_dr_reco").c_str() , "#DeltaR_{jj} Reco", 10, 0, 5);
 
-    jjhists[sel_name + "_jj_pT_particle"] = new TH1F( (sel_name + "_jj_pT_particle").c_str() , "p^{T}_{jj} Particle", 10, 0, 250);
-    jjhists[sel_name + "_jj_m_particle"] = new TH1F( (sel_name + "_jj_m_particle").c_str() , "m_{jj} Particle", 10, 0, 500);
+    jjhists[sel_name + "_jj_pT_particle"] = new TH1F( (sel_name + "_jj_pT_particle").c_str() , "p^{T}_{jj} Particle", 20, 0, 500);
+    jjhists[sel_name + "_jj_m_particle"] = new TH1F( (sel_name + "_jj_m_particle").c_str() , "m_{jj} Particle", 20, 0, 2000);
     jjhists[sel_name + "_jj_dphi_particle"] = new TH1F( (sel_name + "_jj_dphi_particle").c_str() , "#Delta#phi_{jj} Particle", 10, -TMath::Pi(), +TMath::Pi());
     jjhists[sel_name + "_jj_deta_particle"] = new TH1F( (sel_name + "_jj_deta_particle").c_str() , "#Delta#eta_{jj} Particle", 10, -10, 10);
     jjhists[sel_name + "_jj_dr_particle"] = new TH1F( (sel_name + "_jj_dr_particle").c_str() , "#DeltaR_{jj} Particle", 10, 0, 5);
+
+    jjhists[sel_name + "_jj_pT_parton"] = new TH1F( (sel_name + "_jj_pT_parton").c_str() , "p^{T}_{jj} Parton", 20, 0, 500);
+    jjhists[sel_name + "_jj_m_parton"] = new TH1F( (sel_name + "_jj_m_parton").c_str() , "m_{jj} Parton", 20, 0, 2000);
+    jjhists[sel_name + "_jj_dphi_parton"] = new TH1F( (sel_name + "_jj_dphi_parton").c_str() , "#Delta#phi_{jj} Parton", 10, -TMath::Pi(), +TMath::Pi());
+    jjhists[sel_name + "_jj_deta_parton"] = new TH1F( (sel_name + "_jj_deta_parton").c_str() , "#Delta#eta_{jj} Parton", 10, -10, 10);
+    jjhists[sel_name + "_jj_dr_parton"] = new TH1F( (sel_name + "_jj_dr_parton").c_str() , "#DeltaR_{jj} Parton", 10, 0, 5);
+
+  // 2D
+
+    jjhists2D[sel_name + "_jj_pT_reco_particle"] = new TH2F( (sel_name + "_jj_pT_reco_particle").c_str() , "p^{T}_{jj} Reco Particle", 20, 0, 500, 20, 0, 500);
+    jjhists2D[sel_name + "_jj_m_reco_particle"] = new TH2F( (sel_name + "_jj_m_reco_particle").c_str() , "m_{jj} Reco Particle", 20, 0, 2000, 20, 0, 2000);
+    jjhists2D[sel_name + "_jj_dphi_reco_particle"] = new TH2F( (sel_name + "_jj_dphi_reco_particle").c_str() , "#Delta#phi_{jj} Reco Particle", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    jjhists2D[sel_name + "_jj_deta_reco_particle"] = new TH2F( (sel_name + "_jj_deta_reco_particle").c_str() , "#Delta#eta_{jj} Reco Particle", 10, -10, 10, 10, -10, 10);
+    jjhists2D[sel_name + "_jj_dr_reco_particle"] = new TH2F( (sel_name + "_jj_dr_reco_particle").c_str() , "#DeltaR_{jj} Reco Particle", 10, 0, 5, 10, 0, 5);
+
+    jjhists2D[sel_name + "_jj_pT_particle_parton"] = new TH2F( (sel_name + "_jj_pT_particle_parton").c_str() , "p^{T}_{jj} Particle Parton", 20, 0, 500, 20, 0, 500);
+    jjhists2D[sel_name + "_jj_m_particle_parton"] = new TH2F( (sel_name + "_jj_m_particle_parton").c_str() , "m_{jj} Particle Parton", 20, 0, 2000, 20, 0, 2000);
+    jjhists2D[sel_name + "_jj_dphi_particle_parton"] = new TH2F( (sel_name + "_jj_dphi_particle_parton").c_str() , "#Delta#phi_{jj} Particle Parton", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    jjhists2D[sel_name + "_jj_deta_particle_parton"] = new TH2F( (sel_name + "_jj_deta_particle_parton").c_str() , "#Delta#eta_{jj} Particle Parton", 10, -10, 10, 10, -10, 10);
+    jjhists2D[sel_name + "_jj_dr_particle_parton"] = new TH2F( (sel_name + "_jj_dr_particle_parton").c_str() , "#DeltaR_{jj} Particle Parton", 10, 0, 5, 10, 0, 5);
 
   }
 
   void initialize_ww() {
 
-  wwhists[sel_name + "_w1_pT_reco"] = new TH1F( (sel_name + "_w1_pT_reco").c_str() , "p^{T}_{w1} Reco", 10, 0, 250);
-  wwhists[sel_name + "_w1_m_reco"] = new TH1F( (sel_name + "_w1_m_reco").c_str() , "m_{w1} Reco", 10, 0, 500);
-  wwhists[sel_name + "_w2_pT_reco"] = new TH1F( (sel_name + "_w2_pT_reco").c_str() , "p^{T}_{w2} Reco", 10, 0, 250);
-  wwhists[sel_name + "_w2_m_reco"] = new TH1F( (sel_name + "_w2_m_reco").c_str() , "m_{w2} Reco", 10, 0, 500);
-  wwhists[sel_name + "_ww_pT_reco"] = new TH1F( (sel_name + "_ww_pT_reco").c_str() , "p^{T}_{ww} Reco", 10, 0, 250);
-  wwhists[sel_name + "_ww_m_reco"] = new TH1F( (sel_name + "_ww_m_reco").c_str() , "m_{ww} Reco", 10, 0, 500);
-  wwhists[sel_name + "_ww_dphi_reco"] = new TH1F( (sel_name + "_ww_dphi_reco").c_str() , "#Delta#phi_{ww} Reco", 10, -TMath::Pi(), +TMath::Pi());
-  wwhists[sel_name + "_ww_deta_reco"] = new TH1F( (sel_name + "_ww_deta_reco").c_str() , "#Delta#eta_{ww} Reco", 10, -10, 10);
-  wwhists[sel_name + "_ww_dr_reco"] = new TH1F( (sel_name + "_ww_dr_reco").c_str() , "#DeltaR_{ww} Reco", 10, 0, 5);
+    wwhists[sel_name + "_w1_pT_reco"] = new TH1F( (sel_name + "_w1_pT_reco").c_str() , "p^{T}_{w1} Reco", 20, 0, 500);
+    wwhists[sel_name + "_w1_m_reco"] = new TH1F( (sel_name + "_w1_m_reco").c_str() , "m_{w1} Reco", 20, 0, 500); wwhists[sel_name + "_w1_mT_reco"] = new TH1F( (sel_name + "_w1_mT_reco").c_str() , "m^{T}_{w1} Reco", 20, 0, 500);
+    wwhists[sel_name + "_w2_pT_reco"] = new TH1F( (sel_name + "_w2_pT_reco").c_str() , "p^{T}_{w2} Reco", 20, 0, 500);
+    wwhists[sel_name + "_w2_m_reco"] = new TH1F( (sel_name + "_w2_m_reco").c_str() , "m_{w2} Reco", 20, 0, 500); wwhists[sel_name + "_w2_mT_reco"] = new TH1F( (sel_name + "_w2_mT_reco").c_str() , "m^{T}_{w2} Reco", 20, 0, 500);
+    wwhists[sel_name + "_ww_pT_reco"] = new TH1F( (sel_name + "_ww_pT_reco").c_str() , "p^{T}_{ww} Reco", 20, 0, 500);
+    wwhists[sel_name + "_ww_m_reco"] = new TH1F( (sel_name + "_ww_m_reco").c_str() , "m^{T}_{ww} Reco", 20, 0, 500); wwhists[sel_name + "_ww_mT_reco"] = new TH1F( (sel_name + "_ww_mT_reco").c_str() , "m^{T}_{ww} Reco", 20, 0, 500);
+    wwhists[sel_name + "_ww_dphi_reco"] = new TH1F( (sel_name + "_ww_dphi_reco").c_str() , "#Delta#phi_{ww} Reco", 10, -TMath::Pi(), +TMath::Pi());
+    wwhists[sel_name + "_ww_deta_reco"] = new TH1F( (sel_name + "_ww_deta_reco").c_str() , "#Delta#eta_{ww} Reco", 10, -10, 10);
+    wwhists[sel_name + "_ww_dr_reco"] = new TH1F( (sel_name + "_ww_dr_reco").c_str() , "#DeltaR_{ww} Reco", 10, 0, 5);
+    wwhists[sel_name + "_ww_et_reco"] = new TH1F( (sel_name + "_ww_et_reco").c_str() , "Event Type Reco", 5, -1, 4);
 
-  wwhists[sel_name + "_w1_pT_particle"] = new TH1F( (sel_name + "_w1_pT_particle").c_str() , "p^{T}_{w1} Particle", 10, 0, 250);
-  wwhists[sel_name + "vw1_m_particle"] = new TH1F( (sel_name + "_w1_m_particle").c_str() , "m_{w1} Particle", 10, 0, 500);
-  wwhists[sel_name + "_w2_pT_particle"] = new TH1F( (sel_name + "_w2_pT_particle").c_str() , "p^{T}_{w2} Particle", 10, 0, 250);
-  wwhists[sel_name + "_w2_m_particle"] = new TH1F( (sel_name + "_w2_m_particle").c_str() , "m_{w2} Particle", 10, 0, 500);
-  wwhists[sel_name + "_ww_pT_particle"] = new TH1F( (sel_name + "_ww_pT_particle").c_str() , "p^{T}_{ww} Particle", 10, 0, 250);
-  wwhists[sel_name + "_ww_m_particle"] = new TH1F( (sel_name + "_ww_m_particle").c_str(), "m_{ww} Particle", 10, 0, 500);
-  wwhists[sel_name + "_ww_dphi_particle"] = new TH1F( (sel_name + "_ww_dphi_particle").c_str() , "#Delta#phi_{ww} Particle", 10, -TMath::Pi(), +TMath::Pi());
-  wwhists[sel_name + "_ww_deta_particle"] = new TH1F( (sel_name + "_ww_deta_particle").c_str() , "#Delta#eta_{ww} Particle", 10, -10, 10);
-  wwhists[sel_name + "_ww_dr_particle"] = new TH1F( (sel_name + "_ww_dr_particle").c_str() , "#DeltaR_{ww} Particle", 10, 0, 5);
+    wwhists[sel_name + "_w1_pT_particle"] = new TH1F( (sel_name + "_w1_pT_particle").c_str() , "p^{T}_{w1} Particle", 20, 0, 500);
+    wwhists[sel_name + "_w1_m_particle"] = new TH1F( (sel_name + "_w1_m_particle").c_str() , "m_{w1} Particle", 20, 0, 500); wwhists[sel_name + "_w1_mT_particle"] = new TH1F( (sel_name + "_w1_mT_particle").c_str() , "m^{T}_{w1} Particle", 20, 0, 500);
+    wwhists[sel_name + "_w2_pT_particle"] = new TH1F( (sel_name + "_w2_pT_particle").c_str() , "p^{T}_{w2} Particle", 20, 0, 500);
+    wwhists[sel_name + "_w2_m_particle"] = new TH1F( (sel_name + "_w2_m_particle").c_str() , "m_{w2} Particle", 20, 0, 500); wwhists[sel_name + "_w2_mT_particle"] = new TH1F( (sel_name + "_w2_mT_particle").c_str() , "m^{T}_{w2} Particle", 20, 0, 500);
+    wwhists[sel_name + "_ww_pT_particle"] = new TH1F( (sel_name + "_ww_pT_particle").c_str() , "p^{T}_{ww} Particle", 20, 0, 500);
+    wwhists[sel_name + "_ww_m_particle"] = new TH1F( (sel_name + "_ww_m_particle").c_str(), "m_{ww} Particle", 20, 0, 500); wwhists[sel_name + "_ww_mT_particle"] = new TH1F( (sel_name + "_ww_mT_particle").c_str(), "m^{T}_{ww} Particle", 20, 0, 500);
+    wwhists[sel_name + "_ww_dphi_particle"] = new TH1F( (sel_name + "_ww_dphi_particle").c_str() , "#Delta#phi_{ww} Particle", 10, -TMath::Pi(), +TMath::Pi());
+    wwhists[sel_name + "_ww_deta_particle"] = new TH1F( (sel_name + "_ww_deta_particle").c_str() , "#Delta#eta_{ww} Particle", 10, -10, 10);
+    wwhists[sel_name + "_ww_dr_particle"] = new TH1F( (sel_name + "_ww_dr_particle").c_str() , "#DeltaR_{ww} Particle", 10, 0, 5);
+    wwhists[sel_name + "_ww_et_particle"] = new TH1F( (sel_name + "_ww_et_particle").c_str() , "Event Type Particle", 5, -1, 4);
 
-}
+    wwhists[sel_name + "_w1_pT_parton"] = new TH1F( (sel_name + "_w1_pT_parton").c_str() , "p^{T}_{w1} Parton", 20, 0, 500);
+    wwhists[sel_name + "_w1_m_parton"] = new TH1F( (sel_name + "_w1_m_parton").c_str() , "m_{w1} Parton", 20, 0, 500); wwhists[sel_name + "_w1_mT_parton"] = new TH1F( (sel_name + "_w1_mT_parton").c_str() , "m^{T}_{w1} Parton", 20, 0, 500);
+    wwhists[sel_name + "_w2_pT_parton"] = new TH1F( (sel_name + "_w2_pT_parton").c_str() , "p^{T}_{w2} Parton", 20, 0, 500);
+    wwhists[sel_name + "_w2_m_parton"] = new TH1F( (sel_name + "_w2_m_parton").c_str() , "m_{w2} Parton", 20, 0, 500); wwhists[sel_name + "_w2_mT_parton"] = new TH1F( (sel_name + "_w2_mT_parton").c_str() , "m^{T}_{w2} Parton", 20, 0, 500);
+    wwhists[sel_name + "_ww_pT_parton"] = new TH1F( (sel_name + "_ww_pT_parton").c_str() , "p^{T}_{ww} Parton", 20, 0, 500);
+    wwhists[sel_name + "_ww_m_parton"] = new TH1F( (sel_name + "_ww_m_parton").c_str(), "m_{ww} Parton", 20, 0, 500); wwhists[sel_name + "_ww_mT_parton"] = new TH1F( (sel_name + "_ww_mT_parton").c_str(), "m^{T}_{ww} Parton", 20, 0, 500);
+    wwhists[sel_name + "_ww_dphi_parton"] = new TH1F( (sel_name + "_ww_dphi_parton").c_str() , "#Delta#phi_{ww} Parton", 10, -TMath::Pi(), +TMath::Pi());
+    wwhists[sel_name + "_ww_deta_parton"] = new TH1F( (sel_name + "_ww_deta_parton").c_str() , "#Delta#eta_{ww} Parton", 10, -10, 10);
+    wwhists[sel_name + "_ww_dr_parton"] = new TH1F( (sel_name + "_ww_dr_parton").c_str() , "#DeltaR_{ww} Parton", 10, 0, 5);
+    wwhists[sel_name + "_ww_et_parton"] = new TH1F( (sel_name + "_ww_et_parton").c_str() , "Event Type Parton", 5, -1, 4);
+
+  // 2D
+
+    wwhists2D[sel_name + "_w1_pT_reco_particle"] = new TH2F( (sel_name + "_w1_pT_reco_particle").c_str() , "p^{T}_{w1} Reco Particle", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_w1_m_reco_particle"] = new TH2F( (sel_name + "_w1_m_reco_particle").c_str() , "m_{w1} Reco Particle", 20, 0, 500, 20, 0, 500); wwhists2D[sel_name + "_w1_mT_reco_particle"] = new TH2F( (sel_name + "_w1_mT_reco_particle").c_str() , "m^{T}_{w1} Reco Particle", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_w2_pT_reco_particle"] = new TH2F( (sel_name + "_w2_pT_reco_particle").c_str() , "p^{T}_{w2} Reco Particle", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_w2_m_reco_particle"] = new TH2F( (sel_name + "_w2_m_reco_particle").c_str() , "m_{w2} Reco Particle", 20, 0, 500, 20, 0, 500); wwhists2D[sel_name + "_w2_mT_reco_particle"] = new TH2F( (sel_name + "_w2_mT_reco_particle").c_str() , "m^{T}_{w2} Reco Particle", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_ww_pT_reco_particle"] = new TH2F( (sel_name + "_ww_pT_reco_particle").c_str() , "p^{T}_{ww} Reco Particle", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_ww_m_reco_particle"] = new TH2F( (sel_name + "_ww_m_reco_particle").c_str() , "m_{ww} Reco Particle", 20, 0, 500, 20, 0, 500); wwhists2D[sel_name + "_ww_mT_reco_particle"] = new TH2F( (sel_name + "_ww_mT_reco_particle").c_str() , "m^{T}_{ww} Reco Particle", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_ww_dphi_reco_particle"] = new TH2F( (sel_name + "_ww_dphi_reco_particle").c_str() , "#Delta#phi_{ww} Reco Particle", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    wwhists2D[sel_name + "_ww_deta_reco_particle"] = new TH2F( (sel_name + "_ww_deta_reco_particle").c_str() , "#Delta#eta_{ww} Reco Particle", 10, -10, 10, 10, -10, 10);
+    wwhists2D[sel_name + "_ww_dr_reco_particle"] = new TH2F( (sel_name + "_ww_dr_reco_particle").c_str() , "#DeltaR_{ww} Reco Particle", 10, 0, 5, 10, 0, 5);
+
+    wwhists2D[sel_name + "_w1_pT_particle_parton"] = new TH2F( (sel_name + "_w1_pT_particle_parton").c_str() , "p^{T}_{w1} Particle Parton", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_w1_m_particle_parton"] = new TH2F( (sel_name + "_w1_m_particle_parton").c_str() , "m_{w1} Particle Parton", 20, 0, 500, 20, 0, 500); wwhists2D[sel_name + "_w1_mT_particle_parton"] = new TH2F( (sel_name + "_w1_mT_particle_parton").c_str() , "m^{T}_{w1} Particle Parton", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_w2_pT_particle_parton"] = new TH2F( (sel_name + "_w2_pT_particle_parton").c_str() , "p^{T}_{w2} Particle Parton", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_w2_m_particle_parton"] = new TH2F( (sel_name + "_w2_m_particle_parton").c_str() , "m_{w2} Particle Parton", 20, 0, 500, 20, 0, 500); wwhists2D[sel_name + "_w2_mT_particle_parton"] = new TH2F( (sel_name + "_w2_mT_particle_parton").c_str() , "m^{T}_{w2} Particle Parton", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_ww_pT_particle_parton"] = new TH2F( (sel_name + "_ww_pT_particle_parton").c_str() , "p^{T}_{ww} Particle Parton", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_ww_m_particle_parton"] = new TH2F( (sel_name + "_ww_m_particle_parton").c_str() , "m_{ww} Particle Parton", 20, 0, 500, 20, 0, 500); wwhists2D[sel_name + "_ww_mT_particle_parton"] = new TH2F( (sel_name + "_ww_mT_particle_parton").c_str() , "m^{T}_{ww} Particle Parton", 20, 0, 500, 20, 0, 500);
+    wwhists2D[sel_name + "_ww_dphi_particle_parton"] = new TH2F( (sel_name + "_ww_dphi_particle_parton").c_str() , "#Delta#phi_{ww} Particle Parton", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    wwhists2D[sel_name + "_ww_deta_particle_parton"] = new TH2F( (sel_name + "_ww_deta_particle_parton").c_str() , "#Delta#eta_{ww} Particle Parton", 10, -10, 10, 10, -10, 10);
+    wwhists2D[sel_name + "_ww_dr_particle_parton"] = new TH2F( (sel_name + "_ww_dr_particle_parton").c_str() , "#DeltaR_{ww} Particle Parton", 10, 0, 5, 10, 0, 5);
+
+    }
 
   void initialize_zz() {
 
-  zzhists[sel_name + "_z1_pT_reco"] = new TH1F( (sel_name + "_z1_pT_reco").c_str() , "p^{T}_{z1} Reco", 10, 0, 250);
-  zzhists[sel_name + "_z1_m_reco"] = new TH1F( (sel_name + "_z1_m_reco").c_str() , "m_{z1} Reco", 10, 0, 500);
-  zzhists[sel_name + "_z2_pT_reco"] = new TH1F( (sel_name + "_z2_pT_reco").c_str() , "p^{T}_{z2} Reco", 10, 0, 250);
-  zzhists[sel_name + "_z2_m_reco"] = new TH1F( (sel_name + "_z2_m_reco").c_str() , "m_{z2} Reco", 10, 0, 500);
-  zzhists[sel_name + "_zz_pT_reco"] = new TH1F( (sel_name + "_zz_pT_reco").c_str() , "p^{T}_{zz} Reco", 10, 0, 250);
-  zzhists[sel_name + "_zz_m_reco"] = new TH1F( (sel_name + "_zz_m_reco").c_str() , "m_{zz} Reco", 10, 0, 500);
-  zzhists[sel_name + "_zz_dphi_reco"] = new TH1F( (sel_name + "_zz_dphi_reco").c_str() , "#Delta#phi_{zz} Reco", 10, -TMath::Pi(), +TMath::Pi());
-  zzhists[sel_name + "_zz_deta_reco"] = new TH1F( (sel_name + "_zz_deta_reco").c_str() , "#Delta#eta_{zz} Reco", 10, -10, 10);
-  zzhists[sel_name + "_zz_dr_reco"] = new TH1F( (sel_name + "_zz_dr_reco").c_str() , "#DeltaR_{zz} Reco", 10, 0, 5);
+    zzhists[sel_name + "_z1_pT_reco"] = new TH1F( (sel_name + "_z1_pT_reco").c_str() , "p^{T}_{z1} Reco", 20, 0, 500);
+    zzhists[sel_name + "_z1_m_reco"] = new TH1F( (sel_name + "_z1_m_reco").c_str() , "m_{z1} Reco", 20, 0, 250);
+    zzhists[sel_name + "_z2_pT_reco"] = new TH1F( (sel_name + "_z2_pT_reco").c_str() , "p^{T}_{z2} Reco", 20, 0, 500);
+    zzhists[sel_name + "_z2_m_reco"] = new TH1F( (sel_name + "_z2_m_reco").c_str() , "m_{z2} Reco", 20, 0, 250);
+    zzhists[sel_name + "_zz_pT_reco"] = new TH1F( (sel_name + "_zz_pT_reco").c_str() , "p^{T}_{zz} Reco", 20, 0, 500);
+    zzhists[sel_name + "_zz_m_reco"] = new TH1F( (sel_name + "_zz_m_reco").c_str() , "m_{zz} Reco", 20, 0, 500);
+    zzhists[sel_name + "_zz_dphi_reco"] = new TH1F( (sel_name + "_zz_dphi_reco").c_str() , "#Delta#phi_{zz} Reco", 10, -TMath::Pi(), +TMath::Pi());
+    zzhists[sel_name + "_zz_deta_reco"] = new TH1F( (sel_name + "_zz_deta_reco").c_str() , "#Delta#eta_{zz} Reco", 10, -10, 10);
+    zzhists[sel_name + "_zz_dr_reco"] = new TH1F( (sel_name + "_zz_dr_reco").c_str() , "#DeltaR_{zz} Reco", 10, 0, 5);
+    zzhists[sel_name + "_zz_et_reco"] = new TH1F( (sel_name + "_zz_et_reco").c_str() , "Event Type Reco", 5, -1, 4);
 
-  zzhists[sel_name + "_z1_pT_particle"] = new TH1F( (sel_name + "_z1_pT_particle").c_str() , "p^{T}_{z1} particle", 10, 0, 250);
-  zzhists[sel_name + "_z1_m_particle"] = new TH1F( (sel_name + "_z1_m_particle").c_str() , "m_{z1} particle", 10, 0, 500);
-  zzhists[sel_name + "_z2_pT_particle"] = new TH1F( (sel_name + "_z2_pT_particle").c_str() , "p^{T}_{z2} particle", 10, 0, 250);
-  zzhists[sel_name + "_z2_m_particle"] = new TH1F( (sel_name + "_z2_m_particle").c_str() , "m_{z2} particle", 10, 0, 500);
-  zzhists[sel_name + "_zz_pT_particle"] = new TH1F( (sel_name + "_zz_pT_particle").c_str() , "p^{T}_{zz} Particle", 10, 0, 250);
-  zzhists[sel_name + "_zz_m_particle"] = new TH1F( (sel_name + "_zz_m_particle").c_str() , "m_{zz} Particle", 10, 0, 500);
-  zzhists[sel_name + "_zz_dphi_particle"] = new TH1F( (sel_name + "_zz_dphi_particle").c_str() , "#Delta#phi_{zz} Particle", 10, -TMath::Pi(), +TMath::Pi());
-  zzhists[sel_name + "_zz_deta_particle"] = new TH1F( (sel_name + "_zz_deta_particle").c_str() , "#Delta#eta_{zz} Particle", 10, -10, 10);
-  zzhists[sel_name + "_zz_dr_particle"] = new TH1F( (sel_name + "_zz_dr_particle").c_str() , "#DeltaR_{zz} Particle", 10, 0, 5);
+    zzhists[sel_name + "_z1_pT_particle"] = new TH1F( (sel_name + "_z1_pT_particle").c_str() , "p^{T}_{z1} Particle", 20, 0, 500);
+    zzhists[sel_name + "_z1_m_particle"] = new TH1F( (sel_name + "_z1_m_particle").c_str() , "m_{z1} Particle", 20, 0, 250);
+    zzhists[sel_name + "_z2_pT_particle"] = new TH1F( (sel_name + "_z2_pT_particle").c_str() , "p^{T}_{z2} Particle", 20, 0, 500);
+    zzhists[sel_name + "_z2_m_particle"] = new TH1F( (sel_name + "_z2_m_particle").c_str() , "m_{z2} Particle", 20, 0, 250);
+    zzhists[sel_name + "_zz_pT_particle"] = new TH1F( (sel_name + "_zz_pT_particle").c_str() , "p^{T}_{zz} Particle", 20, 0, 250);
+    zzhists[sel_name + "_zz_m_particle"] = new TH1F( (sel_name + "_zz_m_particle").c_str() , "m_{zz} Particle", 20, 0, 500);
+    zzhists[sel_name + "_zz_dphi_particle"] = new TH1F( (sel_name + "_zz_dphi_particle").c_str() , "#Delta#phi_{zz} Particle", 10, -TMath::Pi(), +TMath::Pi());
+    zzhists[sel_name + "_zz_deta_particle"] = new TH1F( (sel_name + "_zz_deta_particle").c_str() , "#Delta#eta_{zz} Particle", 10, -10, 10);
+    zzhists[sel_name + "_zz_dr_particle"] = new TH1F( (sel_name + "_zz_dr_particle").c_str() , "#DeltaR_{zz} Particle", 10, 0, 5);
+    zzhists[sel_name + "_zz_et_particle"] = new TH1F( (sel_name + "_zz_et_particle").c_str() , "Event Type Particle", 5, -1, 4);
 
-}
+    zzhists[sel_name + "_z1_pT_parton"] = new TH1F( (sel_name + "_z1_pT_parton").c_str() , "p^{T}_{z1} Parton", 20, 0, 500);
+    zzhists[sel_name + "_z1_m_parton"] = new TH1F( (sel_name + "_z1_m_parton").c_str() , "m_{z1} Parton", 20, 0, 250);
+    zzhists[sel_name + "_z2_pT_parton"] = new TH1F( (sel_name + "_z2_pT_parton").c_str() , "p^{T}_{z2} Parton", 20, 0, 500);
+    zzhists[sel_name + "_z2_m_parton"] = new TH1F( (sel_name + "_z2_m_parton").c_str() , "m_{z2} Parton", 20, 0, 250);
+    zzhists[sel_name + "_zz_pT_parton"] = new TH1F( (sel_name + "_zz_pT_parton").c_str() , "p^{T}_{zz} Parton", 20, 0, 500);
+    zzhists[sel_name + "_zz_m_parton"] = new TH1F( (sel_name + "_zz_m_parton").c_str() , "m_{zz} Parton", 20, 0, 500);
+    zzhists[sel_name + "_zz_dphi_parton"] = new TH1F( (sel_name + "_zz_dphi_parton").c_str() , "#Delta#phi_{zz} Parton", 10, -TMath::Pi(), +TMath::Pi());
+    zzhists[sel_name + "_zz_deta_parton"] = new TH1F( (sel_name + "_zz_deta_parton").c_str() , "#Delta#eta_{zz} Parton", 10, -10, 10);
+    zzhists[sel_name + "_zz_dr_parton"] = new TH1F( (sel_name + "_zz_dr_parton").c_str() , "#DeltaR_{zz} Parton", 10, 0, 5);
+    zzhists[sel_name + "_zz_et_parton"] = new TH1F( (sel_name + "_zz_et_parton").c_str() , "Event Type Parton", 5, -1, 4);
 
-  void fill_bb( string analysis_type = "reco", double pT = -99, double m = -99, double delta_eta = -99, double delta_phi = -99, double delta_r = -99) {
+  // 2D
+
+    zzhists2D[sel_name + "_z1_pT_reco_particle"] = new TH2F( (sel_name + "_z1_pT_reco_particle").c_str() , "p^{T}_{z1} Reco Particle", 20, 0, 500, 20, 0, 500);
+    zzhists2D[sel_name + "_z1_m_reco_particle"] = new TH2F( (sel_name + "_z1_m_reco_particle").c_str() , "m_{z1} Reco Particle", 20, 0, 250, 20, 0, 250);
+    zzhists2D[sel_name + "_z2_pT_reco_particle"] = new TH2F( (sel_name + "_z2_pT_reco_particle").c_str() , "p^{T}_{z2} Reco Particle", 20, 0, 500, 20, 0, 500);
+    zzhists2D[sel_name + "_z2_m_reco_particle"] = new TH2F( (sel_name + "_z2_m_reco_particle").c_str() , "m_{z2} Reco Particle", 20, 0, 250, 20, 0, 250);
+    zzhists2D[sel_name + "_zz_pT_reco_particle"] = new TH2F( (sel_name + "_zz_pT_reco_particle").c_str() , "p^{T}_{zz} Reco Particle", 20, 0, 500, 20, 0, 500);
+    zzhists2D[sel_name + "_zz_m_reco_particle"] = new TH2F( (sel_name + "_zz_m_reco_particle").c_str() , "m_{zz} Reco Particle", 20, 0, 500, 20, 0, 500);
+    zzhists2D[sel_name + "_zz_dphi_reco_particle"] = new TH2F( (sel_name + "_zz_dphi_reco_particle").c_str() , "#Delta#phi_{zz} Reco Particle", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    zzhists2D[sel_name + "_zz_deta_reco_particle"] = new TH2F( (sel_name + "_zz_deta_reco_particle").c_str() , "#Delta#eta_{zz} Reco Particle", 10, -10, 10, 10, -10, 10);
+    zzhists2D[sel_name + "_zz_dr_reco_particle"] = new TH2F( (sel_name + "_zz_dr_reco_particle").c_str() , "#DeltaR_{zz} Reco Particle", 10, 0, 5, 10, 0, 5);
+
+    zzhists2D[sel_name + "_z1_pT_particle_parton"] = new TH2F( (sel_name + "_z1_pT_particle_parton").c_str() , "p^{T}_{z1} Particle Parton", 20, 0, 500, 20, 0, 500);
+    zzhists2D[sel_name + "_z1_m_particle_parton"] = new TH2F( (sel_name + "_z1_m_particle_parton").c_str() , "m_{z1} Particle Parton", 20, 0, 250, 20, 0, 250);
+    zzhists2D[sel_name + "_z2_pT_particle_parton"] = new TH2F( (sel_name + "_z2_pT_particle_parton").c_str() , "p^{T}_{z2} Particle Parton", 20, 0, 500, 20, 0, 500);
+    zzhists2D[sel_name + "_z2_m_particle_parton"] = new TH2F( (sel_name + "_z2_m_particle_parton").c_str() , "m_{z2} Particle Parton", 20, 0, 250, 20, 0, 250);
+    zzhists2D[sel_name + "_zz_pT_particle_parton"] = new TH2F( (sel_name + "_zz_pT_particle_parton").c_str() , "p^{T}_{zz} Particle Parton", 20, 0, 500, 20, 0, 500);
+    zzhists2D[sel_name + "_zz_m_particle_parton"] = new TH2F( (sel_name + "_zz_m_particle_parton").c_str() , "m_{zz} Particle Parton", 20, 0, 500, 20, 0, 500);
+    zzhists2D[sel_name + "_zz_dphi_particle_parton"] = new TH2F( (sel_name + "_zz_dphi_particle_parton").c_str() , "#Delta#phi_{zz} Particle Parton", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    zzhists2D[sel_name + "_zz_deta_particle_parton"] = new TH2F( (sel_name + "_zz_deta_particle_parton").c_str() , "#Delta#eta_{zz} Particle Parton", 10, -10, 10, 10, -10, 10);
+    zzhists2D[sel_name + "_zz_dr_particle_parton"] = new TH2F( (sel_name + "_zz_dr_particle_parton").c_str() , "#DeltaR_{zz} Particle Parton", 10, 0, 5, 10, 0, 5);
+
+  }
+
+  void initialize_2l() {
+
+    lephists[sel_name + "_l1_pT_reco"] = new TH1F( (sel_name + "_l1_pT_reco").c_str() , "p^{T}_{l1} Reco", 10, 0, 250);
+    lephists[sel_name + "_l2_pT_reco"] = new TH1F( (sel_name + "_l2_pT_reco").c_str() , "p^{T}_{l2} Reco", 10, 0, 250);
+    lephists[sel_name + "_l1l2_pT_reco"] = new TH1F( (sel_name + "_l1l2_pT_reco").c_str() , "p^{T}_{l1l2} Reco", 10, 0, 250);
+    lephists[sel_name + "_l1l2_m_reco"] = new TH1F( (sel_name + "_l1l2_m_reco").c_str() , "m_{l1l2} Reco", 20, 0, 250);
+    lephists[sel_name + "_l1l2_dphi_reco"] = new TH1F( (sel_name + "_l1l2_dphi_reco").c_str() , "#Delta#phi_{l1l2} Reco", 10, -TMath::Pi(), +TMath::Pi());
+    lephists[sel_name + "_l1l2_deta_reco"] = new TH1F( (sel_name + "_l1l2_deta_reco").c_str() , "#Delta#eta_{l1l2} Reco", 10, -10, 10);
+    lephists[sel_name + "_l1l2_dr_reco"] = new TH1F( (sel_name + "_l1l2_dr_reco").c_str() , "#DeltaR_{l1l2} Reco", 10, 0, 5);
+
+    lephists[sel_name + "_l1_pT_particle"] = new TH1F( (sel_name + "_l1_pT_particle").c_str() , "p^{T}_{l1} Particle", 10, 0, 250);
+    lephists[sel_name + "_l2_pT_particle"] = new TH1F( (sel_name + "_l2_pT_particle").c_str() , "p^{T}_{l2} Particle", 10, 0, 250);
+    lephists[sel_name + "_l1l2_pT_particle"] = new TH1F( (sel_name + "_l1l2_pT_particle").c_str() , "p^{T}_{l1l2} Particle", 10, 0, 250);
+    lephists[sel_name + "_l1l2_m_particle"] = new TH1F( (sel_name + "_l1l2_m_particle").c_str() , "m_{l1l2} Particle", 20, 0, 250);
+    lephists[sel_name + "_l1l2_dphi_particle"] = new TH1F( (sel_name + "_l1l2_dphi_particle").c_str() , "#Delta#phi_{l1l2} Particle", 10, -TMath::Pi(), +TMath::Pi());
+    lephists[sel_name + "_l1l2_deta_particle"] = new TH1F( (sel_name + "_l1l2_deta_particle").c_str() , "#Delta#eta_{l1l2} Particle", 10, -10, 10);
+    lephists[sel_name + "_l1l2_dr_particle"] = new TH1F( (sel_name + "_l1l2_dr_particle").c_str() , "#DeltaR_{l1l2} Particle", 10, 0, 5);
+
+    lephists[sel_name + "_l1_pT_parton"] = new TH1F( (sel_name + "_l1_pT_parton").c_str() , "p^{T}_{l1} Parton", 10, 0, 250);
+    lephists[sel_name + "_l2_pT_parton"] = new TH1F( (sel_name + "_l2_pT_parton").c_str() , "p^{T}_{l2} Parton", 10, 0, 250);
+    lephists[sel_name + "_l1l2_pT_parton"] = new TH1F( (sel_name + "_l1l2_pT_parton").c_str() , "p^{T}_{l1l2} Parton", 10, 0, 250);
+    lephists[sel_name + "_l1l2_m_parton"] = new TH1F( (sel_name + "_l1l2_m_parton").c_str() , "m_{l1l2} Parton", 20, 0, 250);
+    lephists[sel_name + "_l1l2_dphi_parton"] = new TH1F( (sel_name + "_l1l2_dphi_parton").c_str() , "#Delta#phi_{l1l2} Parton", 10, -TMath::Pi(), +TMath::Pi());
+    lephists[sel_name + "_l1l2_deta_parton"] = new TH1F( (sel_name + "_l1l2_deta_parton").c_str() , "#Delta#eta_{l1l2} Parton", 10, -10, 10);
+    lephists[sel_name + "_l1l2_dr_parton"] = new TH1F( (sel_name + "_l1l2_dr_parton").c_str() , "#DeltaR_{l1l2} Parton", 10, 0, 5);
+
+  // 2D
+
+    lephists2D[sel_name + "_l1_pT_reco_particle"] = new TH2F( (sel_name + "_l1_pT_reco_particle").c_str() , "p^{T}_{l1} Reco Particle", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l2_pT_reco_particle"] = new TH2F( (sel_name + "_l2_pT_reco_particle").c_str() , "p^{T}_{l2} Reco Particle", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l1l2_pT_reco_particle"] = new TH2F( (sel_name + "_l1l2_pT_reco_particle").c_str() , "p^{T}_{l1l2} Reco Particle", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l1l2_m_reco_particle"] = new TH2F( (sel_name + "_l1l2_m_reco_particle").c_str() , "m_{l1l2} Reco Particle", 20, 0, 250, 20, 0, 250);
+    lephists2D[sel_name + "_l1l2_dphi_reco_particle"] = new TH2F( (sel_name + "_l1l2_dphi_reco_particle").c_str() , "#Delta#phi_{l1l2} Reco Particle", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    lephists2D[sel_name + "_l1l2_deta_reco_particle"] = new TH2F( (sel_name + "_l1l2_deta_reco_particle").c_str() , "#Delta#eta_{l1l2} Reco Particle", 10, -10, 10, 10, -10, 10);
+    lephists2D[sel_name + "_l1l2_dr_reco_particle"] = new TH2F( (sel_name + "_l1l2_dr_reco_particle").c_str() , "#DeltaR_{l1l2} Reco Particle", 10, 0, 5, 10, 0, 5);
+
+    lephists2D[sel_name + "_l1_pT_particle_parton"] = new TH2F( (sel_name + "_l1_pT_particle_parton").c_str() , "p^{T}_{l1} Particle Parton", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l2_pT_particle_parton"] = new TH2F( (sel_name + "_l2_pT_particle_parton").c_str() , "p^{T}_{l2} Particle Parton", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l1l2_pT_particle_parton"] = new TH2F( (sel_name + "_l1l2_pT_particle_parton").c_str() , "p^{T}_{l1l2} Particle Parton", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l1l2_m_particle_parton"] = new TH2F( (sel_name + "_l1l2_m_particle_parton").c_str() , "m_{l1l2} Particle Parton", 20, 0, 250, 20, 0, 250);
+    lephists2D[sel_name + "_l1l2_dphi_particle_parton"] = new TH2F( (sel_name + "_l1l2_dphi_particle_parton").c_str() , "#Delta#phi_{l1l2} Particle Parton", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    lephists2D[sel_name + "_l1l2_deta_particle_parton"] = new TH2F( (sel_name + "_l1l2_deta_particle_parton").c_str() , "#Delta#eta_{l1l2} Particle Parton", 10, -10, 10, 10, -10, 10);
+    lephists2D[sel_name + "_l1l2_dr_particle_parton"] = new TH2F( (sel_name + "_l1l2_dr_particle_parton").c_str() , "#DeltaR_{l1l2} Particle Parton", 10, 0, 5, 10, 0, 5);
+
+  } 
+
+  void initialize_4l() {
+
+    lephists[sel_name + "_l3_pT_reco"] = new TH1F( (sel_name + "_l3_pT_reco").c_str() , "p^{T}_{l3} Reco", 10, 0, 250);
+    lephists[sel_name + "_l4_pT_reco"] = new TH1F( (sel_name + "_l4_pT_reco").c_str() , "p^{T}_{l4} Reco", 10, 0, 250);
+    lephists[sel_name + "_l3l4_pT_reco"] = new TH1F( (sel_name + "_l3l4_pT_reco").c_str() , "p^{T}_{l3l4} Reco", 10, 0, 250);
+    lephists[sel_name + "_l3l4_m_reco"] = new TH1F( (sel_name + "_l3l4_m_reco").c_str() , "m_{l3l4} Reco", 20, 0, 250);
+    lephists[sel_name + "_l3l4_dphi_reco"] = new TH1F( (sel_name + "_l3l4_dphi_reco").c_str() , "#Delta#phi_{l3l4} Reco", 10, -TMath::Pi(), +TMath::Pi());
+    lephists[sel_name + "_l3l4_deta_reco"] = new TH1F( (sel_name + "_l3l4_deta_reco").c_str() , "#Delta#eta_{l3l4} Reco", 10, -10, 10);
+    lephists[sel_name + "_l3l4_dr_reco"] = new TH1F( (sel_name + "_l3l4_dr_reco").c_str() , "#DeltaR_{l3l4} Reco", 10, 0, 5);
+
+    lephists[sel_name + "_l3_pT_particle"] = new TH1F( (sel_name + "_l3_pT_particle").c_str() , "p^{T}_{l3} Particle", 10, 0, 250);
+    lephists[sel_name + "_l4_pT_particle"] = new TH1F( (sel_name + "_l4_pT_particle").c_str() , "p^{T}_{l4} Particle", 10, 0, 250);
+    lephists[sel_name + "_l3l4_pT_particle"] = new TH1F( (sel_name + "_l3l4_pT_particle").c_str() , "p^{T}_{l3l4} Particle", 10, 0, 250);
+    lephists[sel_name + "_l3l4_m_particle"] = new TH1F( (sel_name + "_l3l4_m_particle").c_str() , "m_{l3l4} Particle", 20, 0, 250);
+    lephists[sel_name + "_l3l4_dphi_particle"] = new TH1F( (sel_name + "_l3l4_dphi_particle").c_str() , "#Delta#phi_{l3l4} Particle", 10, -TMath::Pi(), +TMath::Pi());
+    lephists[sel_name + "_l3l4_deta_particle"] = new TH1F( (sel_name + "_l3l4_deta_particle").c_str() , "#Delta#eta_{l3l4} Particle", 10, -10, 10);
+    lephists[sel_name + "_l3l4_dr_particle"] = new TH1F( (sel_name + "_l3l4_dr_particle").c_str() , "#DeltaR_{l3l4} Particle", 10, 0, 5);
+
+    lephists[sel_name + "_l3_pT_parton"] = new TH1F( (sel_name + "_l3_pT_parton").c_str() , "p^{T}_{l3} Parton", 10, 0, 250);
+    lephists[sel_name + "_l4_pT_parton"] = new TH1F( (sel_name + "_l4_pT_parton").c_str() , "p^{T}_{l4} Parton", 10, 0, 250);
+    lephists[sel_name + "_l3l4_pT_parton"] = new TH1F( (sel_name + "_l3l4_pT_parton").c_str() , "p^{T}_{l3l4} Parton", 10, 0, 250);
+    lephists[sel_name + "_l3l4_m_parton"] = new TH1F( (sel_name + "_l3l4_m_parton").c_str() , "m_{l3l4} Parton", 20, 0, 250);
+    lephists[sel_name + "_l3l4_dphi_parton"] = new TH1F( (sel_name + "_l3l4_dphi_parton").c_str() , "#Delta#phi_{l3l4} Parton", 10, -TMath::Pi(), +TMath::Pi());
+    lephists[sel_name + "_l3l4_deta_parton"] = new TH1F( (sel_name + "_l3l4_deta_parton").c_str() , "#Delta#eta_{l3l4} Parton", 10, -10, 10);
+    lephists[sel_name + "_l3l4_dr_parton"] = new TH1F( (sel_name + "_l3l4_dr_parton").c_str() , "#DeltaR_{l3l4} Parton", 10, 0, 5);
+
+  // 2D
+
+    lephists2D[sel_name + "_l3_pT_reco_particle"] = new TH2F( (sel_name + "_l3_pT_reco_particle").c_str() , "p^{T}_{l3} Reco Particle", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l4_pT_reco_particle"] = new TH2F( (sel_name + "_l4_pT_reco_particle").c_str() , "p^{T}_{l4} Reco Particle", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l3l4_pT_reco_particle"] = new TH2F( (sel_name + "_l3l4_pT_reco_particle").c_str() , "p^{T}_{l3l4} Reco Particle", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l3l4_m_reco_particle"] = new TH2F( (sel_name + "_l3l4_m_reco_particle").c_str() , "m_{l3l4} Reco Particle", 20, 0, 250, 20, 0, 250);
+    lephists2D[sel_name + "_l3l4_dphi_reco_particle"] = new TH2F( (sel_name + "_l3l4_dphi_reco_particle").c_str() , "#Delta#phi_{l3l4} Reco Particle", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    lephists2D[sel_name + "_l3l4_deta_reco_particle"] = new TH2F( (sel_name + "_l3l4_deta_reco_particle").c_str() , "#Delta#eta_{l3l4} Reco Particle", 10, -10, 10, 10, -10, 10);
+    lephists2D[sel_name + "_l3l4_dr_reco_particle"] = new TH2F( (sel_name + "_l3l4_dr_reco_particle").c_str() , "#DeltaR_{l3l4} Reco Particle", 10, 0, 5, 10, 0, 5);
+
+    lephists2D[sel_name + "_l3_pT_particle_parton"] = new TH2F( (sel_name + "_l3_pT_particle_parton").c_str() , "p^{T}_{l3} Particle Parton", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l4_pT_particle_parton"] = new TH2F( (sel_name + "_l4_pT_particle_parton").c_str() , "p^{T}_{l4} Particle Parton", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l3l4_pT_particle_parton"] = new TH2F( (sel_name + "_l3l4_pT_particle_parton").c_str() , "p^{T}_{l3l4} Particle Parton", 10, 0, 250, 10, 0, 250);
+    lephists2D[sel_name + "_l3l4_m_particle_parton"] = new TH2F( (sel_name + "_l3l4_m_particle_parton").c_str() , "m_{l3l4} Particle Parton", 20, 0, 250, 20, 0, 250);
+    lephists2D[sel_name + "_l3l4_dphi_particle_parton"] = new TH2F( (sel_name + "_l3l4_dphi_particle_parton").c_str() , "#Delta#phi_{l3l4} Particle Parton", 10, -TMath::Pi(), +TMath::Pi(), 10, -TMath::Pi(), +TMath::Pi());
+    lephists2D[sel_name + "_l3l4_deta_particle_parton"] = new TH2F( (sel_name + "_l3l4_deta_particle_parton").c_str() , "#Delta#eta_{l3l4} Particle Parton", 10, -10, 10, 10, -10, 10);
+    lephists2D[sel_name + "_l3l4_dr_particle_parton"] = new TH2F( (sel_name + "_l3l4_dr_particle_parton").c_str() , "#DeltaR_{l3l4} Particle Parton", 10, 0, 5, 10, 0, 5);
+
+  } 
+
+  void fill_bb( string analysis_type, double weight, TLorentzVector &b1, TLorentzVector &b2) {
+
+    double pT = ( b1 + b2 ).Pt();
+
+    double m = ( b1 + b2 ).M();
+
+    double dphi = delta_phi( b1 , b2 );
+    double deta = delta_eta( b1 , b2 );
+    double dr = delta_r( b1 , b2 );
 
     if ( analysis_type == "reco" ){
 
-      bbhists[ sel_name + "_bb_pT_reco" ]->Fill(pT);
-      bbhists[ sel_name + "_bb_m_reco" ]->Fill(m);
-      bbhists[ sel_name + "_bb_dphi_reco" ]->Fill(delta_phi);
-      bbhists[ sel_name + "_bb_deta_reco" ]->Fill(delta_eta);
-      bbhists[ sel_name + "_bb_dr_reco" ]->Fill(delta_r);
+      bbhists[ sel_name + "_bb_pT_reco" ]->Fill(pT, weight);
+      bbhists[ sel_name + "_bb_m_reco" ]->Fill(m, weight);
+      bbhists[ sel_name + "_bb_dphi_reco" ]->Fill(dphi, weight);
+      bbhists[ sel_name + "_bb_deta_reco" ]->Fill(deta, weight);
+      bbhists[ sel_name + "_bb_dr_reco" ]->Fill(dr, weight);
 
     } else if ( analysis_type == "particle" ){
 
-      bbhists[ sel_name + "_bb_pT_particle" ]->Fill(pT);
-      bbhists[ sel_name + "_bb_m_particle" ]->Fill(m);
-      bbhists[ sel_name + "_bb_dphi_particle" ]->Fill(delta_phi);
-      bbhists[ sel_name + "_bb_deta_particle" ]->Fill(delta_eta);
-      bbhists[ sel_name + "_bb_dr_particle" ]->Fill(delta_r);
+      bbhists[ sel_name + "_bb_pT_particle" ]->Fill(pT, weight);
+      bbhists[ sel_name + "_bb_m_particle" ]->Fill(m, weight);
+      bbhists[ sel_name + "_bb_dphi_particle" ]->Fill(dphi, weight);
+      bbhists[ sel_name + "_bb_deta_particle" ]->Fill(deta, weight);
+      bbhists[ sel_name + "_bb_dr_particle" ]->Fill(dr, weight);
+
+    } else if ( analysis_type == "parton" ){
+
+      bbhists[ sel_name + "_bb_pT_parton" ]->Fill(pT, weight);
+      bbhists[ sel_name + "_bb_m_parton" ]->Fill(m, weight);
+      bbhists[ sel_name + "_bb_dphi_parton" ]->Fill(dphi, weight);
+      bbhists[ sel_name + "_bb_deta_parton" ]->Fill(deta, weight);
+      bbhists[ sel_name + "_bb_dr_parton" ]->Fill(dr, weight);
 
     }
 
   }
 
-  void fill_jj( string analysis_type = "reco", double pT = -99, double m = -99, double delta_eta = -99, double delta_phi = -99, double delta_r = -99) {
+  void fill_bb_2D( string analysis_type1, string analysis_type2, double weight, TLorentzVector &at1_b1, TLorentzVector &at1_b2, TLorentzVector &at2_b1, TLorentzVector &at2_b2 ) {
 
-    if ( analysis_type == "reco" ){
+    double pT1 = ( at1_b1 + at1_b2 ).Pt(); double pT2 = ( at2_b1 + at2_b2 ).Pt();
 
-      jjhists[ sel_name + "_jj_pT_reco" ]->Fill(pT);
-      jjhists[ sel_name + "_jj_m_reco" ]->Fill(m);
-      jjhists[ sel_name + "_jj_dphi_reco" ]->Fill(delta_phi);
-      jjhists[ sel_name + "_jj_deta_reco" ]->Fill(delta_eta);
-      jjhists[ sel_name + "_jj_dr_reco" ]->Fill(delta_r);
+    double m1 = ( at1_b1 + at1_b2 ).M(); double m2 = ( at2_b1 + at2_b2 ).M();
 
-    } else if ( analysis_type == "particle" ){
+    double dphi1 = delta_phi( at1_b1 , at1_b2 ); double dphi2 = delta_phi( at2_b1 , at2_b2 );
+    double deta1 = delta_eta( at1_b1 , at1_b2 ); double deta2 = delta_eta( at2_b1 , at2_b2 );
+    double dr1 = delta_r( at1_b1 , at1_b2 ); double dr2 = delta_r( at2_b1 , at2_b2 );
 
-      jjhists[ sel_name + "_jj_pT_particle" ]->Fill(pT);
-      jjhists[ sel_name + "_jj_m_particle" ]->Fill(m);
-      jjhists[ sel_name + "_jj_dphi_particle" ]->Fill(delta_phi);
-      jjhists[ sel_name + "_jj_deta_particle" ]->Fill(delta_eta);
-      jjhists[ sel_name + "_jj_dr_particle" ]->Fill(delta_r);
+    if ( analysis_type1 == "reco" && analysis_type2 == "particle" ){
 
-    }
+      bbhists2D[ sel_name + "_bb_pT_reco_particle" ]->Fill(pT1, pT2, weight);
+      bbhists2D[ sel_name + "_bb_m_reco_particle" ]->Fill(m1, m2, weight);
+      bbhists2D[ sel_name + "_bb_dphi_reco_particle" ]->Fill(dphi1, dphi2, weight);
+      bbhists2D[ sel_name + "_bb_deta_reco_particle" ]->Fill(deta1, deta2, weight);
+      bbhists2D[ sel_name + "_bb_dr_reco_particle" ]->Fill(dr1, dr2, weight);
 
-  }
+    } else if ( analysis_type1 == "particle" && analysis_type2 == "parton" ){
 
-  void fill_ww( string analysis_type = "reco", double pT1 = -99, double pT2 = -99, double m1 = -99, double m2 = -99, double delta_eta = -99, double delta_phi = -99, double delta_r = -99) {
-
-    if ( analysis_type == "reco" ){
-
-      wwhists[ sel_name + "_w1_pT_reco" ]->Fill(pT1);
-      wwhists[ sel_name + "_w1_m_reco" ]->Fill(m1);
-      wwhists[ sel_name + "_w2_pT_reco" ]->Fill(pT2);
-      wwhists[ sel_name + "_w2_m_reco" ]->Fill(m2);
-      wwhists[ sel_name + "_ww_pT_reco" ]->Fill(pT1 + pT2);
-      wwhists[ sel_name + "_ww_m_reco" ]->Fill(m1 + m2);
-
-      wwhists[ sel_name + "_ww_dphi_reco" ]->Fill(delta_phi);
-      wwhists[ sel_name + "_ww_deta_reco" ]->Fill(delta_eta);
-      wwhists[ sel_name + "_ww_dr_reco" ]->Fill(delta_r);
-
-    } else if ( analysis_type == "particle" ){
-
-      wwhists[ sel_name + "_w1_pT_particle" ]->Fill(pT1);
-      wwhists[ sel_name + "_w1_m_particle" ]->Fill(m1);
-      wwhists[ sel_name + "_w2_pT_particle" ]->Fill(pT2);
-      wwhists[ sel_name + "_w2_m_particle" ]->Fill(m2);
-      wwhists[ sel_name + "_ww_pT_particle" ]->Fill(pT1 + pT2);
-      wwhists[ sel_name + "_ww_m_particle" ]->Fill(m1 + m2);
-
-      wwhists[ sel_name + "_ww_dphi_particle" ]->Fill(delta_phi);
-      wwhists[ sel_name + "_ww_deta_particle" ]->Fill(delta_eta);
-      wwhists[ sel_name + "_ww_dr_particle" ]->Fill(delta_r);
+      bbhists2D[ sel_name + "_bb_pT_particle_parton" ]->Fill(pT1, pT2, weight);
+      bbhists2D[ sel_name + "_bb_m_particle_parton" ]->Fill(m1, m2, weight);
+      bbhists2D[ sel_name + "_bb_dphi_particle_parton" ]->Fill(dphi1, dphi2, weight);
+      bbhists2D[ sel_name + "_bb_deta_particle_parton" ]->Fill(deta1, deta2, weight);
+      bbhists2D[ sel_name + "_bb_dr_particle_parton" ]->Fill(dr1, dr2, weight);
 
     }
 
   }
 
-  void fill_zz( string analysis_type = "reco", double pT1 = -99 , double pT2 = -99, double m1 = -99, double m2 = -99, double delta_eta = -99, double delta_phi = -99, double delta_r = -99) {
+
+  void fill_jj( string analysis_type, double weight, TLorentzVector &j1, TLorentzVector &j2) {
+
+    double pT = ( j1 + j2 ).Pt();
+
+    double m = ( j1 + j2 ).M();
+
+    double dphi = delta_phi( j1 , j2 );
+    double deta = delta_eta( j1 , j2 );
+    double dr = delta_r( j1 , j2 );
 
     if ( analysis_type == "reco" ){
 
-      zzhists[ sel_name + "_z1_pT_reco"]->Fill(pT1);
-      zzhists[ sel_name + "_z1_m_reco"]->Fill(m1);
-      zzhists[ sel_name + "_z2_pT_reco"]->Fill(pT2);
-      zzhists[ sel_name + "_z2_m_reco"]->Fill(m2);
-      zzhists[ sel_name + "_zz_pT_reco"]->Fill(pT1 + pT2);
-      zzhists[ sel_name + "_zz_m_reco"]->Fill(m1 + m2);
-
-      zzhists[ sel_name + "_zz_dphi_reco"]->Fill(delta_phi);
-      zzhists[ sel_name + "_zz_deta_reco"]->Fill(delta_eta);
-      zzhists[ sel_name + "_zz_dr_reco"]->Fill(delta_r);
+      jjhists[ sel_name + "_jj_pT_reco" ]->Fill(pT, weight);
+      jjhists[ sel_name + "_jj_m_reco" ]->Fill(m, weight);
+      jjhists[ sel_name + "_jj_dphi_reco" ]->Fill(dphi, weight);
+      jjhists[ sel_name + "_jj_deta_reco" ]->Fill(deta, weight);
+      jjhists[ sel_name + "_jj_dr_reco" ]->Fill(dr, weight);
 
     } else if ( analysis_type == "particle" ){
 
-      zzhists[ sel_name + "_z1_pT_particle" ]->Fill(pT1);
-      zzhists[ sel_name + "_z1_m_particle" ]->Fill(m1);
-      zzhists[ sel_name + "_z2_pT_particle" ]->Fill(pT2);
-      zzhists[ sel_name + "_z2_m_particle" ]->Fill(m2);
-      zzhists[ sel_name + "_zz_pT_particle" ]->Fill(pT1 + pT2);
-      zzhists[ sel_name + "_zz_m_particle" ]->Fill(m1 + m2);
+      jjhists[ sel_name + "_jj_pT_particle" ]->Fill(pT, weight);
+      jjhists[ sel_name + "_jj_m_particle" ]->Fill(m, weight);
+      jjhists[ sel_name + "_jj_dphi_particle" ]->Fill(dphi, weight);
+      jjhists[ sel_name + "_jj_deta_particle" ]->Fill(deta, weight);
+      jjhists[ sel_name + "_jj_dr_particle" ]->Fill(dr, weight);
 
-      zzhists[ sel_name + "_zz_dphi_particle" ]->Fill(delta_phi);
-      zzhists[ sel_name + "_zz_deta_particle" ]->Fill(delta_eta);
-      zzhists[ sel_name + "_zz_dr_particle" ]->Fill(delta_r);
+    } else if ( analysis_type == "parton" ){
+
+      jjhists[ sel_name + "_jj_pT_parton" ]->Fill(pT, weight);
+      jjhists[ sel_name + "_jj_m_parton" ]->Fill(m, weight);
+      jjhists[ sel_name + "_jj_dphi_parton" ]->Fill(dphi, weight);
+      jjhists[ sel_name + "_jj_deta_parton" ]->Fill(deta, weight);
+      jjhists[ sel_name + "_jj_dr_parton" ]->Fill(dr, weight);
+
+    }
+
+  }
+
+  void fill_jj_2D( string analysis_type1, string analysis_type2, double weight, TLorentzVector &at1_j1, TLorentzVector &at1_j2, TLorentzVector &at2_j1, TLorentzVector &at2_j2 ) {
+
+    double pT1 = ( at1_j1 + at1_j2 ).Pt(); double pT2 = ( at2_j1 + at2_j2 ).Pt();
+
+    double m1 = ( at1_j1 + at1_j2 ).M(); double m2 = ( at2_j1 + at2_j2 ).M();
+
+    double dphi1 = delta_phi( at1_j1 , at1_j2 ); double dphi2 = delta_phi( at2_j1 , at2_j2 );
+    double deta1 = delta_eta( at1_j1 , at1_j2 ); double deta2 = delta_eta( at2_j1 , at2_j2 );
+    double dr1 = delta_r( at1_j1 , at1_j2 ); double dr2 = delta_r( at2_j1 , at2_j2 );
+
+    if ( analysis_type1 == "reco" && analysis_type2 == "particle" ){
+
+      jjhists2D[ sel_name + "_jj_pT_reco_particle" ]->Fill(pT1, pT2, weight);
+      jjhists2D[ sel_name + "_jj_m_reco_particle" ]->Fill(m1, m2, weight);
+      jjhists2D[ sel_name + "_jj_dphi_reco_particle" ]->Fill(dphi1, dphi2, weight);
+      jjhists2D[ sel_name + "_jj_deta_reco_particle" ]->Fill(deta1, deta2, weight);
+      jjhists2D[ sel_name + "_jj_dr_reco_particle" ]->Fill(dr1, dr2, weight);
+
+    } else if ( analysis_type1 == "particle" && analysis_type2 == "parton" ){
+
+      jjhists2D[ sel_name + "_jj_pT_particle_parton" ]->Fill(pT1, pT2, weight);
+      jjhists2D[ sel_name + "_jj_m_particle_parton" ]->Fill(m1, m2, weight);
+      jjhists2D[ sel_name + "_jj_dphi_particle_parton" ]->Fill(dphi1, dphi2, weight);
+      jjhists2D[ sel_name + "_jj_deta_particle_parton" ]->Fill(deta1, deta2, weight);
+      jjhists2D[ sel_name + "_jj_dr_particle_parton" ]->Fill(dr1, dr2, weight);
+
+    }
+
+  }
+
+
+  void fill_ww( string analysis_type, double weight, int et, TLorentzVector &w1, TLorentzVector &w2) {
+
+    double pT1 = w1.Pt(); double pT2 = w2.Pt(); double pT = ( w1 + w2 ).Pt();
+
+    double m1 = w1.M(); double m2 = w2.M(); double m = ( w1 + w2 ).M();
+    double mT1 = w1.Mt(); double mT2 = w2.Mt(); double mT = ( w1 + w2 ).Mt();
+
+    double dphi = delta_phi( w1 , w2 );
+    double deta = delta_eta( w1 , w2 );
+    double dr = delta_r( w1 , w2 );
+
+    if ( analysis_type == "reco" ){
+
+      wwhists[ sel_name + "_w1_pT_reco" ]->Fill(pT1, weight);
+      wwhists[ sel_name + "_w1_m_reco" ]->Fill(m1, weight); wwhists[ sel_name + "_w1_mT_reco" ]->Fill(mT1, weight);
+      wwhists[ sel_name + "_w2_pT_reco" ]->Fill(pT2, weight);
+      wwhists[ sel_name + "_w2_m_reco" ]->Fill(m2, weight); wwhists[ sel_name + "_w2_mT_reco" ]->Fill(mT2, weight);
+      wwhists[ sel_name + "_ww_pT_reco" ]->Fill(pT, weight);
+      wwhists[ sel_name + "_ww_m_reco" ]->Fill(m, weight); wwhists[ sel_name + "_ww_mT_reco" ]->Fill(mT, weight);
+
+      wwhists[ sel_name + "_ww_dphi_reco" ]->Fill(dphi, weight);
+      wwhists[ sel_name + "_ww_deta_reco" ]->Fill(deta, weight);
+      wwhists[ sel_name + "_ww_dr_reco" ]->Fill(dr, weight);
+
+      wwhists[ sel_name + "_ww_et_reco" ]->Fill(et, weight);
+
+    } else if ( analysis_type == "particle" ){
+
+      wwhists[ sel_name + "_w1_pT_particle" ]->Fill(pT1, weight);
+      wwhists[ sel_name + "_w1_m_particle" ]->Fill(m1, weight); wwhists[ sel_name + "_w1_mT_particle" ]->Fill(mT1, weight);
+      wwhists[ sel_name + "_w2_pT_particle" ]->Fill(pT2, weight);
+      wwhists[ sel_name + "_w2_m_particle" ]->Fill(m2, weight); wwhists[ sel_name + "_w2_mT_particle" ]->Fill(mT2, weight);
+      wwhists[ sel_name + "_ww_pT_particle" ]->Fill(pT, weight);
+      wwhists[ sel_name + "_ww_m_particle" ]->Fill(m, weight); wwhists[ sel_name + "_ww_mT_particle" ]->Fill(mT, weight);
+
+      wwhists[ sel_name + "_ww_dphi_particle" ]->Fill(dphi, weight);
+      wwhists[ sel_name + "_ww_deta_particle" ]->Fill(deta, weight);
+      wwhists[ sel_name + "_ww_dr_particle" ]->Fill(dr, weight);
+
+      wwhists[ sel_name + "_ww_et_particle" ]->Fill(et, weight);
+
+    } else if ( analysis_type == "parton" ){
+
+      wwhists[ sel_name + "_w1_pT_parton" ]->Fill(pT1, weight);
+      wwhists[ sel_name + "_w1_m_parton" ]->Fill(m1, weight); wwhists[ sel_name + "_w1_mT_parton" ]->Fill(mT1, weight);
+      wwhists[ sel_name + "_w2_pT_parton" ]->Fill(pT2, weight);
+      wwhists[ sel_name + "_w2_m_parton" ]->Fill(m2, weight); wwhists[ sel_name + "_w2_mT_parton" ]->Fill(mT2, weight);
+      wwhists[ sel_name + "_ww_pT_parton" ]->Fill(pT, weight);
+      wwhists[ sel_name + "_ww_m_parton" ]->Fill(m, weight); wwhists[ sel_name + "_ww_mT_parton" ]->Fill(mT, weight);
+
+      wwhists[ sel_name + "_ww_dphi_parton" ]->Fill(dphi, weight);
+      wwhists[ sel_name + "_ww_deta_parton" ]->Fill(deta, weight);
+      wwhists[ sel_name + "_ww_dr_parton" ]->Fill(dr, weight);
+
+      wwhists[ sel_name + "_ww_et_parton" ]->Fill(et, weight);
+
+    }
+
+  }
+
+
+  void fill_ww_2D( string analysis_type1, string analysis_type2, double weight, TLorentzVector &at1_w1, TLorentzVector &at1_w2, TLorentzVector &at2_w1, TLorentzVector &at2_w2 ) {
+
+    double at1_pT1 = at1_w1.Pt(); double at2_pT1 = at2_w1.Pt();
+    double at1_pT2 = at1_w2.Pt(); double at2_pT2 = at2_w2.Pt();
+    double at1_pT = ( at1_w1 + at1_w2 ).Pt(); double at2_pT = ( at2_w1 + at2_w2 ).Pt();
+
+    double at1_m1 = at1_w1.M(); double at2_m1 = at2_w1.M();
+    double at1_m2 = at1_w2.M(); double at2_m2 = at2_w2.M();
+    double at1_m = ( at1_w1 + at1_w2 ).M(); double at2_m = ( at2_w1 + at2_w2 ).M();
+
+    double at1_mT1 = at1_w1.Mt(); double at2_mT1 = at2_w1.Mt();
+    double at1_mT2 = at1_w2.Mt(); double at2_mT2 = at2_w2.Mt();
+    double at1_mT = ( at1_w1 + at1_w2 ).Mt(); double at2_mT = ( at2_w1 + at2_w2 ).Mt();
+
+    double dphi1 = delta_phi( at1_w1 , at1_w2 ); double dphi2 = delta_phi( at2_w1 , at2_w2 );
+    double deta1 = delta_eta( at1_w1 , at1_w2 ); double deta2 = delta_eta( at2_w1 , at2_w2 );
+    double dr1 = delta_r( at1_w1 , at1_w2 ); double dr2 = delta_r( at2_w1 , at2_w2 );
+
+    if ( analysis_type1 == "reco" && analysis_type2 == "particle" ){
+
+      wwhists2D[ sel_name + "_w1_pT_reco_particle" ]->Fill(at1_pT1, at2_pT2, weight);
+      wwhists2D[ sel_name + "_w1_m_reco_particle" ]->Fill(at1_m1, at2_m2, weight); wwhists2D[ sel_name + "_w1_mT_reco_particle" ]->Fill(at1_mT1, at2_mT2, weight); 
+      wwhists2D[ sel_name + "_w2_pT_reco_particle" ]->Fill(at1_pT1, at2_pT2, weight);
+      wwhists2D[ sel_name + "_w2_m_reco_particle" ]->Fill(at1_m1, at2_m2, weight); wwhists2D[ sel_name + "_w2_mT_reco_particle" ]->Fill(at1_mT1, at2_mT2, weight);
+      wwhists2D[ sel_name + "_ww_pT_reco_particle" ]->Fill(at1_pT, at2_pT, weight);
+      wwhists2D[ sel_name + "_ww_m_reco_particle" ]->Fill(at1_m1, at2_m2, weight); wwhists2D[ sel_name + "_ww_mT_reco_particle" ]->Fill(at1_mT1, at2_mT2, weight);
+      wwhists2D[ sel_name + "_ww_dphi_reco_particle" ]->Fill(dphi1, dphi2, weight);
+      wwhists2D[ sel_name + "_ww_deta_reco_particle" ]->Fill(deta1, deta2, weight);
+      wwhists2D[ sel_name + "_ww_dr_reco_particle" ]->Fill(dr1, dr2, weight);
+
+    } else if ( analysis_type1 == "particle" && analysis_type2 == "parton" ){
+
+      wwhists2D[ sel_name + "_w1_pT_particle_parton" ]->Fill(at1_pT1, at2_pT2, weight);
+      wwhists2D[ sel_name + "_w1_m_particle_parton" ]->Fill(at1_m1, at2_m2, weight); wwhists2D[ sel_name + "_w1_mT_particle_parton" ]->Fill(at1_mT1, at2_mT2, weight);
+      wwhists2D[ sel_name + "_w2_pT_particle_parton" ]->Fill(at1_pT1, at2_pT2, weight);
+      wwhists2D[ sel_name + "_w2_m_particle_parton" ]->Fill(at1_m1, at2_m2, weight); wwhists2D[ sel_name + "_w2_mT_particle_parton" ]->Fill(at1_mT1, at2_mT2, weight);
+      wwhists2D[ sel_name + "_ww_pT_particle_parton" ]->Fill(at1_pT1, at2_pT2, weight);
+      wwhists2D[ sel_name + "_ww_m_particle_parton" ]->Fill(at1_m1, at2_m2, weight); wwhists2D[ sel_name + "_ww_mT_particle_parton" ]->Fill(at1_mT1, at2_mT2, weight);
+      wwhists2D[ sel_name + "_ww_dphi_particle_parton" ]->Fill(dphi1, dphi2, weight);
+      wwhists2D[ sel_name + "_ww_deta_particle_parton" ]->Fill(deta1, deta2, weight);
+      wwhists2D[ sel_name + "_ww_dr_particle_parton" ]->Fill(dr1, dr2, weight);
+
+    }
+
+  }
+
+
+  void fill_zz( string analysis_type, double weight, int et, TLorentzVector &z1, TLorentzVector &z2) {
+
+    double pT1 = z1.Pt(); double pT2 = z2.Pt(); double pT = ( z1 + z2 ).Pt();
+    double m1 = z1.M(); double m2 = z2.M(); double m = ( z1 + z2 ).M();
+    double dphi = delta_phi( z1 , z2 );
+    double deta = delta_eta( z1 , z2 );
+    double dr = delta_r( z1 , z2 );
+
+    if ( analysis_type == "reco" ){
+
+      zzhists[ sel_name + "_z1_pT_reco"]->Fill(pT1, weight);
+      zzhists[ sel_name + "_z1_m_reco"]->Fill(m1, weight);
+      zzhists[ sel_name + "_z2_pT_reco"]->Fill(pT2, weight);
+      zzhists[ sel_name + "_z2_m_reco"]->Fill(m2, weight);
+      zzhists[ sel_name + "_zz_pT_reco"]->Fill(pT, weight);
+      zzhists[ sel_name + "_zz_m_reco"]->Fill(m, weight);
+
+      zzhists[ sel_name + "_zz_dphi_reco"]->Fill(dphi, weight);
+      zzhists[ sel_name + "_zz_deta_reco"]->Fill(deta, weight);
+      zzhists[ sel_name + "_zz_dr_reco"]->Fill(dr, weight);
+
+      zzhists[ sel_name + "_zz_et_reco" ]->Fill(et, weight);
+
+    } else if ( analysis_type == "particle" ){
+
+      zzhists[ sel_name + "_z1_pT_particle" ]->Fill(pT1, weight);
+      zzhists[ sel_name + "_z1_m_particle" ]->Fill(m1, weight);
+      zzhists[ sel_name + "_z2_pT_particle" ]->Fill(pT2, weight);
+      zzhists[ sel_name + "_z2_m_particle" ]->Fill(m2, weight);
+      zzhists[ sel_name + "_zz_pT_particle" ]->Fill(pT, weight);
+      zzhists[ sel_name + "_zz_m_particle" ]->Fill(m, weight);
+
+      zzhists[ sel_name + "_zz_dphi_particle" ]->Fill(dphi, weight);
+      zzhists[ sel_name + "_zz_deta_particle" ]->Fill(deta, weight);
+      zzhists[ sel_name + "_zz_dr_particle" ]->Fill(dr, weight);
+
+      zzhists[ sel_name + "_zz_et_particle" ]->Fill(et, weight);
+
+    } else if ( analysis_type == "parton" ){
+
+      zzhists[ sel_name + "_z1_pT_parton" ]->Fill(pT1, weight);
+      zzhists[ sel_name + "_z1_m_parton" ]->Fill(m1, weight);
+      zzhists[ sel_name + "_z2_pT_parton" ]->Fill(pT2, weight);
+      zzhists[ sel_name + "_z2_m_parton" ]->Fill(m2, weight);
+      zzhists[ sel_name + "_zz_pT_parton" ]->Fill(pT, weight);
+      zzhists[ sel_name + "_zz_m_parton" ]->Fill(m, weight);
+
+      zzhists[ sel_name + "_zz_dphi_parton" ]->Fill(dphi, weight);
+      zzhists[ sel_name + "_zz_deta_parton" ]->Fill(deta, weight);
+      zzhists[ sel_name + "_zz_dr_parton" ]->Fill(dr, weight);
+
+      zzhists[ sel_name + "_zz_et_parton" ]->Fill(et, weight);
+
+    }
+
+  }
+
+
+  void fill_zz_2D( string analysis_type1, string analysis_type2, double weight, TLorentzVector &at1_z1, TLorentzVector &at1_z2, TLorentzVector &at2_z1, TLorentzVector &at2_z2 ) {
+
+    double at1_pT1 = at1_z1.Pt(); double at2_pT1 = at2_z1.Pt();
+    double at1_pT2 = at1_z2.Pt(); double at2_pT2 = at2_z2.Pt();
+    double at1_pT = ( at1_z1 + at1_z2 ).Pt(); double at2_pT = ( at2_z1 + at2_z2 ).Pt();
+
+    double at1_m1 = at1_z1.M(); double at2_m1 = at2_z1.M();
+    double at1_m2 = at1_z2.M(); double at2_m2 = at2_z2.M();
+    double at1_m = ( at1_z1 + at1_z2 ).M(); double at2_m = ( at2_z1 + at2_z2 ).M();
+
+    double dphi1 = delta_phi( at1_z1 , at1_z2 ); double dphi2 = delta_phi( at2_z1 , at2_z2 );
+    double deta1 = delta_eta( at1_z1 , at1_z2 ); double deta2 = delta_eta( at2_z1 , at2_z2 );
+    double dr1 = delta_r( at1_z1 , at1_z2 ); double dr2 = delta_r( at2_z1 , at2_z2 );
+
+    if ( analysis_type1 == "reco" && analysis_type2 == "particle" ){
+
+      zzhists2D[ sel_name + "_z1_pT_reco_particle" ]->Fill(at1_pT1, at2_pT2, weight);
+      zzhists2D[ sel_name + "_z1_m_reco_particle" ]->Fill(at1_m1, at2_m2, weight); 
+      zzhists2D[ sel_name + "_z2_pT_reco_particle" ]->Fill(at1_pT1, at2_pT2, weight);
+      zzhists2D[ sel_name + "_z2_m_reco_particle" ]->Fill(at1_m1, at2_m2, weight);
+      zzhists2D[ sel_name + "_zz_pT_reco_particle" ]->Fill(at1_pT, at2_pT, weight);
+      zzhists2D[ sel_name + "_zz_m_reco_particle" ]->Fill(at1_m1, at2_m2, weight);
+      zzhists2D[ sel_name + "_zz_dphi_reco_particle" ]->Fill(dphi1, dphi2, weight);
+      zzhists2D[ sel_name + "_zz_deta_reco_particle" ]->Fill(deta1, deta2, weight);
+      zzhists2D[ sel_name + "_zz_dr_reco_particle" ]->Fill(dr1, dr2, weight);
+
+    } else if ( analysis_type1 == "particle" && analysis_type2 == "parton" ){
+
+      zzhists2D[ sel_name + "_z1_pT_particle_parton" ]->Fill(at1_pT1, at2_pT2, weight);
+      zzhists2D[ sel_name + "_z1_m_particle_parton" ]->Fill(at1_m1, at2_m2, weight);
+      zzhists2D[ sel_name + "_z2_pT_particle_parton" ]->Fill(at1_pT1, at2_pT2, weight);
+      zzhists2D[ sel_name + "_z2_m_particle_parton" ]->Fill(at1_m1, at2_m2, weight);
+      zzhists2D[ sel_name + "_zz_pT_particle_parton" ]->Fill(at1_pT1, at2_pT2, weight);
+      zzhists2D[ sel_name + "_zz_m_particle_parton" ]->Fill(at1_m1, at2_m2, weight);
+      zzhists2D[ sel_name + "_zz_dphi_particle_parton" ]->Fill(dphi1, dphi2, weight);
+      zzhists2D[ sel_name + "_zz_deta_particle_parton" ]->Fill(deta1, deta2, weight);
+      zzhists2D[ sel_name + "_zz_dr_particle_parton" ]->Fill(dr1, dr2, weight);
+
+    }
+
+  }
+
+
+  void fill_2l( string analysis_type, double weight, TLorentzVector &l1, TLorentzVector &l2) {
+
+    double pT1 = l1.Pt(); double pT2 = l2.Pt(); double pT = ( l1 + l2 ).Pt();
+
+    double m = ( l1 + l2 ).M();
+
+    double dphi = delta_phi( l1 , l2 );
+    double deta = delta_eta( l1 , l2 );
+    double dr = delta_r( l1 , l2 );
+
+    if ( analysis_type == "reco" ){
+
+      lephists[ sel_name + "_l1_pT_reco"]->Fill(pT1, weight);
+      lephists[ sel_name + "_l2_pT_reco"]->Fill(pT2, weight);
+      lephists[ sel_name + "_l1l2_pT_reco"]->Fill(pT, weight);
+      lephists[ sel_name + "_l1l2_m_reco"]->Fill(m, weight);
+
+      lephists[ sel_name + "_l1l2_dphi_reco"]->Fill(dphi, weight);
+      lephists[ sel_name + "_l1l2_deta_reco"]->Fill(deta, weight);
+      lephists[ sel_name + "_l1l2_dr_reco"]->Fill(dr, weight);
+
+    } else if ( analysis_type == "particle" ){
+
+      lephists[ sel_name + "_l1_pT_particle" ]->Fill(pT1, weight);
+      lephists[ sel_name + "_l2_pT_particle" ]->Fill(pT2, weight);
+      lephists[ sel_name + "_l1l2_pT_particle" ]->Fill(pT, weight);
+      lephists[ sel_name + "_l1l2_m_particle" ]->Fill(m, weight);
+
+      lephists[ sel_name + "_l1l2_dphi_particle" ]->Fill(dphi, weight);
+      lephists[ sel_name + "_l1l2_deta_particle" ]->Fill(deta, weight);
+      lephists[ sel_name + "_l1l2_dr_particle" ]->Fill(dr, weight);
+
+    } else if ( analysis_type == "parton" ){
+
+      lephists[ sel_name + "_l1_pT_parton" ]->Fill(pT1, weight);
+      lephists[ sel_name + "_l2_pT_parton" ]->Fill(pT2, weight);
+      lephists[ sel_name + "_l1l2_pT_parton" ]->Fill(pT, weight);
+      lephists[ sel_name + "_l1l2_m_parton" ]->Fill(m, weight);
+
+      lephists[ sel_name + "_l1l2_dphi_parton" ]->Fill(dphi, weight);
+      lephists[ sel_name + "_l1l2_deta_parton" ]->Fill(deta, weight);
+      lephists[ sel_name + "_l1l2_dr_parton" ]->Fill(dr, weight);
+
+    }
+
+  }
+
+
+  void fill_2l_2D( string analysis_type1, string analysis_type2, double weight, TLorentzVector &at1_l1, TLorentzVector &at1_l2, TLorentzVector &at2_l1, TLorentzVector &at2_l2 ) {
+
+    double at1_pT1 = at1_l1.Pt(); double at2_pT1 = at2_l1.Pt();
+    double at1_pT2 = at1_l2.Pt(); double at2_pT2 = at2_l2.Pt();
+    double at1_pT = ( at1_l1 + at1_l2 ).Pt(); double at2_pT = ( at2_l1 + at2_l2 ).Pt();
+
+    double at1_m1 = at1_l1.M(); double at2_m1 = at2_l1.M();
+    double at1_m2 = at1_l2.M(); double at2_m2 = at2_l2.M();
+    double at1_m = ( at1_l1 + at1_l2 ).M(); double at2_m = ( at2_l1 + at2_l2 ).M();
+
+    double dphi1 = delta_phi( at1_l1 , at1_l2 ); double dphi2 = delta_phi( at2_l1 , at2_l2 );
+    double deta1 = delta_eta( at1_l1 , at1_l2 ); double deta2 = delta_eta( at2_l1 , at2_l2 );
+    double dr1 = delta_r( at1_l1 , at1_l2 ); double dr2 = delta_r( at2_l1 , at2_l2 );
+
+    if ( analysis_type1 == "reco" && analysis_type2 == "particle" ){
+
+      lephists2D[ sel_name + "_l1_pT_reco_particle" ]->Fill(at1_pT1, at2_pT2, weight);
+      lephists2D[ sel_name + "_l2_pT_reco_particle" ]->Fill(at1_pT1, at2_pT2, weight);
+      lephists2D[ sel_name + "_l1l2_pT_reco_particle" ]->Fill(at1_pT, at2_pT, weight);
+      lephists2D[ sel_name + "_l1l2_m_reco_particle" ]->Fill(at1_m, at2_m, weight);
+      lephists2D[ sel_name + "_l1l2_dphi_reco_particle" ]->Fill(dphi1, dphi2, weight);
+      lephists2D[ sel_name + "_l1l2_deta_reco_particle" ]->Fill(deta1, deta2, weight);
+      lephists2D[ sel_name + "_l1l2_dr_reco_particle" ]->Fill(dr1, dr2, weight);
+
+    } else if ( analysis_type1 == "particle" && analysis_type2 == "parton" ){
+
+      lephists2D[ sel_name + "_l1_pT_particle_parton" ]->Fill(at1_pT1, at2_pT2, weight);
+      lephists2D[ sel_name + "_l2_pT_particle_parton" ]->Fill(at1_pT1, at2_pT2, weight);
+      lephists2D[ sel_name + "_l1l2_pT_particle_parton" ]->Fill(at1_pT, at2_pT, weight);
+      lephists2D[ sel_name + "_l1l2_m_particle_parton" ]->Fill(at1_m, at2_m, weight);
+      lephists2D[ sel_name + "_l1l2_dphi_particle_parton" ]->Fill(dphi1, dphi2, weight);
+      lephists2D[ sel_name + "_l1l2_deta_particle_parton" ]->Fill(deta1, deta2, weight);
+      lephists2D[ sel_name + "_l1l2_dr_particle_parton" ]->Fill(dr1, dr2, weight);
+
+    }
+
+  }
+
+  void fill_4l( string analysis_type, double weight, TLorentzVector &l3, TLorentzVector &l4) {
+
+    double pT3 = l3.Pt(); double pT4 = l4.Pt(); double pT = ( l3 + l4 ).Pt();
+
+    double m = ( l3 + l4 ).M();
+
+    double dphi = delta_phi( l3 , l4 );
+    double deta = delta_eta( l3 , l4 );
+    double dr = delta_r( l3 , l4 );
+
+    if ( analysis_type == "reco" ){
+
+      lephists[ sel_name + "_l3_pT_reco"]->Fill(pT3, weight);
+      lephists[ sel_name + "_l4_pT_reco"]->Fill(pT4, weight);
+      lephists[ sel_name + "_l3l4_pT_reco"]->Fill(pT, weight);
+      lephists[ sel_name + "_l3l4_m_reco"]->Fill(m, weight);
+
+      lephists[ sel_name + "_l3l4_dphi_reco"]->Fill(dphi, weight);
+      lephists[ sel_name + "_l3l4_deta_reco"]->Fill(deta, weight);
+      lephists[ sel_name + "_l3l4_dr_reco"]->Fill(dr, weight);
+
+    } else if ( analysis_type == "particle" ){
+
+      lephists[ sel_name + "_l3_pT_particle" ]->Fill(pT3, weight);
+      lephists[ sel_name + "_l4_pT_particle" ]->Fill(pT4, weight);
+      lephists[ sel_name + "_l3l4_pT_particle" ]->Fill(pT, weight);
+      lephists[ sel_name + "_l3l4_m_particle" ]->Fill(m, weight);
+
+      lephists[ sel_name + "_l3l4_dphi_particle" ]->Fill(dphi, weight);
+      lephists[ sel_name + "_l3l4_deta_particle" ]->Fill(deta, weight);
+      lephists[ sel_name + "_l3l4_dr_particle" ]->Fill(dr, weight);
+
+    } else if ( analysis_type == "parton" ){
+
+      lephists[ sel_name + "_l3_pT_parton" ]->Fill(pT3, weight);
+      lephists[ sel_name + "_l4_pT_parton" ]->Fill(pT4, weight);
+      lephists[ sel_name + "_l3l4_pT_parton" ]->Fill(pT, weight);
+      lephists[ sel_name + "_l3l4_m_parton" ]->Fill(m, weight);
+
+      lephists[ sel_name + "_l3l4_dphi_parton" ]->Fill(dphi, weight);
+      lephists[ sel_name + "_l3l4_deta_parton" ]->Fill(deta, weight);
+      lephists[ sel_name + "_l3l4_dr_parton" ]->Fill(dr, weight);
+
+    }
+
+  }
+
+
+  void fill_4l_2D( string analysis_type1, string analysis_type2, double weight, TLorentzVector &at1_l3, TLorentzVector &at1_l4, TLorentzVector &at2_l3, TLorentzVector &at2_l4 ) {
+
+    double at1_pT3 = at1_l3.Pt(); double at2_pT3 = at2_l3.Pt();
+    double at1_pT4 = at1_l4.Pt(); double at2_pT4 = at2_l4.Pt();
+    double at1_pT = ( at1_l3 + at1_l4 ).Pt(); double at2_pT = ( at2_l3 + at2_l4 ).Pt();
+
+    double at1_m = ( at1_l3 + at1_l4 ).M(); double at2_m = ( at2_l3 + at2_l4 ).M();
+
+    double dphi1 = delta_phi( at1_l3 , at1_l4 ); double dphi2 = delta_phi( at2_l3 , at2_l4 );
+    double deta1 = delta_eta( at1_l3 , at1_l4 ); double deta2 = delta_eta( at2_l3 , at2_l4 );
+    double dr1 = delta_r( at1_l3 , at1_l4 ); double dr2 = delta_r( at2_l3 , at2_l4 );
+
+    if ( analysis_type1 == "reco" && analysis_type2 == "particle" ){
+
+      lephists2D[ sel_name + "_l3_pT_reco_particle" ]->Fill(at1_pT3, at2_pT3, weight);
+      lephists2D[ sel_name + "_l4_pT_reco_particle" ]->Fill(at1_pT4, at2_pT4, weight);
+      lephists2D[ sel_name + "_l3l4_pT_reco_particle" ]->Fill(at1_pT, at2_pT, weight);
+      lephists2D[ sel_name + "_l3l4_m_reco_particle" ]->Fill(at1_m, at2_m, weight);
+      lephists2D[ sel_name + "_l3l4_dphi_reco_particle" ]->Fill(dphi1, dphi2, weight);
+      lephists2D[ sel_name + "_l3l4_deta_reco_particle" ]->Fill(deta1, deta2, weight);
+      lephists2D[ sel_name + "_l3l4_dr_reco_particle" ]->Fill(dr1, dr2, weight);
+
+    } else if ( analysis_type1 == "particle" && analysis_type2 == "parton" ){
+
+      lephists2D[ sel_name + "_l3_pT_particle_parton" ]->Fill(at1_pT3, at2_pT3, weight);
+      lephists2D[ sel_name + "_l4_pT_particle_parton" ]->Fill(at1_pT4, at2_pT4, weight);
+      lephists2D[ sel_name + "_l3l4_pT_particle_parton" ]->Fill(at1_pT, at2_pT, weight);
+      lephists2D[ sel_name + "_l3l4_m_particle_parton" ]->Fill(at1_m, at2_m, weight);
+      lephists2D[ sel_name + "_l3l4_dphi_particle_parton" ]->Fill(dphi1, dphi2, weight);
+      lephists2D[ sel_name + "_l3l4_deta_particle_parton" ]->Fill(deta1, deta2, weight);
+      lephists2D[ sel_name + "_l3l4_dr_particle_parton" ]->Fill(dr1, dr2, weight);
 
     }
 
@@ -214,20 +832,39 @@ public:
 void write_all_hist() {
 
     for (auto& pair : bbhists) {
-
       // histogram->SetDirectory(0)
       // cd 
       pair.second->Write();
-
+    }
+    for (auto& pair : bbhists2D) {
+      pair.second->Write();
     }
 
     for (auto& pair : jjhists) {
       pair.second->Write();
     }
+    for (auto& pair : jjhists2D) {
+      pair.second->Write();
+    }
+
     for (auto& pair : wwhists) {
       pair.second->Write();
     }
+    for (auto& pair : wwhists2D) {
+      pair.second->Write();
+    }
+
     for (auto& pair : zzhists) {
+      pair.second->Write();
+    }
+    for (auto& pair : zzhists2D) {
+      pair.second->Write();
+    }
+
+    for (auto& pair : lephists) {
+      pair.second->Write();
+    }
+    for (auto& pair : lephists2D) {
       pair.second->Write();
     }
 
@@ -238,13 +875,26 @@ void write_all_hist() {
   for (auto& pair : bbhists) {
     // delete pair.second;
   }
-
+  for (auto& pair : bbhists2D) {
+    // delete pair.second;
+  }
   for (auto& pair : jjhists) {
   }
+  for (auto& pair : jjhists2D) {
+  }
   for (auto& pair : wwhists) {
+  }
+  for (auto& pair : wwhists2D) {
   }  
   for (auto& pair : zzhists) {
   }
+  for (auto& pair : zzhists2D) {
+  }
+  for (auto& pair : lephists) {
+  }
+  for (auto& pair : lephists2D) {
+  }
+
 }
 
 };

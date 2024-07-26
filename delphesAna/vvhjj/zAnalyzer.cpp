@@ -16,7 +16,13 @@
 
 #define MSEED 1234 
 
+bool dumpgen = false;
+// bool dumpreco = false;
+
 bool debug_bool = false;
+bool debug_bool_bb = false;
+bool debug_bool_jj = false;
+bool debug_bool_vv = false;
 
 #include "../common_includes/trasnform_inputs.h"
 #include <unordered_map>
@@ -24,10 +30,10 @@ bool debug_bool = false;
 #include "classes/DelphesClasses.h"
 #include "classes/DelphesLHEFReader.h"
 #include "external/ExRootAnalysis/ExRootTreeReader.h"
-#include "../common_includes/ghost_tagging.h"
+//#include "../common_includes/ghost_tagging.h"
 #include "../common_includes/combinations.h"
 //#include "../common_includes/get_cross_section.h"
-#include "../common_includes/make_paired.h"
+// #include "../common_includes/make_paired.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -70,8 +76,11 @@ bool debug_bool = false;
 #include "includes/selections_include.h"
 #include "includes/kinematics_include.h"
 #include "includes/helperfunctions_include.h"
+
+#include "includes/paired_include.h"
+#include "includes/ghosttag_include.h"
  
-#include "lepAnalyzer.h"
+//#include "lepAnalyzer.h"
 
 using namespace std;
 
@@ -131,12 +140,11 @@ void zAnalyzer(const char *input_file, const char *output_file, const char *proc
   
   cut_list_reco = cut_sel_process_reco["all"];
   cut_list_particle = cut_sel_process_particle["all"];
-  cutList_parton = cut_sel_process_parton["all"];
+  cut_list_parton = cut_sel_process_parton["all"];
 
   std::map< string, bool > enable_cut_reco;  
   std::map< string, bool > enable_cut_particle; 
-
-  std::map<string, bool> enableCutParton;
+  std::map< string, bool > enable_cut_parton; 
  
   for(vector<string>::iterator it=cut_sel_process_reco["all"].begin(); it!=cut_sel_process_reco["all"].end(); it++){
     enable_cut_reco[ (*it)] = hasCut(cut_list_reco, (*it));
@@ -145,7 +153,7 @@ void zAnalyzer(const char *input_file, const char *output_file, const char *proc
     enable_cut_particle[ (*it)] = hasCut(cut_list_particle, (*it));
   }
   for(vector<string>::iterator it=cut_sel_process_parton["all"].begin(); it!=cut_sel_process_parton["all"].end(); it++){
-    enableCutParton[ (*it)] = hasCut(cutList_parton, (*it));
+    enable_cut_parton[ (*it)] = hasCut(cut_list_parton, (*it));
   }
 
   // new cft
@@ -169,31 +177,34 @@ void zAnalyzer(const char *input_file, const char *output_file, const char *proc
   for(int i=0; i<(int) cut_list_particle.size(); i++) { 
     cft_total_particle[cut_list_particle.at(i)] = make_pair(0,0.0); 
   }
-
-  // new cft
   
   int cutVal_parton = 0;
   double cutValW_parton = 0;
 
-  std::map<string, std::pair<int,double>> cutFlowMap_parton;
-  for(int i=0; i<(int) cutList_parton.size(); i++) { 
-    cutFlowMap_parton[cutList_parton.at(i)] = make_pair(0,0.0); 
+  std::map<string, std::pair<int,double>> cft_total_parton;
+  std::vector<std::map<std::string, std::pair<int, double>>> cft_allevents_parton;
+
+  for(int i=0; i<(int) cut_list_parton.size(); i++) { 
+    cft_total_parton[cut_list_parton.at(i)] = make_pair(0,0.0); 
   }
  
+  // new cft
+
+
   vector <string> selType={"reco","particle","parton"};
   std::map<string, vector<string>> cutFlowMByType;
   cutFlowMByType["reco"] = cut_list_reco;
   cutFlowMByType["particle"] = cut_list_particle;
-  cutFlowMByType["parton"]=cutList_parton;
+  cutFlowMByType["parton"] = cut_list_parton;
  
   std::map<string,TH1F*> cutFlowHists;
   std::map<string,TProfile*> cutFlowEffs;
 
   typedef std::map<std::string, std::pair<int,double>> cutFlowMapDef;
   std::map<string, cutFlowMapDef* > cutFlowMapAll;
-    cutFlowMapAll["reco"] =  & cft_total_reco;
+    cutFlowMapAll["reco"] = & cft_total_reco;
     cutFlowMapAll["particle"] = & cft_total_particle;
-    cutFlowMapAll["parton"] = & cutFlowMap_parton;
+    cutFlowMapAll["parton"] = & cft_total_parton;
   
   for(std::vector<string>::iterator it=selType.begin(); it!=selType.end(); it++){
     cutFlowHists[(*it)]=new TH1F(Form("hSel_%s",(*it).c_str()),"",cutFlowMByType[(*it)].size(),0,cutFlowMByType[(*it)].size()+1);
@@ -242,18 +253,13 @@ void zAnalyzer(const char *input_file, const char *output_file, const char *proc
     }
   }
 
-  TH1F *hWeight = new TH1F("weights", "weight", 50, 0.0, 1.0);
-  listOfTH1.push_back(hWeight);
-
-  TFile *hists= new TFile(output_file,"recreate");
-
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // initialize histograms
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-vector<string> selections = { "HWWJJ", "WWJJ" }; // , "HZZJJ", "(HWW)JJ", "(HZZ)JJ", "WWJJ", "ZZJJ" }; 
+vector<string> selections = { "wwhjj", "zzhjj" }; // , "wwjj", "zzjj", "hwwjj", "hzzjj" 
 
 map< string, histograms > sel_hist_map;
 
@@ -264,21 +270,10 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   sel_hist_map[ *selection ].initialize_jj();
   sel_hist_map[ *selection ].initialize_ww();
   sel_hist_map[ *selection ].initialize_zz();
-
+  sel_hist_map[ *selection ].initialize_2l();
+  sel_hist_map[ *selection ].initialize_4l();
+  
 }
-
-
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-// DEF QUANTITIES
-//------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-  double nPassed=0;
-  double totWeightedEntries=0;
-  int nPassedRaw=0;
-
-  double Lumi=1000*300; // 1000 to convert from pb to fb, 300 for end of run 3
-  cout << "LUMI: "<< Lumi << endl;
 
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -286,10 +281,20 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+  double nPassed=0;
+  double totWeightedEntries=0;
+  int nPassedRaw=0;
   double sumOfWeights=0;
+
+  double Lumi=1000*300; // 1000 to convert from pb to fb, 300 for end of run 3
 
   TH1F *hClosure = new TH1F("hClosure","hClosure",1,0,1);
   listOfTH1.push_back(hClosure);
+
+  TH1F *hWeight = new TH1F("weights", "weight", 50, 0.0, 1.0);
+  listOfTH1.push_back(hWeight);
+
+  TFile *hists= new TFile(output_file,"recreate");
 
   for(Int_t entry = 0; entry < numberOfEntries; ++entry){
 
@@ -299,7 +304,8 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     totalWeight += event->Weight;
 
   }
-
+  
+  cout << "LUMI: "<< Lumi << endl;
   cout << "TOTAL WEIGHT: "<< totalWeight << endl;
     
 
@@ -308,9 +314,17 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-  if (debug_bool) numberOfEntries = 25;
+  if (debug_bool) numberOfEntries = 50;
+  if ( dumpgen ) numberOfEntries = 10;
+
+  TH1F *recoET = new TH1F("reco_event_type", "Reco Event Type", 5, -1, 4); 
+  TH1F *particleET = new TH1F("particle_event_type", "Particle Event Type", 5, -1, 4);
+  TH1F *partonET = new TH1F("parton_event_type", "Parton Event Type", 5, -1, 4);
 
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
+
+    debug_print(dumpgen, "GEN EVENT DUMP"); event_dump("particle", branchGenParticle, branchGenParticle, branchGenParticle, dumpgen);
+    // debug_print(dumpreco, "RECO EVENT DUMP"); event_dump("reco", branchGenParticle, branchElectron, branchMuon, dumpreco);
 
     debug_print(debug_bool, "----------------------------------------------------------------------------------------------------");
     debug_print(debug_bool, "----------------------------------------------------------------------------------------------------");
@@ -331,6 +345,7 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
    
     std::map<string, std::pair<int,double>> cft_event_reco;
     std::map<string, std::pair<int,double>> cft_event_particle;
+    std::map<string, std::pair<int,double>> cft_event_parton;
 
     for(int i=0; i<(int) cut_list_reco.size(); i++) { 
       cft_event_reco[cut_list_reco.at(i)] = make_pair(0,0.0); 
@@ -340,8 +355,13 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
       cft_event_particle[cut_list_particle.at(i)] = make_pair(0,0.0); 
     }
 
+    for(int i=0; i<(int) cut_list_parton.size(); i++) { 
+      cft_event_parton[cut_list_parton.at(i)] = make_pair(0,0.0); 
+    }
+
     update_cft(cft_event_reco, cft_total_reco, "initial - reco", weight);
     update_cft(cft_event_particle, cft_total_particle, "initial - particle", weight);
+    update_cft(cft_event_parton, cft_total_parton, "initial - parton", weight);
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -351,25 +371,27 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 
   string analysis_type;
 
+  double jet_pT = 20.0;                        // cuts
+  double lep_pT = 15.0; double lep_eta = 2.5;  // cuts
+
   // reco
     bool found_bb_reco = false;
     bool found_jj_reco = false;
     bool found_ww_reco = false;
     bool found_zz_reco = false;
 
-    vector < int > eminus_reco, eplus_reco, muminus_reco, muplus_reco, leps_reco, jets_reco;
+    vector < int > eminus_reco, eplus_reco, muminus_reco, muplus_reco, e_reco, mu_reco;
+    vector < int > jet_eplus_reco, jet_eminus_reco, jet_muplus_reco, jet_muminus_reco, jet_e_reco, jet_mu_reco;
+    vector < int > all_leps_reco, jets_reco;
     int nleps_reco, njets_reco;
 
     std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> bb_reco_i;         // paired b jets (higgs)
     // vector < int > bb_reco_i;                                                                                // pseudo b tagged jets (higgs)
     pair<int, int> jj_reco_i;                                                                                   // pair of vbf jets
-    pair< int, vector <int>> ww_reco_i;                                                                         // event type and pair of leading subleading w index 
-    pair< int, pair< vector <int>, vector <int>>> zz_reco_i;                                                    // event type and pair of leading subleading z index
+    pair< int, pair < vector <TLorentzVector>, vector <TLorentzVector > > > vv_reco_i;                          // event type and pair of vector of v and vector of l
 
     pair< TLorentzVector, TLorentzVector> bb_reco;                    // < b1, b2 >
     pair< TLorentzVector, TLorentzVector> jj_reco;                    // < j1, j2 >
-    pair< vector<TLorentzVector>, vector<TLorentzVector>> ww_reco;    // < <leps>, <ws> >
-    pair< vector<TLorentzVector>, vector<TLorentzVector>> zz_reco;    // < <leps>, <zs> >
 
   // particle
     bool found_bb_particle = false;
@@ -377,62 +399,64 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     bool found_ww_particle = false;
     bool found_zz_particle = false;
 
-    vector < int > eminus_particle, eplus_particle, muminus_particle, muplus_particle, leps_particle, jets_particle;
+    vector < int > eminus_particle, eplus_particle, muminus_particle, muplus_particle, e_particle, mu_particle;
+    vector < int > jet_eplus_particle, jet_eminus_particle, jet_muplus_particle, jet_muminus_particle, jet_e_particle, jet_mu_particle;
+    vector < int > all_leps_particle, jets_particle;
     int nleps_particle, njets_particle;
 
     std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>> bb_particle_i;      // paired b jets (higgs)
     // vector < int > bb_particle_i;                                                                             // pseudo b tagged jets (higgs)
     pair<int, int> jj_particle_i;                                                                                // pair of vbf jets
-    pair< int, vector <int>> ww_particle_i;                                                                      // event type and pair of leading subleading w index
-    pair< int, pair< vector <int>, vector <int>>> zz_particle_i;                                                 // event type and pair of leading subleading z index
+    pair< int, pair < vector <TLorentzVector>, vector <TLorentzVector > > > vv_particle_i;                       // event type and pair of vector of v and vector of l
 
     pair< TLorentzVector, TLorentzVector> bb_particle;                    // < b1, b2 >
     pair< TLorentzVector, TLorentzVector> jj_particle;                    // < j1, j2 >
-    pair< vector<TLorentzVector>, vector<TLorentzVector>> ww_particle;    // < <leps>, <ws> >
-    pair< vector<TLorentzVector>, vector<TLorentzVector>> zz_particle;    // < <leps>, <zs> >
+
+  // parton
+    bool found_bb_parton = false;
+    bool found_jj_parton = false;
+    bool found_ww_parton = false;
+    bool found_zz_parton = false;
+
+    vector < int > eminus_parton, eplus_parton, muminus_parton, muplus_parton, leps_parton, jets_parton;
+
+    pair< int, pair< int, int >> hbb_parton_i;
+    pair< int, int > jj_parton_i;
+    pair < int, pair < vector < int > , vector < int >>> vvleps_parton_i;
+
+    pair< TLorentzVector, pair< TLorentzVector, TLorentzVector >> hbb_parton;                               // < h, < b1, b2 > >
+    pair< TLorentzVector, TLorentzVector > jj_parton;                                                       // < j1, j2 >
+    pair< TLorentzVector, TLorentzVector > ww_parton;                                                       // < w1, w2 >
+    pair< TLorentzVector, TLorentzVector > ll_parton;                                                       // < l1, l2 >
+    pair< TLorentzVector, TLorentzVector > zz_parton;                                                       // < z1, z2 >
+    pair < pair< TLorentzVector, TLorentzVector >, pair< TLorentzVector, TLorentzVector >> llll_parton;     // << l1, l2 > , < l1, l2 >>
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // reco selection
+  // parton selection
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  analysis_type = "reco";
+
+    analysis_type = "parton";
 
   debug_print( debug_bool, " " );
   debug_print( debug_bool, "------------------------------------------------------------------------" );
-  debug_print( debug_bool, " reco leps and jets - passing pT and eta cut " );
+  debug_print( debug_bool, "parton" );
   debug_print( debug_bool, "------------------------------------------------------------------------" );
   debug_print( debug_bool, " " );
 
-    // all leps and jets
-    eminus_reco = get_leptons( analysis_type, branchElectron, 15.0 , 2.5, "electron", -1, debug_bool );
-    eplus_reco = get_leptons( analysis_type, branchElectron, 15.0 , 2.5, "electron", 1, debug_bool );
-    muminus_reco = get_leptons( analysis_type, branchMuon, 15.0 , 2.5, "muon", -1, debug_bool );
-    muplus_reco = get_leptons( analysis_type, branchMuon, 15.0 , 2.5, "muon", 1, debug_bool );
-    concatenate_indices(leps_reco, eminus_reco); concatenate_indices(leps_reco, eplus_reco); concatenate_indices(leps_reco, muminus_reco); concatenate_indices(leps_reco, muplus_reco);
+    // get
+    hbb_parton_i = get_hbb_parton( branchGenParticle, debug_bool_bb );
+    jj_parton_i = get_jj_parton( branchGenParticle, debug_bool_jj );
+    vvleps_parton_i = get_vv_parton( branchGenParticle, debug_bool_vv );
 
-    jets_reco = get_all_jets( "reco", leps_reco, branchJet, branchElectron, branchMuon, 20 , debug_bool );
+    leps_parton = vvleps_parton_i.second.second;
 
-    nleps_reco = eminus_reco.size() + eplus_reco.size() + muminus_reco.size() + muplus_reco.size();
-    njets_reco = jets_reco.size();
-
-  debug_print( debug_bool, " " );
-  debug_print( debug_bool, analysis_type + " num leps: " + to_string( nleps_reco ) + " ( # e- " + to_string( eminus_reco.size() ) + " # e+ " + to_string( eplus_reco.size() ) + " # mu- " + to_string( muminus_reco.size() ) + " # mu+ " + to_string( muplus_reco.size() ) + " ) " );
-  debug_print( debug_bool, "number of reco jets: " + to_string(njets_reco) );
-  debug_print( debug_bool, " " );
-
-  // get
-    jj_reco_i = get_jj( "reco", jets_reco, branchJet );
-    if ( njets_reco >= 4 )   bb_reco_i = get_bb( "reco", jj_reco_i, branchJet, branchGenParticle, branchPFCand );
-
-    if ( nleps_reco < 4 )         ww_reco_i = get_ww_leptonic( "reco", eminus_reco, eplus_reco, muminus_reco, muplus_reco, branchElectron, branchMuon, branchMissingET );
-    else if ( nleps_reco >= 4 )   zz_reco_i = get_zz_leptonic( "reco", eminus_reco, eplus_reco, muminus_reco, muplus_reco, branchElectron, branchMuon );
-
-  // set
-    if ( bb_reco_i.size() >=2 ) found_bb_reco = true;
-    if ( jj_reco_i.first != -1 && jj_reco_i.second != -1 ) found_jj_reco = true;
-    if ( ww_reco_i.first != -1 && ww_reco_i.second.size() >= 2) found_ww_reco = true;
-    if ( zz_reco_i.first != -1 && zz_reco_i.second.first.size() >= 2 && zz_reco_i.second.second.size() >= 2) found_zz_reco = true;
+    // set 
+    if ( hbb_parton_i.first != -99 && hbb_parton_i.second.first != -99 && hbb_parton_i.second.second != -99 )  found_bb_parton = true;
+    if ( jj_parton_i.first != -99 && jj_parton_i.second != -99 ) found_jj_parton = true;
+    if ( vvleps_parton_i.first != -1 && vvleps_parton_i.second.second.size() < 4 ) found_ww_parton = true;
+    if ( vvleps_parton_i.first != -1 && vvleps_parton_i.second.second.size() >= 4 ) found_zz_parton = true;
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -443,125 +467,123 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 
   debug_print( debug_bool, " " );
   debug_print( debug_bool, "------------------------------------------------------------------------" );
-  debug_print( debug_bool, " particle leps and jets - passing pT and eta cut " );
+  debug_print( debug_bool, " particle leps and jets " );
   debug_print( debug_bool, "------------------------------------------------------------------------" );
   debug_print( debug_bool, " " );
 
     // all leps and jets
-    eminus_particle = get_leptons( analysis_type, branchGenParticle, 15.0 , 2.5, "electron", -1, debug_bool );
-    eplus_particle = get_leptons( analysis_type, branchGenParticle, 15.0 , 2.5, "electron", 1, debug_bool );
-    muminus_particle = get_leptons( analysis_type, branchGenParticle, 15.0 , 2.5, "muon", -1, debug_bool );
-    muplus_particle = get_leptons( analysis_type, branchGenParticle, 15.0 , 2.5, "muon", 1, debug_bool );
-    concatenate_indices(leps_particle, eminus_particle); concatenate_indices(leps_particle, eplus_particle); concatenate_indices(leps_particle, muminus_particle); concatenate_indices(leps_particle, muplus_particle);
+    eminus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "electron", -1, debug_bool );
+    eplus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "electron", 1, debug_bool );
+    muminus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "muon", -1, debug_bool );
+    muplus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "muon", 1, debug_bool );
+    concatenate_indices( e_particle, eminus_particle); concatenate_indices(e_particle, eplus_particle); concatenate_indices(mu_particle, muminus_particle); concatenate_indices(mu_particle, muplus_particle); 
 
-    jets_particle = get_all_jets( "particle", leps_particle, branchGenJet, branchGenParticle, branchGenParticle, 20 , debug_bool );
+    jet_e_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, e_particle, lep_pT, lep_eta, "electron", 0, debug_bool ); 
+    jet_mu_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, mu_particle, lep_pT, lep_eta, "muon", 0, debug_bool ); 
+    //jet_eminus_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, eminus_particle, lep_pT, lep_eta, "electron", -1, debug_bool ); jet_eplus_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, eplus_particle, lep_pT, lep_eta, "electron", 1, debug_bool ); 
+    //jet_muminus_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, muminus_particle, lep_pT, lep_eta, "muon", -1, debug_bool );  jet_muplus_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, muplus_particle, lep_pT, lep_eta, "muon", 1, debug_bool ); 
+    //concatenate_indices( jet_e_particle, jet_eminus_particle ); concatenate_indices( jet_e_particle, jet_eplus_particle ); concatenate_indices( jet_mu_particle, jet_muminus_particle ); concatenate_indices( jet_mu_particle, jet_muplus_particle ); 
+  
+    concatenate_indices( all_leps_particle, e_particle ); concatenate_indices( all_leps_particle, mu_particle ); concatenate_indices( all_leps_particle, jet_e_particle ); concatenate_indices( all_leps_particle, jet_mu_particle );
 
-    nleps_particle = eminus_particle.size() + eplus_particle.size() + muminus_particle.size() + muplus_particle.size();
+    if ( all_leps_particle.size() > 0 ) update_cft(cft_event_particle, cft_total_particle,  "lep pT > 15 && lep eta < 2.5 - particle", weight); if ( all_leps_particle.size() >= 2 ) update_cft(cft_event_particle, cft_total_particle,  "2 passing leps - particle", weight); if (  all_leps_particle.size() >= 4 ) update_cft(cft_event_particle, cft_total_particle, "4 passing leps - particle", weight);
+ 
+    jets_particle = get_all_jets( "particle", leps_parton, branchGenJet, branchGenParticle, branchGenParticle, branchGenParticle, jet_pT , debug_bool );
+    if ( jets_particle.size()>0 ) update_cft(cft_event_particle, cft_total_particle,  "jet pT > 20 - particle", weight);
+
+    nleps_particle = all_leps_particle.size();
     njets_particle = jets_particle.size();
 
   debug_print( debug_bool, " " );
-  debug_print( debug_bool, analysis_type + " num leps: " + to_string( nleps_particle ) + " ( # e- " + to_string( eminus_particle.size() ) + " # e+ " + to_string( eplus_particle.size() ) + " # mu- " + to_string( muminus_particle.size() ) + " # mu+ " + to_string( muplus_particle.size() ) + " ) " );
+  debug_print( debug_bool, analysis_type + " num leps: " + to_string( nleps_particle ) + " ( # e- " + to_string( eminus_particle.size() ) + " # e+ " + to_string( eplus_particle.size() ) + " # mu- " + to_string( muminus_particle.size() ) + " # mu+ " + to_string( muplus_particle.size() ) + " # je- " + to_string( jet_eminus_particle.size() ) + " # je+ " + to_string( jet_eplus_particle.size() ) + " # jmu- " + to_string( jet_muminus_particle.size() ) + " # jmu+ " + to_string( jet_muplus_particle.size() ) + " ) " );
   debug_print( debug_bool, "number of particle jets: " + to_string(njets_particle) );
   debug_print( debug_bool, " " );
 
   // get
-    jj_particle_i = get_jj( "particle", jets_particle, branchGenJet );
+    jj_particle_i = get_jj( "particle", jets_particle, branchGenJet, branchGenParticle ); if ( jj_particle_i.first != -1 && jj_particle_i.second != -1 ) update_cft(cft_event_particle, cft_total_particle, "no bb vbf && detajj > 2.5 - particle", weight);
     if ( njets_particle >= 4 ) bb_particle_i = get_bb( "particle", jj_particle_i, branchGenJet, branchGenParticle, branchPFCand );
     
-    if ( nleps_particle < 4 )         ww_particle_i = get_ww_leptonic( "particle", eminus_particle, eplus_particle, muminus_particle, muplus_particle, branchGenParticle, branchGenParticle, branchGenMissingET );
-    else if ( nleps_particle >= 4 )   zz_particle_i = get_zz_leptonic( "particle", eminus_particle, eplus_particle, muminus_particle, muplus_particle, branchGenParticle, branchGenParticle );
-
-  // set 
     if ( jj_particle_i.first != -1 && jj_particle_i.second != -1 )  found_jj_particle = true;
-    if ( bb_particle_i.size() >= 2 )  found_bb_particle = true;
-    if ( ww_particle_i.first != -1 && ww_particle_i.second.size() >= 2) found_ww_particle = true;
-    if ( zz_particle_i.first != -1 && zz_particle_i.second.first.size() >= 2 && zz_particle_i.second.second.size() >= 2)  found_zz_particle = true;
+    if ( bb_particle_i.size() >= 2 ) found_bb_particle = true;
 
+    if ( nleps_particle < 4 ) {
+
+      vv_particle_i = get_vv_leptonic( "particle", "w", e_particle, mu_particle, jet_e_particle, jet_mu_particle, branchGenParticle, branchGenParticle, branchGenJet, branchMissingET);
+      if ( vv_particle_i.first != -1 ) {
+        found_ww_particle = true;
+        update_cft(cft_event_particle, cft_total_particle, "mll > 10 - particle", weight);
+      }
+
+    } else if ( nleps_particle >= 4 ) {
+
+      vv_particle_i = get_vv_leptonic( "particle", "z", e_particle, mu_particle, jet_e_particle, jet_mu_particle, branchGenParticle, branchGenParticle, branchGenJet, branchMissingET);
+      if ( vv_particle_i.first != -1 ) found_zz_particle = true;
+
+    }
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // parton selection
+  // reco selection
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-/*
-  // higgs
-    int switchVal_parton = 0;
-  
-    if(enableCutParton["initial parton"]){
-      increaseCount(cutFlowMap_parton,"initial parton",weight);
-    }
 
-    bool HiggsRecord=FillHiggsTruthRecord(branchGenParticle,h_parton,b1_parton,b2_parton,j1_parton,j2_parton);
 
-    if(enableCutParton["Higgs Candidate"]){
-      if(switchVal_parton == 0 && HiggsRecord) increaseCount(cutFlowMap_parton,"Higgs Candidate",weight);
-      else  switchVal_parton = 1;
-    }
+    analysis_type = "reco";
 
-    if(HiggsRecord){
-      double bbdeltaPhiparton = deltaPhi(b1_parton, b2_parton);
-      double bbdeltaEtarparton = deltaEta(b1_parton, b2_parton);
-      double bbdeltaRrparton = deltaR(b1_parton, b2_parton);
-    }
+  debug_print( debug_bool, " " );
+  debug_print( debug_bool, "------------------------------------------------------------------------" );
+  debug_print( debug_bool, " reco leps and jets " );
+  debug_print( debug_bool, "------------------------------------------------------------------------" );
+  debug_print( debug_bool, " " );
 
-    // leps
-    int thisPartonEventType=-1;
+    // all leps and jets
 
-    vector <int> goodE_parton_indices  = GoodElectronPartonIndices(branchGenParticle, analysis);
-    vector <int> goodMu_parton_indices = GoodMuonPartonIndices(branchGenParticle, analysis);
-    // goodE_size_parton->Fill(goodE_parton_indices.size(),weight);
-    // goodMu_size_parton->Fill(goodMu_parton_indices.size(),weight);
+    eminus_reco = get_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, lep_pT , lep_eta, "electron", -1, debug_bool );
+    eplus_reco = get_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, lep_pT , lep_eta, "electron", 1, debug_bool );
+    muminus_reco = get_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, lep_pT , lep_eta, "muon", -1, debug_bool );
+    muplus_reco = get_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, lep_pT , lep_eta, "muon", 1, debug_bool );
+    concatenate_indices( e_reco, eminus_reco ); concatenate_indices( e_reco, eplus_reco ); concatenate_indices( mu_reco, muminus_reco ); concatenate_indices( mu_reco, muplus_reco );  
 
-    vector <int> ZPartonIndices;
-    vector <int> WPartonIndices;
-    bool foundZZ = false;
-    bool foundWW = false;
+    jet_e_reco = get_jet_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, leps_parton, e_reco, lep_pT, lep_eta, "electron", 0, debug_bool ); 
+    jet_mu_reco = get_jet_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, leps_parton, mu_reco, lep_pT, lep_eta, "muon", 0, debug_bool ); 
+    // jet_eminus_reco = get_jet_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, leps_parton, eminus_reco, lep_pT , lep_eta, "electron", -1, debug_bool ); jet_eplus_reco = get_jet_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, leps_parton, eplus_reco, lep_pT , lep_eta, "electron", 1, debug_bool );
+    // jet_muminus_reco = get_jet_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, leps_parton, muminus_reco, lep_pT , lep_eta, "muon", -1, debug_bool ); jet_muplus_reco = get_jet_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, leps_parton, muplus_reco, lep_pT , lep_eta, "muon", 1, debug_bool );
+    // concatenate_indices( jet_e_reco, jet_eminus_reco ); concatenate_indices( jet_e_reco, jet_eplus_reco ); concatenate_indices( jet_mu_reco, jet_muminus_reco ); concatenate_indices( jet_mu_reco, jet_muplus_reco ); 
 
-    if(analysis == "HZZJJ"){
+    concatenate_indices( all_leps_reco, e_reco ); concatenate_indices( all_leps_reco, mu_reco ); concatenate_indices( all_leps_reco, jet_e_reco ); concatenate_indices( all_leps_reco, jet_mu_reco );
 
-      ZPartonIndices = GetZPartonIndices(branchGenParticle, analysis);
+    if ( all_leps_reco.size() > 0 ) update_cft(cft_event_reco, cft_total_reco,  "lep pT > 15 && lep eta < 2.5 - reco", weight); if ( all_leps_reco.size() >= 2 ) update_cft(cft_event_reco, cft_total_reco,  "2 passing leps - reco", weight); if ( all_leps_reco.size() >= 4 ) update_cft(cft_event_reco, cft_total_reco,  "4 passing leps - reco", weight);
+
+    jets_reco = get_all_jets( "reco", leps_parton, branchJet, branchGenParticle, branchElectron, branchMuon, jet_pT, debug_bool );
+    if ( jets_reco.size()>0 ) update_cft(cft_event_reco, cft_total_reco,  "jet pT > 20 - reco", weight);
+
+    nleps_reco = all_leps_reco.size();
+    njets_reco = jets_reco.size();
+
+  debug_print( debug_bool, " " );
+  debug_print( debug_bool, analysis_type + " num leps: " + to_string( nleps_reco ) + " ( # e- " + to_string( eminus_reco.size() ) + " # e+ " + to_string( eplus_reco.size() ) + " # mu- " + to_string( muminus_reco.size() ) + " # mu+ " + to_string( muplus_reco.size() ) + " # je- " + to_string( jet_eminus_reco.size() ) + " # je+ " + to_string( jet_eplus_reco.size() ) + " # jmu- " + to_string( jet_muminus_reco.size() ) + " # jmu+ " + to_string( jet_muplus_reco.size() ) + " ) " );
+  debug_print( debug_bool, "number of reco jets: " + to_string(njets_reco) );
+  debug_print( debug_bool, " " );
+
+  // get
+    jj_reco_i = get_jj( "reco", jets_reco, branchJet, branchGenParticle ); if ( jj_reco_i.first != -1 && jj_reco_i.second != -1 ) update_cft(cft_event_reco, cft_total_reco, "no bb vbf && detajj > 2.5 - reco", weight);
+    if ( njets_reco >= 4 )   bb_reco_i = get_bb( "reco", jj_reco_i, branchJet, branchGenParticle, branchPFCand );
+
+    if ( bb_reco_i.size() >=2 ) found_bb_reco = true;
+    if ( jj_reco_i.first != -1 && jj_reco_i.second != -1 ) found_jj_reco = true;
+
+    if ( nleps_reco < 4 ) {
+
+      vv_reco_i = get_vv_leptonic( "reco", "w", e_reco, mu_reco, jet_e_reco, jet_mu_reco, branchElectron, branchMuon, branchJet, branchMissingET);
+      if ( vv_reco_i.first != -1 ) {
+        found_ww_reco = true;
+        update_cft(cft_event_reco, cft_total_reco, "mll > 10 - reco", weight);
+      }
       
-      if(ZPartonIndices.size() > 1) foundZZ = true;
+    } else if ( nleps_reco >= 4 ) {
 
-      if(enableCutParton["ZZ parton"]){
-        if(switchVal_parton == 0 && foundZZ) increaseCount(cutFlowMap_parton,"ZZ parton",weight);
-        else switchVal_parton = 1;
-      }
-  
-      if(switchVal_parton == 0) getPartonZLeps(thisPartonEventType, ZPartonIndices, branchGenParticle, z1_parton, z2_parton, l1_parton, l2_parton, l3_parton, l4_parton, q1_parton, q2_parton, q3_parton, q4_parton);
+      vv_reco_i = get_vv_leptonic( "reco", "z", e_reco, mu_reco, jet_e_reco, jet_mu_reco, branchElectron, branchMuon, branchJet, branchMissingET);
+      if ( vv_reco_i.first != -1 ) found_zz_reco = true;
 
-      if(foundZZ){
-        double zzdeltaPhiparton = deltaPhi(z1_parton, z2_parton);
-        double zzdeltaEtarparton = deltaEta(z1_parton, z2_parton);
-        double zzdeltaRrparton = deltaR(z1_parton, z2_parton);
-      }
-
-
-    } if(analysis == "HWWJJ") { 
-
-      WPartonIndices = GetWPartonIndices(branchGenParticle, analysis);
-
-      if(WPartonIndices.size() > 1) foundWW = true;
-
-      if(enableCutParton["WW parton"]){
-        if(switchVal_parton == 0 && foundWW) increaseCount(cutFlowMap_parton,"WW parton",weight);
-        else switchVal_parton = 1;
-      }
-
-      if(switchVal_parton == 0) getPartonWLeps(thisPartonEventType, WPartonIndices, branchGenParticle, w1_parton, w2_parton, l1_parton, l2_parton, q1_parton, q2_parton);
-
-      // partonET->Fill(thisPartonEventType,weight);
-
-      if(foundWW) {
-	
-        double wwdeltaPhiparton = deltaPhi(w1_parton, w2_parton);
-        double wwdeltaEtarparton = deltaEta(w1_parton, w2_parton);
-        double wwdeltaRrparton = deltaR(w1_parton, w2_parton);
-
-        // lepPT_partonV.at(0)->Fill(l1_parton.Pt());
-        // lepPT_partonV.at(1)->Fill(l2_parton.Pt());
-	
-      }
     }
-*/
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // cuts
@@ -578,44 +600,74 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   if ( found_ww_particle ) update_cft(cft_event_particle, cft_total_particle, "found ww - particle", weight);
   if ( found_zz_particle ) update_cft(cft_event_particle, cft_total_particle, "found zz - particle", weight);
 
+  if ( found_bb_parton ) update_cft(cft_event_parton, cft_total_parton, "found bb - parton", weight);
+  if ( found_jj_parton ) update_cft(cft_event_parton, cft_total_parton, "found jj - parton", weight);
+  if ( found_ww_parton ) update_cft(cft_event_parton, cft_total_parton, "found ww - parton", weight);
+  if ( found_zz_parton ) update_cft(cft_event_parton, cft_total_parton, "found zz - parton", weight);
+
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // get tlorentz vectors
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-  TLorentzVector b1_reco, b2_reco, b1_particle, b2_particle;
-  TLorentzVector j1_reco, j2_reco, j1_particle, j2_particle;
+  TLorentzVector b1_reco, b2_reco, b1_particle, b2_particle, h_parton, b1_parton, b2_parton;
+  TLorentzVector j1_reco, j2_reco, j1_particle, j2_particle, j1_parton, j2_parton;
 
-  TLorentzVector l1_reco, l2_reco, l3_reco, l4_reco, l1_particle, l2_particle, l3_particle, l4_particle;
-  TLorentzVector w1_reco, w2_reco, w1_particle, w2_particle;
-  TLorentzVector z1_reco, z2_reco, z1_particle, z2_particle;
+  TLorentzVector l1_reco, l2_reco, l3_reco, l4_reco, l1_particle, l2_particle, l3_particle, l4_particle, l1_parton, l2_parton, l3_parton, l4_parton;
+  TLorentzVector w1_reco, w2_reco, w1_particle, w2_particle, w1_parton, w2_parton;
+  TLorentzVector z1_reco, z2_reco, z1_particle, z2_particle, z1_parton, z2_parton;
 
   // reco 
 
-    if ( found_bb_reco ) bb_reco = make_bb( "reco", bb_reco_i ); b1_reco = bb_reco.first; b2_reco = bb_reco.second;
-    if ( found_jj_reco ) jj_reco = make_jj( "reco", jj_reco_i, branchJet ); j1_reco = jj_reco.first; j2_reco = jj_reco.second;
-    if ( found_ww_reco ) {
-      ww_reco = make_ww_leptonic( "reco", ww_reco_i, branchElectron, branchMuon, branchMissingET ); 
-      l1_reco = ww_reco.first[0]; l2_reco = ww_reco.first[1]; w1_reco = ww_reco.second[0]; w2_reco = ww_reco.second[1];
+    if ( found_bb_reco ) {
+      bb_reco = make_bb( "reco", bb_reco_i ); b1_reco = bb_reco.first; b2_reco = bb_reco.second;
+    }
+    if ( found_jj_reco ) {
+      jj_reco = make_jj( "reco", jj_reco_i, branchJet ); j1_reco = jj_reco.first; j2_reco = jj_reco.second;
+    } if ( found_ww_reco ) {
+      w1_reco = vv_reco_i.second.first[0]; w2_reco = vv_reco_i.second.first[1];
+      l1_reco = vv_reco_i.second.second[0]; l2_reco = vv_reco_i.second.second[1]; 
     }
     if ( found_zz_reco ) {
-      zz_reco = make_zz_leptonic( "reco", zz_reco_i, branchElectron, branchMuon ); 
-      l1_reco = zz_reco.first[0]; l2_reco = zz_reco.first[1]; l3_reco = zz_reco.first[2]; l4_reco = zz_reco.first[3]; z1_reco = zz_reco.second[0]; z2_reco = zz_reco.second[1];
+      z1_reco = vv_reco_i.second.first[0]; z2_reco = vv_reco_i.second.first[1];
+      l1_reco = vv_reco_i.second.second[0]; l2_reco = vv_reco_i.second.second[1]; l3_reco = vv_reco_i.second.second[2]; l4_reco = vv_reco_i.second.second[3];
     }
 
   // particle
 
-    if ( found_bb_particle ) bb_particle = make_bb( "particle", bb_particle_i ); b1_particle = bb_particle.first; b2_particle = bb_particle.second;
-    if ( found_jj_particle ) jj_particle = make_jj( "particle", jj_particle_i, branchGenJet ); j1_particle = jj_particle.first; j2_particle = jj_particle.second;
+    if ( found_bb_particle ) {
+      bb_particle = make_bb( "particle", bb_particle_i ); b1_particle = bb_particle.first; b2_particle = bb_particle.second;
+    }
+    if ( found_jj_particle ) {
+      jj_particle = make_jj( "particle", jj_particle_i, branchGenJet ); j1_particle = jj_particle.first; j2_particle = jj_particle.second;
+    }
     if ( found_ww_particle ) {
-      ww_particle = make_ww_leptonic( "particle", ww_particle_i, branchGenParticle, branchGenParticle, branchGenMissingET ); 
-      l1_particle = ww_particle.first[0]; l2_particle = ww_particle.first[1]; w1_particle = ww_particle.second[0]; w2_particle = ww_particle.second[1];
+      w1_particle = vv_particle_i.second.first[0]; w2_particle = vv_particle_i.second.first[1];
+      l1_particle = vv_particle_i.second.second[0]; l2_particle = vv_particle_i.second.second[1]; 
     }
     if ( found_zz_particle ) {
-      zz_particle = make_zz_leptonic( "particle", zz_particle_i, branchGenParticle, branchGenParticle ); 
-      l1_particle = zz_particle.first[0]; l2_particle = zz_particle.first[1]; l3_particle = zz_particle.first[2]; l4_particle = zz_particle.first[3]; z1_particle = zz_particle.second[0]; z2_particle = zz_particle.second[1];
+      z1_particle = vv_particle_i.second.first[0]; z2_particle = vv_particle_i.second.first[1];
+      l1_particle = vv_particle_i.second.second[0]; l2_particle = vv_particle_i.second.second[1]; l3_particle = vv_particle_i.second.second[2]; l4_particle = vv_particle_i.second.second[3];
     }
+
+  // parton
+
+    if ( found_bb_parton ) {
+      hbb_parton = make_parton_bb( "parton", hbb_parton_i, branchGenParticle ); h_parton = hbb_parton.first; b1_parton = hbb_parton.second.first; b2_parton = hbb_parton.second.second;
+    }
+    if ( found_jj_parton ) {
+      jj_parton = make_parton_jj( "parton", jj_parton_i, branchGenParticle ); j1_parton = jj_parton.first; j2_parton = jj_parton.second;
+    }
+    if ( found_ww_parton ) {
+      ww_parton = make_parton_vv( "parton", vvleps_parton_i, branchGenParticle ); w1_parton = ww_parton.first; w2_parton = ww_parton.second;
+      ll_parton = make_parton_2l( "parton", vvleps_parton_i, branchGenParticle ); l1_parton = ll_parton.first; l2_parton = ll_parton.second;
+    }    
+    if ( found_zz_parton ) {
+      zz_parton = make_parton_vv( "parton", vvleps_parton_i, branchGenParticle ); z1_parton = zz_parton.first; z2_parton = zz_parton.second;
+      llll_parton = make_parton_4l( "parton", vvleps_parton_i, branchGenParticle ); l1_parton = llll_parton.first.first; l2_parton = llll_parton.first.second; l3_parton = llll_parton.second.first; l4_parton = llll_parton.second.second;
+    }
+
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // dump selection info
@@ -626,120 +678,176 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 
     debug_print( debug_bool, " " );
     debug_print( debug_bool, "------------------------------------------------------------------------" );
-    debug_print( debug_bool, "reco selection" );
-    debug_print( debug_bool, "------------------------------------------------------------------------" );
-    debug_print( debug_bool, " " );
-
-    if (found_bb_reco ) {
-      debug_print( debug_bool, " " );
-      debug_print( debug_bool, " reco hbb m: " + to_string( (b1_reco+b2_reco).M() ) + " hbb pT: " +  to_string( (b1_reco+b2_reco).Pt() ) );
-      debug_print( debug_bool, " reco b1 pT: " + to_string( b1_reco.Pt() ) + " b1 eta: " + to_string( b1_reco.Eta() ) + " b1 phi: " + to_string( b1_reco.Phi() ) );
-      debug_print( debug_bool, " reco b2 pT: " + to_string( b2_reco.Pt() ) + " b2 eta: " + to_string( b2_reco.Eta() ) + " b2 phi: " + to_string( b2_reco.Phi() ) );
-    }
-    if (!found_bb_reco) debug_print( debug_bool, " no reco hbb found" );
-    if (found_jj_reco ) {
-      debug_print( debug_bool, " " );
-      debug_print( debug_bool, " reco jj m: " + to_string( (j1_reco+j2_reco).M() ) + " jj pT: " +  to_string( (j1_reco+j2_reco).Pt() ) );
-      debug_print( debug_bool, " reco j1 pT: " + to_string( j1_reco.Pt() ) + " j1 eta: " + to_string( j1_reco.Eta() ) + " j1 phi: " + to_string( j1_reco.Phi() ) );
-      debug_print( debug_bool, " reco j2 pT: " + to_string( j2_reco.Pt() ) + " j2 eta: " + to_string( j2_reco.Eta() ) + " j2 phi: " + to_string( j2_reco.Phi() ) );
-    }
-    if (!found_jj_reco) debug_print( debug_bool, " no reco jj found" );
-    if (found_ww_reco ) {
-      debug_print( debug_bool, " " );
-      debug_print( debug_bool, " reco l1 pT: " + to_string( l1_reco.Pt() ) + " reco l1 eta: " + to_string( l1_reco.Eta() ) + " reco l1 phi: " + to_string( l1_reco.Phi() ) );
-      debug_print( debug_bool, " reco l2 pT: " + to_string( l2_reco.Pt() ) + " reco l2 eta: " + to_string( l2_reco.Eta() ) + " reco l2 phi: " + to_string( l2_reco.Phi() ) );
-      debug_print( debug_bool, " reco w1 pT: " + to_string( w1_reco.M() ) + " reco w1 mT: " + to_string( w1_reco.Mt() ) );
-      debug_print( debug_bool, " reco w2 pT: " + to_string( w2_reco.M() ) + " reco w2 mT: " + to_string( w2_reco.Mt() ) );
-      debug_print( debug_bool, " " );
-    }
-    if (!found_ww_reco) debug_print( debug_bool, " no reco ww found" );
-    if (found_zz_reco ) {
-      debug_print( debug_bool, " " );
-      debug_print( debug_bool, " reco l1 pT: " + to_string( l1_reco.Pt() ) + " reco l1 eta: " + to_string( l1_reco.Eta() ) + " reco l1 phi: " + to_string( l1_reco.Phi() ) );
-      debug_print( debug_bool, " reco l2 pT: " + to_string( l2_reco.Pt() ) + " reco l2 eta: " + to_string( l2_reco.Eta() ) + " reco l2 phi: " + to_string( l2_reco.Phi() ) );
-      debug_print( debug_bool, " reco l3 pT: " + to_string( l3_reco.Pt() ) + " reco l3 eta: " + to_string( l3_reco.Eta() ) + " reco l3 phi: " + to_string( l3_reco.Phi() ) );
-      debug_print( debug_bool, " reco l4 pT: " + to_string( l4_reco.Pt() ) + " reco l4 eta: " + to_string( l4_reco.Eta() ) + " reco l4 phi: " + to_string( l4_reco.Phi() ) );
-      debug_print( debug_bool, " reco z1 pT: " + to_string( z1_reco.Pt() ) + " reco z1 m: " + to_string( z1_reco.M() ) );
-      debug_print( debug_bool, " reco z2 pT: " + to_string( z2_reco.Pt() ) + " reco z2 m: " + to_string( z2_reco.M() ) );
-      debug_print( debug_bool, " " );
-    }
-    if (!found_zz_reco) debug_print( debug_bool, " no reco zz found" );
-
-    debug_print( debug_bool, " " );
-    debug_print( debug_bool, "------------------------------------------------------------------------" );
     debug_print( debug_bool, "particle selection" );
     debug_print( debug_bool, "------------------------------------------------------------------------" );
     debug_print( debug_bool, " " );
 
     if (found_bb_particle ) {
       debug_print( debug_bool, " " );
-      debug_print( debug_bool, " particle hbb m: " + to_string( (b1_particle+b2_particle).M() ) + " hbb pT: " +  to_string( (b1_particle+b2_particle).Pt() ) );
-      debug_print( debug_bool, " particle b1 pT: " + to_string( b1_particle.Pt() ) + " b1 eta: " + to_string( b1_particle.Eta() ) + " b1 phi: " + to_string( b1_particle.Phi() ) );
-      debug_print( debug_bool, " particle b2 pT: " + to_string( b2_particle.Pt() ) + " b2 eta: " + to_string( b2_particle.Eta() ) + " b2 phi: " + to_string( b2_particle.Phi() ) );
+      debug_print( debug_bool_bb, "particle hbb m: " + to_string( (b1_particle+b2_particle).M() ) + " hbb pT: " +  to_string( (b1_particle+b2_particle).Pt() ) );
+      debug_print( debug_bool_bb, "particle b1 pT: " + to_string( b1_particle.Pt() ) + " b1 eta: " + to_string( b1_particle.Eta() ) + " b1 phi: " + to_string( b1_particle.Phi() ) );
+      debug_print( debug_bool_bb, "particle b2 pT: " + to_string( b2_particle.Pt() ) + " b2 eta: " + to_string( b2_particle.Eta() ) + " b2 phi: " + to_string( b2_particle.Phi() ) );
+      debug_print( debug_bool, " " );
     }
-    if (!found_bb_particle) debug_print( debug_bool, " no particle hbb found" );
+    if (!found_bb_particle) debug_print( debug_bool_bb, "no particle hbb found" );
     if (found_jj_particle ) {
       debug_print( debug_bool, " " );
-      debug_print( debug_bool, " particle jj m: " + to_string( (j1_particle+j2_particle).M() ) + " jj pT: " +  to_string( (j1_particle+j2_particle).Pt() ) );
-      debug_print( debug_bool, " particle j1 pT: " + to_string( j1_particle.Pt() ) + " j1 eta: " + to_string( j1_particle.Eta() ) + " j1 phi: " + to_string( j1_particle.Phi() ) );
-      debug_print( debug_bool, " particle j2 pT: " + to_string( j2_particle.Pt() ) + " j2 eta: " + to_string( j2_particle.Eta() ) + " j2 phi: " + to_string( j2_particle.Phi() ) );
+      debug_print( debug_bool_jj, "particle jj m: " + to_string( (j1_particle+j2_particle).M() ) + " jj pT: " +  to_string( (j1_particle+j2_particle).Pt() ) );
+      debug_print( debug_bool_jj, "particle j1 pT: " + to_string( j1_particle.Pt() ) + " j1 eta: " + to_string( j1_particle.Eta() ) + " j1 phi: " + to_string( j1_particle.Phi() ) );
+      debug_print( debug_bool_jj, "particle j2 pT: " + to_string( j2_particle.Pt() ) + " j2 eta: " + to_string( j2_particle.Eta() ) + " j2 phi: " + to_string( j2_particle.Phi() ) );
+      debug_print( debug_bool, " " );
     }
-    if (!found_jj_particle) debug_print( debug_bool, " no particle jj found" );
+    if (!found_jj_particle) debug_print( debug_bool_jj, "no particle jj found" );
     if (found_ww_particle ) {
-      debug_print( debug_bool, " " );
-      debug_print( debug_bool, " particle l1 pT: " + to_string( l1_particle.Pt() ) + " particle l1 eta: " + to_string( l1_particle.Eta() ) + " particle l1 phi: " + to_string( l1_particle.Phi() ) );
-      debug_print( debug_bool, " particle l2 pT: " + to_string( l2_particle.Pt() ) + " particle l2 eta: " + to_string( l2_particle.Eta() ) + " particle l2 phi: " + to_string( l2_particle.Phi() ) );
-      debug_print( debug_bool, " particle w1 pT: " + to_string( w1_particle.Pt() ) + " particle w1 mT: " + to_string( w1_particle.Mt() ) );
-      debug_print( debug_bool, " particle w2 pT: " + to_string( w2_particle.Pt() ) + " particle w2 mT: " + to_string( w2_particle.Mt() ) );
+      debug_print( debug_bool, " " ); 
+      debug_print( debug_bool_vv, "particle et: " + to_string( vv_particle_i.first ) );
+      debug_print( debug_bool_vv, "particle l1 pT: " + to_string( l1_particle.Pt() ) + " particle l1 eta: " + to_string( l1_particle.Eta() ) + " particle l1 phi: " + to_string( l1_particle.Phi() ) );
+      debug_print( debug_bool_vv, "particle l2 pT: " + to_string( l2_particle.Pt() ) + " particle l2 eta: " + to_string( l2_particle.Eta() ) + " particle l2 phi: " + to_string( l2_particle.Phi() ) );
+      debug_print( debug_bool_vv, "particle w1 pT: " + to_string( w1_particle.Pt() ) + " particle w1 mT: " + to_string( w1_particle.Mt() ) );
+      debug_print( debug_bool_vv, "particle w2 pT: " + to_string( w2_particle.Pt() ) + " particle w2 mT: " + to_string( w2_particle.Mt() ) );
       debug_print( debug_bool, " " );
     }
-    if (!found_ww_particle) debug_print( debug_bool, " no particle ww found" );
+    if (!found_ww_particle) debug_print( debug_bool_vv, "no particle ww found" );
     if (found_zz_particle ) {
       debug_print( debug_bool, " " );
-      debug_print( debug_bool, " particle l1 pT: " + to_string( l1_particle.Pt() ) + " particle l1 eta: " + to_string( l1_particle.Eta() ) + " particle l1 phi: " + to_string( l1_particle.Phi() ) );
-      debug_print( debug_bool, " particle l2 pT: " + to_string( l2_particle.Pt() ) + " particle l2 eta: " + to_string( l2_particle.Eta() ) + " particle l2 phi: " + to_string( l2_particle.Phi() ) );
-      debug_print( debug_bool, " particle l3 pT: " + to_string( l3_particle.Pt() ) + " particle l3 eta: " + to_string( l3_particle.Eta() ) + " particle l3 phi: " + to_string( l3_particle.Phi() ) );
-      debug_print( debug_bool, " particle l4 pT: " + to_string( l4_particle.Pt() ) + " particle l4 eta: " + to_string( l4_particle.Eta() ) + " particle l4 phi: " + to_string( l4_particle.Phi() ) );
-      debug_print( debug_bool, " particle z1 pT: " + to_string( z1_particle.Pt() ) + " particle z1 m: " + to_string( z1_particle.M() ) );
-      debug_print( debug_bool, " particle z2 pT: " + to_string( z2_particle.Pt() ) + " particle z2 m: " + to_string( z2_particle.M() ) );
+      debug_print( debug_bool_vv, "particle l1 pT: " + to_string( l1_particle.Pt() ) + " particle l1 eta: " + to_string( l1_particle.Eta() ) + " particle l1 phi: " + to_string( l1_particle.Phi() ) );
+      debug_print( debug_bool_vv, "particle l2 pT: " + to_string( l2_particle.Pt() ) + " particle l2 eta: " + to_string( l2_particle.Eta() ) + " particle l2 phi: " + to_string( l2_particle.Phi() ) );
+      debug_print( debug_bool_vv, "particle l3 pT: " + to_string( l3_particle.Pt() ) + " particle l3 eta: " + to_string( l3_particle.Eta() ) + " particle l3 phi: " + to_string( l3_particle.Phi() ) );
+      debug_print( debug_bool_vv, "particle l4 pT: " + to_string( l4_particle.Pt() ) + " particle l4 eta: " + to_string( l4_particle.Eta() ) + " particle l4 phi: " + to_string( l4_particle.Phi() ) );
+      debug_print( debug_bool_vv, "particle z1 pT: " + to_string( z1_particle.Pt() ) + " particle z1 m: " + to_string( z1_particle.M() ) );
+      debug_print( debug_bool_vv, "particle z2 pT: " + to_string( z2_particle.Pt() ) + " particle z2 m: " + to_string( z2_particle.M() ) );
       debug_print( debug_bool, " " );
     }
-    if (!found_zz_particle) debug_print( debug_bool, " no particle zz found" );
+    if (!found_zz_particle) debug_print( debug_bool_vv, "no particle zz found" );
+
+    debug_print( debug_bool, " " );
+    debug_print( debug_bool, "------------------------------------------------------------------------" );
+    debug_print( debug_bool, "reco selection" );
+    debug_print( debug_bool, "------------------------------------------------------------------------" );
+    debug_print( debug_bool, " " );
+
+    if (found_bb_reco ) {
+      debug_print( debug_bool, " " );
+      debug_print( debug_bool_bb, "reco hbb m: " + to_string( (b1_reco+b2_reco).M() ) + " hbb pT: " +  to_string( (b1_reco+b2_reco).Pt() ) );
+      debug_print( debug_bool_bb, "reco b1 pT: " + to_string( b1_reco.Pt() ) + " b1 eta: " + to_string( b1_reco.Eta() ) + " b1 phi: " + to_string( b1_reco.Phi() ) );
+      debug_print( debug_bool_bb, "reco b2 pT: " + to_string( b2_reco.Pt() ) + " b2 eta: " + to_string( b2_reco.Eta() ) + " b2 phi: " + to_string( b2_reco.Phi() ) );
+      debug_print( debug_bool, " " );
+    }
+    if (!found_bb_reco) debug_print( debug_bool_bb, "no reco hbb found" );
+    if (found_jj_reco ) {
+      debug_print( debug_bool, " " );
+      debug_print( debug_bool_jj, "reco jj m: " + to_string( (j1_reco+j2_reco).M() ) + " jj pT: " +  to_string( (j1_reco+j2_reco).Pt() ) );
+      debug_print( debug_bool_jj, "reco j1 pT: " + to_string( j1_reco.Pt() ) + " j1 eta: " + to_string( j1_reco.Eta() ) + " j1 phi: " + to_string( j1_reco.Phi() ) );
+      debug_print( debug_bool_jj, "reco j2 pT: " + to_string( j2_reco.Pt() ) + " j2 eta: " + to_string( j2_reco.Eta() ) + " j2 phi: " + to_string( j2_reco.Phi() ) );
+      debug_print( debug_bool, " " );
+    }
+    if (!found_jj_reco) debug_print( debug_bool_jj, "no reco jj found" );
+    if (found_ww_reco ) {
+      debug_print( debug_bool, " " );
+      debug_print( debug_bool_vv, "reco et: " + to_string( vv_reco_i.first ) );
+      debug_print( debug_bool_vv, "reco l1 pT: " + to_string( l1_reco.Pt() ) + " reco l1 eta: " + to_string( l1_reco.Eta() ) + " reco l1 phi: " + to_string( l1_reco.Phi() ) );
+      debug_print( debug_bool_vv, "reco l2 pT: " + to_string( l2_reco.Pt() ) + " reco l2 eta: " + to_string( l2_reco.Eta() ) + " reco l2 phi: " + to_string( l2_reco.Phi() ) );
+      debug_print( debug_bool_vv, "reco w1 pT: " + to_string( w1_reco.M() ) + " reco w1 mT: " + to_string( w1_reco.Mt() ) );
+      debug_print( debug_bool_vv, "reco w2 pT: " + to_string( w2_reco.M() ) + " reco w2 mT: " + to_string( w2_reco.Mt() ) );
+      debug_print( debug_bool, " " );
+    }
+    if (!found_ww_reco) debug_print( debug_bool_vv, "no reco ww found" );
+    if (found_zz_reco ) {
+      debug_print( debug_bool, " " );
+      debug_print( debug_bool_vv, "reco l1 pT: " + to_string( l1_reco.Pt() ) + " reco l1 eta: " + to_string( l1_reco.Eta() ) + " reco l1 phi: " + to_string( l1_reco.Phi() ) );
+      debug_print( debug_bool_vv, "reco l2 pT: " + to_string( l2_reco.Pt() ) + " reco l2 eta: " + to_string( l2_reco.Eta() ) + " reco l2 phi: " + to_string( l2_reco.Phi() ) );
+      debug_print( debug_bool_vv, "reco l3 pT: " + to_string( l3_reco.Pt() ) + " reco l3 eta: " + to_string( l3_reco.Eta() ) + " reco l3 phi: " + to_string( l3_reco.Phi() ) );
+      debug_print( debug_bool_vv, "reco l4 pT: " + to_string( l4_reco.Pt() ) + " reco l4 eta: " + to_string( l4_reco.Eta() ) + " reco l4 phi: " + to_string( l4_reco.Phi() ) );
+      debug_print( debug_bool_vv, "reco z1 pT: " + to_string( z1_reco.Pt() ) + " reco z1 m: " + to_string( z1_reco.M() ) );
+      debug_print( debug_bool_vv, "reco z2 pT: " + to_string( z2_reco.Pt() ) + " reco z2 m: " + to_string( z2_reco.M() ) );
+      debug_print( debug_bool, " " );
+    }
+    if (!found_zz_reco) debug_print( debug_bool_vv, "no reco zz found" );
+
 
     debug_print( debug_bool, " " );
     debug_print( debug_bool, "------------------------------------------------------------------------" );
     debug_print( debug_bool, " " );
 
-
-
   }
-
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // fill hists
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    recoET->Fill(vv_reco_i.first, weight);
+    particleET->Fill(vv_particle_i.first, weight);
+    partonET->Fill(vvleps_parton_i.first, weight);
 
     for (const auto& selection : selections) {
 
       enable_cut_reco[ selection ] = true;
       enable_cut_particle[ selection ] = true;
+      enable_cut_parton[ selection ] = true;
 
       for (const auto& cut : cut_sel_process_reco[selection]) {
+        if ( cut == "final - reco" ) continue;
         if ( cft_event_reco[cut].first == 0 ) enable_cut_reco[ selection ] = false;
+      }
+      for (const auto& cut : cut_sel_process_particle[selection]) {
+        if ( cut == "final - particle" ) continue;
         if ( cft_event_particle[cut].first == 0 ) enable_cut_particle[ selection ] = false;
       }
+      for (const auto& cut : cut_sel_process_parton[selection]) {
+        if ( cut == "final - parton" ) continue;
+        if ( cft_event_parton[cut].first == 0 ) enable_cut_parton[ selection ] = false;
+      }
 
-      if ( enable_cut_reco[ selection ] ) sel_hist_map[ selection ].fill_bb( "reco", (b1_reco+b2_reco).Pt(), (b1_reco+b2_reco).M() , delta_eta(b1_reco,b2_reco) , delta_phi(b1_reco,b2_reco) , delta_r(b1_reco,b2_reco) );
-      if ( enable_cut_reco[ selection ] ) sel_hist_map[ selection ].fill_jj( "reco", (j1_reco+j2_reco).Pt(), (j1_reco+j2_reco).M() , delta_eta(j1_reco,j2_reco) , delta_phi(j1_reco,j2_reco) , delta_r(j1_reco,j2_reco) );
-      if ( enable_cut_reco[ selection ] ) sel_hist_map[ selection ].fill_ww( "reco", w1_reco.Pt(), w2_reco.Pt(), w1_reco.Mt(), w2_reco.Mt(), delta_eta(w1_reco,w2_reco) , delta_phi(w1_reco,w2_reco) , delta_r(w1_reco,w2_reco) );
-      if ( enable_cut_reco[ selection ] ) sel_hist_map[ selection ].fill_zz( "reco", z1_reco.Pt(), z2_reco.Pt(), z1_reco.M(), z1_reco.Mt(), delta_eta(z1_reco,z2_reco) , delta_phi(z1_reco,z2_reco) , delta_r(z1_reco,z2_reco) );
+      if ( enable_cut_reco[ selection ] ) update_cft(cft_event_reco, cft_total_reco, "final - reco", weight);
+      if ( enable_cut_particle[ selection ] ) update_cft(cft_event_particle, cft_total_particle, "final - particle", weight);
+      if ( enable_cut_parton[ selection ] ) update_cft(cft_event_parton, cft_total_parton, "final - parton", weight);
 
-      if ( enable_cut_particle[ selection ] ) sel_hist_map[ selection ].fill_bb( "particle", (b1_particle+b2_particle).Pt(), (b1_particle+b2_particle).M() , delta_eta(b1_particle,b2_particle) , delta_phi(b1_particle,b2_particle) , delta_r(b1_particle,b2_particle) );
-      if ( enable_cut_particle[ selection ] ) sel_hist_map[ selection ].fill_jj( "particle", (j1_particle+j2_particle).Pt(), (j1_particle+j2_particle).M() , delta_eta(j1_particle,j2_particle) , delta_phi(j1_particle,j2_particle) , delta_r(j1_particle,j2_particle) );
-      if ( enable_cut_particle[ selection ] ) sel_hist_map[ selection ].fill_ww( "particle", w1_particle.Pt(), w2_particle.Pt(), w1_particle.Mt(), w2_particle.Mt(), delta_eta(w1_particle,w2_particle) , delta_phi(w1_particle,w2_particle) , delta_r(w1_particle,w2_particle) );
-      if ( enable_cut_particle[ selection ] ) sel_hist_map[ selection ].fill_zz( "particle", z1_particle.Pt(), z2_particle.Pt(), z1_particle.M(), z2_particle.M(), delta_eta(z1_particle,z2_particle) , delta_phi(z1_particle,z2_particle) , delta_r(z1_particle,z2_particle) );
+    // 1D
+      if ( enable_cut_reco[ selection ] ) {
+        sel_hist_map[ selection ].fill_bb( "reco", weight, b1_reco, b2_reco );
+        sel_hist_map[ selection ].fill_jj( "reco", weight, j1_reco, j2_reco );
+        sel_hist_map[ selection ].fill_ww( "reco", weight, vv_reco_i.first, w1_reco, w2_reco );
+        sel_hist_map[ selection ].fill_zz( "reco", weight, vv_reco_i.first, z1_reco, z2_reco );
+        sel_hist_map[ selection ].fill_2l( "reco", weight, l1_reco, l2_reco );
+        sel_hist_map[ selection ].fill_4l( "reco", weight, l3_reco, l4_reco );
+      } 
 
+      if ( enable_cut_particle[ selection ] ) {
+        sel_hist_map[ selection ].fill_bb( "particle", weight, b1_particle, b2_particle );
+        sel_hist_map[ selection ].fill_jj( "particle", weight, j1_particle, j2_particle );
+        sel_hist_map[ selection ].fill_ww( "particle", weight, vv_particle_i.first, w1_particle, w2_particle );
+        sel_hist_map[ selection ].fill_zz( "particle", weight, vv_particle_i.first, z1_particle, z2_particle );
+        sel_hist_map[ selection ].fill_2l( "particle", weight, l1_particle, l2_particle );
+        sel_hist_map[ selection ].fill_4l( "particle", weight, l3_particle, l4_particle );
+      } 
+
+      if ( enable_cut_parton[ selection ] ) {
+        sel_hist_map[ selection ].fill_bb( "parton", weight, b1_parton, b2_parton );
+        sel_hist_map[ selection ].fill_jj( "parton", weight, j1_parton, j2_parton );
+        sel_hist_map[ selection ].fill_ww( "parton", weight, vvleps_parton_i.first, w1_parton, w2_parton );
+        sel_hist_map[ selection ].fill_zz( "parton", weight, vvleps_parton_i.first, z1_parton, z2_parton );
+        sel_hist_map[ selection ].fill_2l( "parton", weight, l1_parton, l2_parton );
+        sel_hist_map[ selection ].fill_4l( "parton", weight, l3_parton, l4_parton );
+      } 
+
+    // 2D
+      if ( enable_cut_reco[ selection ] && enable_cut_particle[ selection ] ) {
+        sel_hist_map[ selection ].fill_bb_2D( "reco", "particle", weight, b1_reco, b2_reco, b1_particle, b2_particle );
+        sel_hist_map[ selection ].fill_jj_2D( "reco", "particle", weight, j1_reco, j2_reco, j1_particle, j2_particle );
+        sel_hist_map[ selection ].fill_ww_2D( "reco", "particle", weight, w1_reco, w2_reco, w1_particle, w2_particle );
+        sel_hist_map[ selection ].fill_zz_2D( "reco", "particle", weight, z1_reco, z2_reco, z1_particle, z2_particle );
+        sel_hist_map[ selection ].fill_2l_2D( "reco", "particle", weight, l1_reco, l2_reco, l1_particle, l2_particle );
+        sel_hist_map[ selection ].fill_4l_2D( "reco", "particle", weight, l3_reco, l4_reco, l3_particle, l4_particle );
+      }
+      
+      if ( enable_cut_particle[ selection ] && enable_cut_particle[ selection ] ) {
+        sel_hist_map[ selection ].fill_bb_2D( "particle", "parton", weight, b1_particle, b2_particle, b1_parton, b2_parton );
+        sel_hist_map[ selection ].fill_jj_2D( "particle", "parton", weight, j1_particle, j2_particle, j1_parton, j2_parton );
+        sel_hist_map[ selection ].fill_ww_2D( "particle", "parton", weight, w1_particle, w2_particle, w1_parton, w2_parton );
+        sel_hist_map[ selection ].fill_zz_2D( "particle", "parton", weight, z1_particle, z2_particle, z1_parton, z2_parton );
+        sel_hist_map[ selection ].fill_2l_2D( "particle", "parton", weight, l1_particle, l2_particle, l1_parton, l2_parton );
+        sel_hist_map[ selection ].fill_4l_2D( "particle", "parton", weight, l3_particle, l4_particle, l3_parton, l4_parton );
+      }
 
     }
 
@@ -748,11 +856,12 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   // end of event loop
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
     if( entry % 1000 == 0 ){
       cout<<"Processed "<<entry<< " / " <<numberOfEntries <<" "<< entry/ numberOfEntries *100 <<" %"<<endl;
       PrintCutFlow( cft_total_reco, cut_list_reco, "Reco");
       PrintCutFlow( cft_total_particle, cut_list_particle, "Particle");
-      PrintCutFlow( cutFlowMap_parton, cutList_parton, "Parton");
+      PrintCutFlow( cft_total_parton, cut_list_parton, "Parton");
     }
 
     nPassed+=weight;
@@ -769,6 +878,7 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 
     cft_allevents_reco.push_back(cft_event_reco);
     cft_allevents_particle.push_back(cft_event_particle);
+    cft_allevents_parton.push_back(cft_event_parton);
 
   }
 
@@ -783,7 +893,7 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   cout << "PARTICLE CUT FLOW" << endl;
     PrintCutFlow(cft_total_particle, cut_list_particle, "Particle");
   cout << "PARTON CUT FLOW" << endl;
-    PrintCutFlow(cutFlowMap_parton,cutList_parton, "Parton");
+    PrintCutFlow(cft_total_parton,cut_list_parton, "Parton");
   
   for(std::vector<string>::iterator it=selType.begin(); it!=selType.end(); it++){
     FillCutFlow(cutFlowHists[(*it)],cutFlowEffs[(*it)],*cutFlowMapAll[(*it)],cutFlowMByType[(*it)], (*it));
@@ -795,11 +905,24 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 
   hists->cd();
 
-  for (map <string, histograms>:: iterator hist = sel_hist_map.begin(); hist != sel_hist_map.end(); ++hist) {
-  
-    (*hist).second.write_all_hist( );
+  recoET->Write();
+  particleET->Write();
+  partonET->Write();
 
+  for (map <string, histograms>:: iterator hist = sel_hist_map.begin(); hist != sel_hist_map.end(); ++hist) {
+    (*hist).second.write_all_hist( );
   }
+
+  for(std::vector<TH1F*>::iterator h=listOfTH1.begin(); h!=listOfTH1.end(); h++){
+    ( *h)->Write();
+    delete (*h); 
+  }
+  for(std::vector<TProfile*>::iterator h=listOfTProfiles.begin(); h!=listOfTProfiles.end(); h++){
+    ( *h)->Write();
+    delete (*h); 
+  }
+
+
 
   hists->Close();
 
@@ -810,23 +933,44 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-int main(int argc, char* argv[]){
-
-  const char *input_file = argv[1];
-  const char *output_file = argv[2];
-  const char *process_name = argv[3];
-  const char *debug = argv[4];
-
-  if (argc > 4 && strcmp(argv[4], "--debug") == 0) {
-
-    debug_bool = true;
-    cout << " running in debug mode " << endl;
-
-  }
+int main(int argc, char* argv[]) {
   
-  zAnalyzer(input_file, output_file, process_name, debug);
+    const char *input_file = argv[1];
+    const char *output_file = argv[2];
+    const char *process_name = argv[3];
 
-  return 0;
+    for (int i = 4; i < argc; ++i) {
+        if (strcmp(argv[i], "--debugbb") == 0) {
+            debug_bool = true;
+            debug_bool_bb = true;
+            cout << " running in bb debug mode " << endl;
+        } else if (strcmp(argv[i], "--debugjj") == 0) {
+            debug_bool = true;
+            debug_bool_jj = true;
+            cout << " running in jj debug mode " << endl;
+        } else if (strcmp(argv[i], "--debugvv") == 0) {
+            debug_bool = true;
+            debug_bool_vv = true;
+            cout << " running in vv debug mode " << endl;
+        } else if (strcmp(argv[i], "--debug") == 0) {
+            debug_bool = true;
+            debug_bool_bb = true;
+            debug_bool_jj = true;
+            debug_bool_vv = true;
+            cout << " running in debug mode " << endl;
+        } else if (strcmp(argv[i], "--dumpgen") == 0) {
+            dumpgen = true;
+            cout << " dumping gen event record " << endl;
+        } 
+        // else if (strcmp(argv[i], "--dumpreco") == 0) {
+        //     dumpreco = true;
+        //     cout << " dumping reco event record " << endl;
+        // }
+    }
+
+    zAnalyzer(input_file, output_file, process_name, debug_bool);
+
+    return 0;
 }
 
 
@@ -847,6 +991,43 @@ int main(int argc, char* argv[]){
 // STUFF I AM AFRAID TO DELETE PERMANENTLY
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/*
+      if ( enable_cut_reco[ selection ] ) {
+        if (selection == "HWWJJ") {
+          sel_hist_map[ selection ].fill_bb( "reco", (b1_reco+b2_reco).Pt(), (b1_reco+b2_reco).M() , delta_eta(b1_reco,b2_reco) , delta_phi(b1_reco,b2_reco) , delta_r(b1_reco,b2_reco) );
+          sel_hist_map[ selection ].fill_jj( "reco", (j1_reco+j2_reco).Pt(), (j1_reco+j2_reco).M() , delta_eta(j1_reco,j2_reco) , delta_phi(j1_reco,j2_reco) , delta_r(j1_reco,j2_reco) );
+          sel_hist_map[ selection ].fill_ww( "reco", w1_reco.Pt(), w2_reco.Pt(), w1_reco.Mt(), w2_reco.Mt(), delta_eta(w1_reco,w2_reco) , delta_phi(w1_reco,w2_reco) , delta_r(w1_reco,w2_reco) );
+        } else if (selection == "WWJJ") {
+          sel_hist_map[ selection ].fill_jj( "reco", (j1_reco+j2_reco).Pt(), (j1_reco+j2_reco).M() , delta_eta(j1_reco,j2_reco) , delta_phi(j1_reco,j2_reco) , delta_r(j1_reco,j2_reco) );
+          sel_hist_map[ selection ].fill_ww( "reco", w1_reco.Pt(), w2_reco.Pt(), w1_reco.Mt(), w2_reco.Mt(), delta_eta(w1_reco,w2_reco) , delta_phi(w1_reco,w2_reco) , delta_r(w1_reco,w2_reco) );
+        }
+      }
+
+      if ( enable_cut_particle[ selection ] ) {
+        if (selection == "HWWJJ") {
+          sel_hist_map[ selection ].fill_bb( "particle", (b1_particle+b2_particle).Pt(), (b1_particle+b2_particle).M() , delta_eta(b1_particle,b2_particle) , delta_phi(b1_particle,b2_particle) , delta_r(b1_particle,b2_particle) );
+          sel_hist_map[ selection ].fill_jj( "particle", (j1_particle+j2_particle).Pt(), (j1_particle+j2_particle).M() , delta_eta(j1_particle,j2_particle) , delta_phi(j1_particle,j2_particle) , delta_r(j1_particle,j2_particle) );
+          sel_hist_map[ selection ].fill_ww( "particle", w1_particle.Pt(), w2_particle.Pt(), w1_particle.Mt(), w2_particle.Mt(), delta_eta(w1_particle,w2_particle) , delta_phi(w1_particle,w2_particle) , delta_r(w1_particle,w2_particle) );
+        } else if (selection == "WWJJ") {
+          sel_hist_map[ selection ].fill_jj( "particle", (j1_particle+j2_particle).Pt(), (j1_particle+j2_particle).M() , delta_eta(j1_particle,j2_particle) , delta_phi(j1_particle,j2_particle) , delta_r(j1_particle,j2_particle) );
+          sel_hist_map[ selection ].fill_ww( "particle", w1_particle.Pt(), w2_particle.Pt(), w1_particle.Mt(), w2_particle.Mt(), delta_eta(w1_particle,w2_particle) , delta_phi(w1_particle,w2_particle) , delta_r(w1_particle,w2_particle) );
+        }
+      }
+
+      if ( enable_cut_parton[ selection ] ) {
+        if (selection == "HWWJJ") {
+          sel_hist_map[ selection ].fill_bb( "parton", (b1_parton+b2_parton).Pt(), (b1_parton+b2_parton).M() , delta_eta(b1_parton,b2_parton) , delta_phi(b1_parton,b2_parton) , delta_r(b1_parton,b2_parton) );
+          sel_hist_map[ selection ].fill_jj( "parton", (j1_parton+j2_parton).Pt(), (j1_parton+j2_parton).M() , delta_eta(j1_parton,j2_parton) , delta_phi(j1_parton,j2_parton) , delta_r(j1_parton,j2_parton) );
+          // sel_hist_map[ selection ].fill_ww( "parton", w1_parton.Pt(), w2_parton.Pt(), w1_parton.Mt(), w2_parton.Mt(), delta_eta(w1_parton,w2_parton) , delta_phi(w1_parton,w2_parton) , delta_r(w1_parton,w2_parton) );
+        } else if (selection == "WWJJ") {
+          sel_hist_map[ selection ].fill_jj( "parton", (j1_parton+j2_parton).Pt(), (j1_parton+j2_parton).M() , delta_eta(j1_parton,j2_parton) , delta_phi(j1_parton,j2_parton) , delta_r(j1_parton,j2_parton) );
+          // sel_hist_map[ selection ].fill_ww( "parton", w1_parton.Pt(), w2_parton.Pt(), w1_parton.Mt(), w2_parton.Mt(), delta_eta(w1_parton,w2_parton) , delta_phi(w1_parton,w2_parton) , delta_r(w1_parton,w2_parton) );
+        }
+      }
+*/
+
+
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------

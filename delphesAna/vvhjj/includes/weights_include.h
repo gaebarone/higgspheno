@@ -10,7 +10,7 @@ Long64_t get_num_entries(const char *inputName) {
 }
 
 Long64_t get_total_num_entries(const char *process_name) {
-  std::string inputFileName = std::string(process_name) + "_inputs.txt";
+  std::string inputFileName = "jobs/inputs/" + std::string(process_name) + "_inputs.txt";
   std::ifstream inputFile(inputFileName.c_str());
   if(inputFile.fail()){
     cout<<" File "<<inputFileName<<" does not exist returing -1 total num entries"<<endl;
@@ -26,10 +26,10 @@ Long64_t get_total_num_entries(const char *process_name) {
 }
 
 Long64_t get_total_events(const char *process_name) {
-  std::string inputFileName = std::string(process_name) + "_inputs.txt";
+  std::string inputFileName = "jobs/inputs/" + std::string(process_name) + "_inputs.txt";
   std::ifstream inputFile(inputFileName.c_str());
   if(inputFile.fail()){
-    cout<<" File "<<inputFileName<<" does not exist returing -1 total events"<<endl;
+    cout<<" file "<<inputFileName<<" does not exist returing -1 total events"<<endl;
     return -1;
   }
   std::string line;
