@@ -5,7 +5,7 @@
 #include "TClonesArray.h"
 #include "classes/DelphesClasses.h"
 //#endif
-#include "inEllipse.h"
+#include "../../common_includes/inEllipse.h"
 #include "TRandom.h"
 #include "TRandom3.h"
 #include <iostream>

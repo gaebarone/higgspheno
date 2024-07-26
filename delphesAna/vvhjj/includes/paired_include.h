@@ -492,7 +492,7 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   if (_floatVars["label_bb"] == 0 && _floatVars["label_cc"] == 0)
     _floatVars["label_ll"] = 1;
 
-  _floatVars["isbtagged"] = isMyPAIReDBTag(_floatVars["label_bb"] > 0, _floatVars["label_cc"] > 0, _floatVars["label_ll"] > 0, 0, 0.6, 0.02) ? 1.0 : 0.0;
+  _floatVars["isbtagged"] = isMyPAIReDBTag(_floatVars["label_bb"] > 0, _floatVars["label_cc"] > 0, _floatVars["label_ll"] > 0, 0, 0.8, 0.02) ? 1.0 : 0.0;
 
   return std::make_pair(_floatVars,_arrayVars);  
 }
