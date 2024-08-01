@@ -17,16 +17,16 @@
 
 
 bool ghost_btagging(TClonesArray *branchGenParticle, Jet *jet, double jet_radius = 0.4) {
-                                                                                                                                        
+                                                                                                                                      
   for(int i=0; i<((TClonesArray*)branchGenParticle)->GetEntries(); i++){
-
+ 
     GenParticle *particle=(GenParticle*) branchGenParticle->At(i);
 
     if (jet->P4().DeltaR(particle->P4()) > jet_radius) continue;                                                                                                                                                        
     if (Rivet::PID::hasBottom(particle->PID)) return true;
                                                                                                                                                                                                   
   }           
-
+   
   return false;
 
 }
@@ -52,7 +52,7 @@ bool is_my_b_tag(Jet *jet, TClonesArray *branchGenParticle = nullptr, int seed =
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-vector <int> get_all_jets( string analysis_type = "reco", vector<int> true_leps = {0}, TClonesArray *branchJet = nullptr, TClonesArray *branchGenParticle = nullptr , TClonesArray *branchElectron = nullptr , TClonesArray *branchMuon = nullptr, double j_pT_min = 20 , bool debug_bool = false ) {
+vector <int> get_all_jets( string analysis_type = "reco", vector<int> true_leps = {0}, TClonesArray *branchJet = nullptr, TClonesArray *branchGenParticle = nullptr , TClonesArray *branchElectron = nullptr , TClonesArray *branchMuon = nullptr, double j_pT_min = 20, double j_eta_max = 5, bool debug_bool = false ) {
 
     vector <int> all_jet_indices, skimmed_jet_indices;
 
@@ -62,11 +62,12 @@ vector <int> get_all_jets( string analysis_type = "reco", vector<int> true_leps 
 
             Jet *genjet = (Jet*) branchJet->At(i);
 
-            if( genjet->PT > j_pT_min ) all_jet_indices.push_back(i);
+            if( genjet->PT > j_pT_min &&  genjet->Eta < j_eta_max ) all_jet_indices.push_back(i); 
 
         }
 
         skimmed_jet_indices = rm_jetlep_overlap( analysis_type, all_jet_indices, true_leps, branchJet, branchGenParticle );
+        // skimmed_jet_indices = all_jet_indices; // no overlap removal
     
     } 
 
@@ -228,7 +229,7 @@ pair< TLorentzVector, TLorentzVector> make_bb( string analysis_type = "reco",  v
 
 
 // returns vec containing vbf jet candidates
-pair<int, int> get_jj( string analysis_type = "reco", vector<int> jets = {0}, TClonesArray *branchJet = nullptr, TClonesArray *branchGenParticle = nullptr ) {
+pair<int, int> get_jj( string analysis_type = "reco", vector<int> jets = {0}, TClonesArray *branchJet = nullptr ) {
 
     double deta_max = 0.0;
 
@@ -260,18 +261,29 @@ pair<int, int> get_jj( string analysis_type = "reco", vector<int> jets = {0}, TC
 
         }
 
+    }
+
+    return vbf_pair;
+
+}
+
+
+bool is_jj_bb( pair<int, int> vbf_pair, TClonesArray *branchJet, TClonesArray *branchGenParticle ) {
+
+        bool jj_bb = false;
+
+        double efficiency = 0.87; double fake_rate = 0.01;
+
         // to suppress ttHbb
         if ( vbf_pair.first != -1 && vbf_pair.second != -1 ) {
 
             Jet* j1 = (Jet*)branchJet->At( vbf_pair.first ); Jet* j2 = (Jet*)branchJet->At( vbf_pair.second );
             
-            if ( is_my_b_tag( j1, branchGenParticle, 0, 0.4, 0.87, 0.01) && is_my_b_tag( j2, branchGenParticle, 0, 0.4, 0.87, 0.01) ) vbf_pair = make_pair( -1, -1 ) ;
+            if ( is_my_b_tag( j1, branchGenParticle, 0, 0.4, efficiency, fake_rate) && is_my_b_tag( j2, branchGenParticle, 0, 0.4, efficiency, fake_rate) ) jj_bb = true ;
 
         }
 
-    }
-
-    return vbf_pair;
+    return jj_bb;
 
 }
 

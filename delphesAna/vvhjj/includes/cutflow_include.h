@@ -13,25 +13,26 @@ std::map<std::string, std::vector<string> > cut_sel_process_parton;
 
 void DefineSelections(){
 
-    cut_sel_process_reco["all"]={"initial - reco", "lep pT > 15 && lep eta < 2.5 - reco", "no bb vbf && detajj > 2.5 - reco", "2 passing leps - reco", "4 passing leps - reco", "jet pT > 20 - reco", "mll > 10 - reco", "found bb - reco", "found jj - reco", "found ww - reco", "found zz - reco", "final - reco"};
-    cut_sel_process_particle["all"]={"initial - particle", "lep pT > 15 && lep eta < 2.5 - particle", "no bb vbf && detajj > 2.5 - particle", "2 passing leps - particle", "4 passing leps - particle", "jet pT > 20 - particle", "mll > 10 - particle", "found bb - particle", "found jj - particle", "found ww - particle", "found zz - particle", "final - particle"};
-    cut_sel_process_parton["all"]={"initial - parton", "found bb - parton", "found jj - parton", "found ww - parton", "found zz - parton", "final - parton"};
+    cut_sel_process_reco["all"]={"initial - reco", "pT_j > 20 && eta_j < 5 - reco", "absdetajj > 2.5 - reco", "no bb vbfj - reco", "found jj - reco", "found bb - reco", "no bb veto - reco", "pT_l > 15 && eta_l < 2.5 - reco", "2 passing leps - reco", "4 passing leps - reco", "mll > 10 - reco", "2l OS - reco", "4l OS - reco", "met > 20 - reco", "found ww - reco", "found zz - reco",  "final wwhjj - reco",  "final zzhjj - reco"};
+    cut_sel_process_particle["all"]={"initial - particle", "pT_j > 20 && eta_j < 5 - particle", "absdetajj > 2.5 - particle", "no bb vbfj - particle", "found jj - particle", "found bb - particle", "no bb veto - particle", "pT_l > 15 && eta_l < 2.5 - particle", "2 passing leps - particle", "4 passing leps - particle", "mll > 10 - particle", "2l OS - particle", "4l OS - particle", "met > 20 - particle", "found ww - particle", "found zz - particle",  "final wwhjj - particle",  "final zzhjj - particle"};
+    cut_sel_process_parton["all"]={"initial - parton", "found bb - parton", "found jj - parton", "found ww - parton", "found zz - parton", "final wwhjj - parton",  "final zzhjj - parton"};
 
-    cut_sel_process_reco["wwhjj"]={"initial - reco", "lep pT > 15 && lep eta < 2.5 - reco", "no bb vbf && detajj > 2.5 - reco", "2 passing leps - reco", "jet pT > 20 - reco", "mll > 10 - reco", "found bb - reco", "found jj - reco", "found ww - reco", "final - reco"};
-    cut_sel_process_particle["wwhjj"]={"initial - particle", "lep pT > 15 && lep eta < 2.5 - particle", "no bb vbf && detajj > 2.5 - particle", "2 passing leps - particle", "jet pT > 20 - particle", "mll > 10 - particle", "found bb - particle", "found jj - particle", "found ww - particle", "final - particle"};
-    cut_sel_process_parton["wwhjj"]={"initial - parton", "found bb - parton", "found jj - parton", "found ww - parton", "final - parton"};
+    cut_sel_process_reco["wwhjj"]={"initial - reco", "pT_j > 20 && eta_j < 5 - reco", "absdetajj > 2.5 - reco", "no bb vbfj - reco", "found jj - reco", "found bb - reco", "no bb veto - reco", "pT_l > 15 && eta_l < 2.5 - reco", "2 passing leps - reco", "mll > 10 - reco", "2l OS - reco", "met > 20 - reco", "found ww - reco",  "final wwhjj - reco"};
+    cut_sel_process_particle["wwhjj"]={"initial - particle", "pT_j > 20 && eta_j < 5 - particle", "absdetajj > 2.5 - particle", "no bb vbfj - particle", "found jj - particle", "found bb - particle", "no bb veto - particle", "pT_l > 15 && eta_l < 2.5 - particle", "2 passing leps - particle", "mll > 10 - particle", "2l OS - particle", "met > 20 - particle", "found ww - particle",  "final wwhjj - particle"};
+    cut_sel_process_parton["wwhjj"]={"initial - parton", "found bb - parton", "found jj - parton", "found ww - parton", "final wwhjj - parton"};
 
-    cut_sel_process_reco["zzhjj"]={"initial - reco", "lep pT > 15 && lep eta < 2.5 - reco", "no bb vbf && detajj > 2.5 - reco", "4 passing leps - reco", "jet pT > 20 - reco", "found bb - reco", "found jj - reco", "found zz - reco", "final - reco"};
-    cut_sel_process_particle["zzhjj"]={"initial - particle", "lep pT > 15 && lep eta < 2.5 - particle", "no bb vbf && detajj > 2.5 - particle", "4 passing leps - particle", "jet pT > 20 - particle", "found bb - particle", "found jj - particle", "found zz - particle", "final - particle"};
-    cut_sel_process_parton["zzhjj"]={"initial - parton", "found bb - parton", "found jj - parton", "found zz - parton", "final - parton"};
+    cut_sel_process_reco["zzhjj"]={"initial - reco", "pT_j > 20 && eta_j < 5 - reco", "absdetajj > 2.5 - reco", "no bb vbfj - reco", "found jj - reco", "found bb - reco", "no bb veto - reco", "pT_l > 15 && eta_l < 2.5 - reco", "4 passing leps - reco", "mll > 10 - reco", "4l OS - reco", "found zz - reco",  "final zzhjj - reco"};
+    cut_sel_process_particle["zzhjj"]={"initial - particle", "pT_j > 20 && eta_j < 5 - particle", "absdetajj > 2.5 - particle", "no bb vbfj - particle", "found jj - particle", "found bb - particle", "no bb veto - particle", "pT_l > 15 && eta_l < 2.5 - particle", "4 passing leps - particle", "mll > 10 - particle", "4l OS - particle", "found bb - particle", "found jj - particle", "found zz - particle",  "final zzhjj - particle"};
+    cut_sel_process_parton["zzhjj"]={"initial - parton", "found bb - parton", "found jj - parton", "found zz - parton", "final zzhjj - parton"};
 
-    cut_sel_process_reco["wwjj"]={"initial - reco", "lep pT > 15 && lep eta < 2.5 - reco", "no bb vbf && detajj > 2.5 - reco", "2 passing leps - reco", "jet pT > 20 - reco", "mll > 10 -reco", "found jj - reco", "found ww - reco", "final - reco"};
-    cut_sel_process_particle["wwjj"]={"initial - particle", "lep pT > 15 && lep eta < 2.5 - particle", "no bb vbf && detajj > 2.5 - particle", "2 passing leps - particle", "jet pT > 20 - particle", "mll > 10 - particle", "found jj - particle", "found ww - particle", "final - particle"};
-    cut_sel_process_parton["wwjj"]={"initial - parton", "found jj - parton", "found ww - parton", "final - parton"};
+    // cut_sel_process_reco["wwjj"]={"initial - reco", "lep pT > 15 && lep eta < 2.5 - reco", "detajj > 2.5 - reco", "no bb vbfj - reco", "2 passing leps - reco", "jet pT > 20 - reco", "mll > 10 -reco", "met > 15 - reco"}; //, "found jj - reco", "found ww - reco"};
+    // cut_sel_process_particle["wwjj"]={"initial - particle", "lep pT > 15 && lep eta < 2.5 - particle", "detajj > 2.5 - particle", "no bb vbfj - particle", "2 passing leps - particle", "jet pT > 20 - particle", "mll > 10 - particle", "met > 15 - particle"}; //, "found jj - particle", "found ww - particle"};
+    // cut_sel_process_parton["wwjj"]={"initial - parton", "found jj - parton", "found ww - parton", "final - parton"};
 
-    cut_sel_process_reco["zzjj"]={"initial - reco", "lep pT > 15 && lep eta < 2.5 - reco", "no bb vbf && detajj > 2.5 - reco", "4 passing leps - reco", "jet pT > 20 - reco", "found jj - reco", "found zz - reco", "final - reco"};
-    cut_sel_process_particle["zzjj"]={"initial - particle", "lep pT > 15 && lep eta < 2.5 - particle", "no bb vbf && detajj > 2.5 - particle", "4 passing leps - particle", "jet pT > 20 - particle", "found jj - particle", "found zz - particle", "final - particle"};
-    cut_sel_process_parton["zzjj"]={"initial - parton", "found jj - parton", "found zz - parton", "final - parton"};
+    // cut_sel_process_reco["zzjj"]={"initial - reco", "lep pT > 15 && lep eta < 2.5 - reco", "detajj > 2.5 - reco", "no bb vbfj - reco", "4 passing leps - reco", "jet pT > 20 - reco"}; //, "found jj - reco", "found zz - reco"};
+    // cut_sel_process_particle["zzjj"]={"initial - particle", "lep pT > 15 && lep eta < 2.5 - particle", "detajj > 2.5 - particle", "no bb vbfj - particle", "4 passing leps - particle", "jet pT > 20 - particle"}; //, "found jj - particle", "found zz - particle"};
+    // cut_sel_process_parton["zzjj"]={"initial - parton", "found jj - parton", "found zz - parton", "final - parton"};
+    
 }
 
 

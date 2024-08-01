@@ -371,7 +371,7 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 
   string analysis_type;
 
-  double jet_pT = 20.0;                        // cuts
+  double jet_pT = 20.0; double jet_eta = 5.0;  // cuts
   double lep_pT = 15.0; double lep_eta = 2.5;  // cuts
 
   // reco
@@ -477,46 +477,61 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     muminus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "muon", -1, debug_bool );
     muplus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "muon", 1, debug_bool );
     concatenate_indices( e_particle, eminus_particle); concatenate_indices(e_particle, eplus_particle); concatenate_indices(mu_particle, muminus_particle); concatenate_indices(mu_particle, muplus_particle); 
+    concatenate_indices( all_leps_particle, e_particle ); concatenate_indices( all_leps_particle, mu_particle );
 
-    jet_e_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, e_particle, lep_pT, lep_eta, "electron", 0, debug_bool ); 
-    jet_mu_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, mu_particle, lep_pT, lep_eta, "muon", 0, debug_bool ); 
-    //jet_eminus_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, eminus_particle, lep_pT, lep_eta, "electron", -1, debug_bool ); jet_eplus_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, eplus_particle, lep_pT, lep_eta, "electron", 1, debug_bool ); 
-    //jet_muminus_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, muminus_particle, lep_pT, lep_eta, "muon", -1, debug_bool );  jet_muplus_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, muplus_particle, lep_pT, lep_eta, "muon", 1, debug_bool ); 
-    //concatenate_indices( jet_e_particle, jet_eminus_particle ); concatenate_indices( jet_e_particle, jet_eplus_particle ); concatenate_indices( jet_mu_particle, jet_muminus_particle ); concatenate_indices( jet_mu_particle, jet_muplus_particle ); 
-  
-    concatenate_indices( all_leps_particle, e_particle ); concatenate_indices( all_leps_particle, mu_particle ); concatenate_indices( all_leps_particle, jet_e_particle ); concatenate_indices( all_leps_particle, jet_mu_particle );
+    // jet_e_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, e_particle, lep_pT, lep_eta, "electron", 0, debug_bool ); 
+    // jet_mu_particle = get_jet_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, leps_parton, mu_particle, lep_pT, lep_eta, "muon", 0, debug_bool ); 
+    // concatenate_indices( all_leps_particle, jet_e_particle ); concatenate_indices( all_leps_particle, jet_mu_particle );
 
-    if ( all_leps_particle.size() > 0 ) update_cft(cft_event_particle, cft_total_particle,  "lep pT > 15 && lep eta < 2.5 - particle", weight); if ( all_leps_particle.size() >= 2 ) update_cft(cft_event_particle, cft_total_particle,  "2 passing leps - particle", weight); if (  all_leps_particle.size() >= 4 ) update_cft(cft_event_particle, cft_total_particle, "4 passing leps - particle", weight);
- 
-    jets_particle = get_all_jets( "particle", leps_parton, branchGenJet, branchGenParticle, branchGenParticle, branchGenParticle, jet_pT , debug_bool );
-    if ( jets_particle.size()>0 ) update_cft(cft_event_particle, cft_total_particle,  "jet pT > 20 - particle", weight);
+    if ( all_leps_particle.size() > 0 ) update_cft(cft_event_particle, cft_total_particle,  "pT_l > 15 && eta_l < 2.5 - particle", weight); 
+    if ( all_leps_particle.size() >= 2 ) update_cft(cft_event_particle, cft_total_particle,  "2 passing leps - particle", weight); if (  all_leps_particle.size() >= 4 ) update_cft(cft_event_particle, cft_total_particle, "4 passing leps - particle", weight);
+    if ( all_leps_particle.size() >= 2 && (eminus_particle.size() + muminus_particle.size()) > 0 && (eplus_particle.size() + muplus_particle.size()) > 0 ) update_cft(cft_event_particle, cft_total_particle,  "2l OS - particle", weight);
+    if ( all_leps_particle.size() >= 4 && (eminus_particle.size() + muminus_particle.size()) > 1 && (eplus_particle.size() + muplus_particle.size()) > 1 ) update_cft(cft_event_particle, cft_total_particle,  "4l OS - particle", weight);
+
+    jets_particle = get_all_jets( "particle", leps_parton, branchGenJet, branchGenParticle, branchGenParticle, branchGenParticle, jet_pT, jet_eta, debug_bool );
+    if ( jets_particle.size()>0 ) update_cft(cft_event_particle, cft_total_particle,  "pT_j > 20 && eta_j < 5 - particle", weight);
 
     nleps_particle = all_leps_particle.size();
     njets_particle = jets_particle.size();
 
   debug_print( debug_bool, " " );
-  debug_print( debug_bool, analysis_type + " num leps: " + to_string( nleps_particle ) + " ( # e- " + to_string( eminus_particle.size() ) + " # e+ " + to_string( eplus_particle.size() ) + " # mu- " + to_string( muminus_particle.size() ) + " # mu+ " + to_string( muplus_particle.size() ) + " # je- " + to_string( jet_eminus_particle.size() ) + " # je+ " + to_string( jet_eplus_particle.size() ) + " # jmu- " + to_string( jet_muminus_particle.size() ) + " # jmu+ " + to_string( jet_muplus_particle.size() ) + " ) " );
+  debug_print( debug_bool, analysis_type + " num leps: " + to_string( nleps_particle ) + " ( # e- " + to_string( eminus_particle.size() ) + " # e+ " + to_string( eplus_particle.size() ) + " # mu- " + to_string( muminus_particle.size() ) + " # mu+ " + to_string( muplus_particle.size() ) + " ) " ); //  + " # je- " + to_string( jet_eminus_particle.size() ) + " # je+ " + to_string( jet_eplus_particle.size() ) + " # jmu- " + to_string( jet_muminus_particle.size() ) + " # jmu+ " + to_string( jet_muplus_particle.size() ) + " ) " );
   debug_print( debug_bool, "number of particle jets: " + to_string(njets_particle) );
   debug_print( debug_bool, " " );
 
   // get
-    jj_particle_i = get_jj( "particle", jets_particle, branchGenJet, branchGenParticle ); if ( jj_particle_i.first != -1 && jj_particle_i.second != -1 ) update_cft(cft_event_particle, cft_total_particle, "no bb vbf && detajj > 2.5 - particle", weight);
-    if ( njets_particle >= 4 ) bb_particle_i = get_bb( "particle", jj_particle_i, branchGenJet, branchGenParticle, branchPFCand );
-    
-    if ( jj_particle_i.first != -1 && jj_particle_i.second != -1 )  found_jj_particle = true;
-    if ( bb_particle_i.size() >= 2 ) found_bb_particle = true;
+
+    jj_particle_i = get_jj( "particle", jets_particle, branchGenJet ); 
+
+    if ( jj_particle_i.first != -1 && jj_particle_i.second != -1 ) {
+      update_cft(cft_event_particle, cft_total_particle, "absdetajj > 2.5 - particle", weight);
+      if ( !is_jj_bb( jj_particle_i, branchGenJet, branchGenParticle ) ) {
+        update_cft(cft_event_particle, cft_total_particle, "no bb vbfj - particle", weight);
+        found_jj_particle = true;
+      }
+    }
+  
+    if ( njets_particle >= 4 )   bb_particle_i = get_bb( "particle", jj_particle_i, branchGenJet, branchGenParticle, branchPFCand );
+
+    if ( bb_particle_i.size() >=1 ) found_bb_particle = true;
+
+    if ( jj_particle_i.first != -1 && jj_particle_i.second != -1 && bb_particle_i.size() >=1 ) {
+      if ( jj_particle_i.first == bb_particle_i.at(0).first["jet1_index"] || jj_particle_i.second == bb_particle_i.at(0).first["jet1_index"] || jj_particle_i.first ==  bb_particle_i.at(0).first["jet2_index"] || jj_particle_i.second ==  bb_particle_i.at(0).first["jet2_index"]) {
+        found_bb_particle = false;
+      } else {
+        found_bb_particle = true;
+        update_cft(cft_event_particle, cft_total_particle, "no bb veto - particle", weight);
+      }    
+    }
 
     if ( nleps_particle < 4 ) {
 
-      vv_particle_i = get_vv_leptonic( "particle", "w", e_particle, mu_particle, jet_e_particle, jet_mu_particle, branchGenParticle, branchGenParticle, branchGenJet, branchMissingET);
-      if ( vv_particle_i.first != -1 ) {
-        found_ww_particle = true;
-        update_cft(cft_event_particle, cft_total_particle, "mll > 10 - particle", weight);
-      }
-
+      vv_particle_i = get_vv_leptonic( "particle", "w", e_particle, mu_particle, jet_e_particle, jet_mu_particle, branchGenParticle, branchGenParticle, branchGenJet, branchGenMissingET);
+      if ( vv_particle_i.first != -1 ) found_ww_particle = true;
+ 
     } else if ( nleps_particle >= 4 ) {
 
-      vv_particle_i = get_vv_leptonic( "particle", "z", e_particle, mu_particle, jet_e_particle, jet_mu_particle, branchGenParticle, branchGenParticle, branchGenJet, branchMissingET);
+      vv_particle_i = get_vv_leptonic( "particle", "z", e_particle, mu_particle, jet_e_particle, jet_mu_particle, branchGenParticle, branchGenParticle, branchGenJet, branchGenMissingET);
       if ( vv_particle_i.first != -1 ) found_zz_particle = true;
 
     }
@@ -536,51 +551,74 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 
     // all leps and jets
 
-    eminus_reco = get_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, lep_pT , lep_eta, "electron", -1, debug_bool );
-    eplus_reco = get_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, lep_pT , lep_eta, "electron", 1, debug_bool );
-    muminus_reco = get_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, lep_pT , lep_eta, "muon", -1, debug_bool );
-    muplus_reco = get_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, lep_pT , lep_eta, "muon", 1, debug_bool );
+    // eminus_reco = get_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, lep_pT , lep_eta, "electron", -1, debug_bool );
+    // eplus_reco = get_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, lep_pT , lep_eta, "electron", 1, debug_bool );
+    // muminus_reco = get_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, lep_pT , lep_eta, "muon", -1, debug_bool );
+    // muplus_reco = get_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, lep_pT , lep_eta, "muon", 1, debug_bool );
+    
+    eminus_reco = apply_efficiency( eminus_particle, branchGenParticle, debug_bool );
+    eplus_reco = apply_efficiency( eplus_particle, branchGenParticle, debug_bool );
+    muminus_reco = apply_efficiency( muminus_particle, branchGenParticle, debug_bool );
+    muplus_reco = apply_efficiency( muplus_particle, branchGenParticle, debug_bool );
+
     concatenate_indices( e_reco, eminus_reco ); concatenate_indices( e_reco, eplus_reco ); concatenate_indices( mu_reco, muminus_reco ); concatenate_indices( mu_reco, muplus_reco );  
+    concatenate_indices( all_leps_reco, e_reco ); concatenate_indices( all_leps_reco, mu_reco );
 
-    jet_e_reco = get_jet_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, leps_parton, e_reco, lep_pT, lep_eta, "electron", 0, debug_bool ); 
-    jet_mu_reco = get_jet_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, leps_parton, mu_reco, lep_pT, lep_eta, "muon", 0, debug_bool ); 
-    // jet_eminus_reco = get_jet_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, leps_parton, eminus_reco, lep_pT , lep_eta, "electron", -1, debug_bool ); jet_eplus_reco = get_jet_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, leps_parton, eplus_reco, lep_pT , lep_eta, "electron", 1, debug_bool );
-    // jet_muminus_reco = get_jet_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, leps_parton, muminus_reco, lep_pT , lep_eta, "muon", -1, debug_bool ); jet_muplus_reco = get_jet_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, leps_parton, muplus_reco, lep_pT , lep_eta, "muon", 1, debug_bool );
-    // concatenate_indices( jet_e_reco, jet_eminus_reco ); concatenate_indices( jet_e_reco, jet_eplus_reco ); concatenate_indices( jet_mu_reco, jet_muminus_reco ); concatenate_indices( jet_mu_reco, jet_muplus_reco ); 
+    // jet_e_reco = get_jet_leptons( analysis_type, branchElectron, branchGenParticle, branchJet, leps_parton, e_reco, lep_pT, lep_eta, "electron", 0, debug_bool ); 
+    // jet_mu_reco = get_jet_leptons( analysis_type, branchMuon, branchGenParticle, branchJet, leps_parton, mu_reco, lep_pT, lep_eta, "muon", 0, debug_bool ); 
+    // concatenate_indices( all_leps_reco, jet_e_reco ); concatenate_indices( all_leps_reco, jet_mu_reco );
 
-    concatenate_indices( all_leps_reco, e_reco ); concatenate_indices( all_leps_reco, mu_reco ); concatenate_indices( all_leps_reco, jet_e_reco ); concatenate_indices( all_leps_reco, jet_mu_reco );
+    if ( all_leps_reco.size() > 0 ) update_cft(cft_event_reco, cft_total_reco,  "pT_l > 15 && eta_l < 2.5 - reco", weight); 
+    if ( all_leps_reco.size() >= 2 ) update_cft(cft_event_reco, cft_total_reco,  "2 passing leps - reco", weight); if ( all_leps_reco.size() >= 4 ) update_cft(cft_event_reco, cft_total_reco,  "4 passing leps - reco", weight);
+    if ( all_leps_reco.size() >= 2 && (eminus_reco.size() + muminus_reco.size()) > 0 && (eplus_reco.size() + muplus_reco.size()) > 0 ) update_cft(cft_event_reco, cft_total_reco,  "2l OS - reco", weight);
+    if ( all_leps_reco.size() >= 4 && (eminus_reco.size() + muminus_reco.size()) > 1 && (eplus_reco.size() + muplus_reco.size()) > 1 ) update_cft(cft_event_reco, cft_total_reco,  "4l OS - reco", weight);
 
-    if ( all_leps_reco.size() > 0 ) update_cft(cft_event_reco, cft_total_reco,  "lep pT > 15 && lep eta < 2.5 - reco", weight); if ( all_leps_reco.size() >= 2 ) update_cft(cft_event_reco, cft_total_reco,  "2 passing leps - reco", weight); if ( all_leps_reco.size() >= 4 ) update_cft(cft_event_reco, cft_total_reco,  "4 passing leps - reco", weight);
-
-    jets_reco = get_all_jets( "reco", leps_parton, branchJet, branchGenParticle, branchElectron, branchMuon, jet_pT, debug_bool );
-    if ( jets_reco.size()>0 ) update_cft(cft_event_reco, cft_total_reco,  "jet pT > 20 - reco", weight);
+    jets_reco = get_all_jets( "reco", leps_parton, branchJet, branchGenParticle, branchElectron, branchMuon, jet_pT, jet_eta, debug_bool );
+    if ( jets_reco.size()>0 ) update_cft(cft_event_reco, cft_total_reco,  "pT_j > 20 && eta_j < 5 - reco", weight);
 
     nleps_reco = all_leps_reco.size();
     njets_reco = jets_reco.size();
 
   debug_print( debug_bool, " " );
-  debug_print( debug_bool, analysis_type + " num leps: " + to_string( nleps_reco ) + " ( # e- " + to_string( eminus_reco.size() ) + " # e+ " + to_string( eplus_reco.size() ) + " # mu- " + to_string( muminus_reco.size() ) + " # mu+ " + to_string( muplus_reco.size() ) + " # je- " + to_string( jet_eminus_reco.size() ) + " # je+ " + to_string( jet_eplus_reco.size() ) + " # jmu- " + to_string( jet_muminus_reco.size() ) + " # jmu+ " + to_string( jet_muplus_reco.size() ) + " ) " );
+  debug_print( debug_bool, analysis_type + " num leps: " + to_string( nleps_reco ) + " ( # e- " + to_string( eminus_reco.size() ) + " # e+ " + to_string( eplus_reco.size() ) + " # mu- " + to_string( muminus_reco.size() ) + " # mu+ " + to_string( muplus_reco.size() )  + " ) " ); // + " # je- " + to_string( jet_eminus_reco.size() ) + " # je+ " + to_string( jet_eplus_reco.size() ) + " # jmu- " + to_string( jet_muminus_reco.size() ) + " # jmu+ " + to_string( jet_muplus_reco.size() ) + " ) " );
   debug_print( debug_bool, "number of reco jets: " + to_string(njets_reco) );
   debug_print( debug_bool, " " );
 
   // get
-    jj_reco_i = get_jj( "reco", jets_reco, branchJet, branchGenParticle ); if ( jj_reco_i.first != -1 && jj_reco_i.second != -1 ) update_cft(cft_event_reco, cft_total_reco, "no bb vbf && detajj > 2.5 - reco", weight);
+
+    jj_reco_i = get_jj( "reco", jets_reco, branchJet ); 
+    if ( jj_reco_i.first != -1 && jj_reco_i.second != -1 ) {
+      update_cft(cft_event_reco, cft_total_reco, "absdetajj > 2.5 - reco", weight);
+      if ( !is_jj_bb( jj_reco_i, branchJet, branchGenParticle ) ) {
+        update_cft(cft_event_reco, cft_total_reco, "no bb vbfj - reco", weight);
+        found_jj_reco = true;
+      }
+    }
+  
     if ( njets_reco >= 4 )   bb_reco_i = get_bb( "reco", jj_reco_i, branchJet, branchGenParticle, branchPFCand );
 
-    if ( bb_reco_i.size() >=2 ) found_bb_reco = true;
-    if ( jj_reco_i.first != -1 && jj_reco_i.second != -1 ) found_jj_reco = true;
+    if ( bb_reco_i.size() >=1 ) found_bb_reco = true;
+
+    if ( jj_reco_i.first != -1 && jj_reco_i.second != -1 && bb_reco_i.size() >=1 ) {
+      if ( jj_reco_i.first == bb_reco_i.at(0).first["jet1_index"] || jj_reco_i.second == bb_reco_i.at(0).first["jet1_index"] || jj_reco_i.first ==  bb_reco_i.at(0).first["jet2_index"] || jj_reco_i.second ==  bb_reco_i.at(0).first["jet2_index"]) {
+        found_bb_reco = false;
+      } else {
+        found_bb_reco = true;
+        update_cft(cft_event_reco, cft_total_reco, "no bb veto - reco", weight);
+      }    
+    }
+
 
     if ( nleps_reco < 4 ) {
 
-      vv_reco_i = get_vv_leptonic( "reco", "w", e_reco, mu_reco, jet_e_reco, jet_mu_reco, branchElectron, branchMuon, branchJet, branchMissingET);
-      if ( vv_reco_i.first != -1 ) {
-        found_ww_reco = true;
-        update_cft(cft_event_reco, cft_total_reco, "mll > 10 - reco", weight);
-      }
+      // vv_reco_i = get_vv_leptonic( "reco", "w", e_reco, mu_reco, jet_e_reco, jet_mu_reco, branchElectron, branchMuon, branchJet, branchMissingET);
+      vv_reco_i = get_vv_leptonic( "particle", "w", e_reco, mu_reco, jet_e_reco, jet_mu_reco, branchGenParticle, branchGenParticle, branchJet, branchMissingET);
+      if ( vv_reco_i.first != -1 ) found_ww_reco = true;
       
     } else if ( nleps_reco >= 4 ) {
 
-      vv_reco_i = get_vv_leptonic( "reco", "z", e_reco, mu_reco, jet_e_reco, jet_mu_reco, branchElectron, branchMuon, branchJet, branchMissingET);
+      // vv_reco_i = get_vv_leptonic( "reco", "z", e_reco, mu_reco, jet_e_reco, jet_mu_reco, branchElectron, branchMuon, branchJet, branchMissingET);
+      vv_reco_i = get_vv_leptonic( "particle", "z", e_reco, mu_reco, jet_e_reco, jet_mu_reco, branchGenParticle, branchGenParticle, branchJet, branchMissingET);
       if ( vv_reco_i.first != -1 ) found_zz_reco = true;
 
     }
@@ -628,10 +666,13 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     } if ( found_ww_reco ) {
       w1_reco = vv_reco_i.second.first[0]; w2_reco = vv_reco_i.second.first[1];
       l1_reco = vv_reco_i.second.second[0]; l2_reco = vv_reco_i.second.second[1]; 
+      l1_reco.SetPtEtaPhiM( smear_pT( l1_reco.Pt(), l1_reco.Eta(), vv_reco_i.first, 1, "w" ), l1_reco.Eta(), l1_reco.Phi(), l1_reco.M() ); l2_reco.SetPtEtaPhiM( smear_pT( l2_reco.Pt(), l2_reco.Eta(), vv_reco_i.first, 2, "w" ), l2_reco.Eta(), l2_reco.Phi(), l2_reco.M() );
     }
     if ( found_zz_reco ) {
       z1_reco = vv_reco_i.second.first[0]; z2_reco = vv_reco_i.second.first[1];
       l1_reco = vv_reco_i.second.second[0]; l2_reco = vv_reco_i.second.second[1]; l3_reco = vv_reco_i.second.second[2]; l4_reco = vv_reco_i.second.second[3];
+      l1_reco.SetPtEtaPhiM( smear_pT( l1_reco.Pt(), l1_reco.Eta(), vv_reco_i.first, 1, "z" ), l1_reco.Eta(), l1_reco.Phi(), l1_reco.M() ); l2_reco.SetPtEtaPhiM( smear_pT( l2_reco.Pt(), l2_reco.Eta(), vv_reco_i.first, 2, "z" ), l2_reco.Eta(), l2_reco.Phi(), l2_reco.M() ); 
+      l3_reco.SetPtEtaPhiM( smear_pT( l3_reco.Pt(), l3_reco.Eta(), vv_reco_i.first, 3, "z" ), l3_reco.Eta(), l3_reco.Phi(), l3_reco.M() ); l4_reco.SetPtEtaPhiM( smear_pT( l4_reco.Pt(), l4_reco.Eta(), vv_reco_i.first, 4, "z" ), l4_reco.Eta(), l4_reco.Phi(), l4_reco.M() );
     }
 
   // particle
@@ -667,6 +708,16 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
       zz_parton = make_parton_vv( "parton", vvleps_parton_i, branchGenParticle ); z1_parton = zz_parton.first; z2_parton = zz_parton.second;
       llll_parton = make_parton_4l( "parton", vvleps_parton_i, branchGenParticle ); l1_parton = llll_parton.first.first; l2_parton = llll_parton.first.second; l3_parton = llll_parton.second.first; l4_parton = llll_parton.second.second;
     }
+
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // mll + met cuts 
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    if ( (l1_reco+l2_reco).M() > 10 ) update_cft(cft_event_reco, cft_total_reco, "mll > 10 - reco", weight);
+    if ( (l1_particle+l2_particle).M() > 10 ) update_cft(cft_event_particle, cft_total_particle, "mll > 10 - particle", weight);
+
+    if ( ((MissingET*)branchMissingET->At( 0 ))->MET > 20 ) update_cft(cft_event_reco, cft_total_reco, "met > 20 - reco", weight);
+    if ( ((MissingET*)branchGenMissingET->At( 0 ))->MET > 20 ) update_cft(cft_event_particle, cft_total_particle, "met > 20 - particle", weight); 
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -779,6 +830,8 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     particleET->Fill(vv_particle_i.first, weight);
     partonET->Fill(vvleps_parton_i.first, weight);
 
+    // selections = { "wwhjj", "zzhjj", "wwjj", "zzjj", "hwwjj", "hzzjj" };
+
     for (const auto& selection : selections) {
 
       enable_cut_reco[ selection ] = true;
@@ -786,21 +839,21 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
       enable_cut_parton[ selection ] = true;
 
       for (const auto& cut : cut_sel_process_reco[selection]) {
-        if ( cut == "final - reco" ) continue;
+        if ( cut == "final " + selection + " - reco" ) continue;
         if ( cft_event_reco[cut].first == 0 ) enable_cut_reco[ selection ] = false;
       }
       for (const auto& cut : cut_sel_process_particle[selection]) {
-        if ( cut == "final - particle" ) continue;
+        if ( cut == "final " + selection + " - particle" ) continue;
         if ( cft_event_particle[cut].first == 0 ) enable_cut_particle[ selection ] = false;
       }
       for (const auto& cut : cut_sel_process_parton[selection]) {
-        if ( cut == "final - parton" ) continue;
+        if ( cut == "final " + selection + " - parton" ) continue;
         if ( cft_event_parton[cut].first == 0 ) enable_cut_parton[ selection ] = false;
       }
 
-      if ( enable_cut_reco[ selection ] ) update_cft(cft_event_reco, cft_total_reco, "final - reco", weight);
-      if ( enable_cut_particle[ selection ] ) update_cft(cft_event_particle, cft_total_particle, "final - particle", weight);
-      if ( enable_cut_parton[ selection ] ) update_cft(cft_event_parton, cft_total_parton, "final - parton", weight);
+      if ( enable_cut_reco[ selection ] ) update_cft(cft_event_reco, cft_total_reco, "final " + selection + " - reco", weight);
+      if ( enable_cut_particle[ selection ] ) update_cft(cft_event_particle, cft_total_particle, "final " + selection + " - particle", weight);
+      if ( enable_cut_parton[ selection ] ) update_cft(cft_event_parton, cft_total_parton, "final " + selection + " - parton", weight);
 
     // 1D
       if ( enable_cut_reco[ selection ] ) {

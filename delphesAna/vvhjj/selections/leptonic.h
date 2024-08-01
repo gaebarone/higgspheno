@@ -258,64 +258,70 @@ pair< int, pair < vector < TLorentzVector > , vector < TLorentzVector > > > get_
     vector < TLorentzVector > selected_ls;  vector < TLorentzVector > selected_vs;
 
 
-    if ( v == "w" && leps.size() > 0 ) {
-  
+    if (v == "w" && leps.size() > 1) {
+
         TLorentzVector met;
 
         // met option i
         // met = ( (MissingET*)branchMissingET->At( 0 ) ) -> P4();
 
         // met option ii
-        MissingET *missinget = (MissingET*)branchMissingET->At( 0 );
-        met.SetPtEtaPhiM((missinget->MET)/2,0,missinget->Phi,0);  
+        MissingET *missinget = (MissingET*)branchMissingET->At(0);
+        met.SetPtEtaPhiM((missinget->MET) / 2, 0, missinget->Phi, 0);  
 
-        pair < double, TLorentzVector > leading_lep;  pair < double, TLorentzVector > subleading_lep;
-        double smallest_leading_mass_diff = 999.99; double smallest_subleading_mass_diff = 999.99;
+        pair<double, TLorentzVector> leading_lep;  
+        pair<double, TLorentzVector> subleading_lep;
+        double smallest_mass_diff = 999.99;
 
-        if (  leps.size() == 1 ) leading_lep = make_pair( 999, leps[0].second );
+        for (size_t i = 0; i < leps.size(); ++i) {
 
-        if (  leps.size() > 1 ) {
+            for (size_t j = i + 1; j < leps.size(); ++j) {
 
-            for (size_t i = 0; i < leps.size(); ++i) {
+                TLorentzVector w_i = leps[i].second + met;
+                TLorentzVector w_j = leps[j].second + met;
 
-                TLorentzVector w = leps[i].second + met;
-                double mass_diff = abs(w.M() - target_mass); 
+                double mass_diff_i = abs(w_i.M() - target_mass);
+                double mass_diff_j = abs(w_j.M() - target_mass);
 
-                if (mass_diff < smallest_leading_mass_diff) {
+                if (mass_diff_i < smallest_mass_diff || mass_diff_j < smallest_mass_diff) {
 
-                    smallest_subleading_mass_diff = smallest_leading_mass_diff;
-                    subleading_lep = leading_lep;
+                    if (mass_diff_i < mass_diff_j) {
+                        smallest_mass_diff = mass_diff_i;
 
-                    smallest_leading_mass_diff = mass_diff;
-                    leading_lep = make_pair( leps[i].first, leps[i].second);
+                        if (leps[i].second.Pt() > leps[j].second.Pt()) {
+                            leading_lep = leps[i];
+                            subleading_lep = leps[j];
+                        } else {
+                            leading_lep = leps[j];
+                            subleading_lep = leps[i];
+                        }
+                    } else {
+                        smallest_mass_diff = mass_diff_j;
 
-                } else if (mass_diff < smallest_subleading_mass_diff) {
-
-                    smallest_subleading_mass_diff = mass_diff;
-                    subleading_lep = make_pair( leps[i].first, leps[i].second);
-
+                        if (leps[j].second.Pt() > leps[i].second.Pt()) {
+                            leading_lep = leps[j];
+                            subleading_lep = leps[i];
+                        } else {
+                            leading_lep = leps[i];
+                            subleading_lep = leps[j];
+                        }
+                    }
                 }
-
             }
-
         }
 
-        if ( (leading_lep.second + subleading_lep.second).M() > 10  ) {
+        if (leading_lep.first == 0 && subleading_lep.first == 0) event_type = 0;
+        if (leading_lep.first == 1 && subleading_lep.first == 1) event_type = 1;
+        if (leading_lep.first == 0 && subleading_lep.first == 1) event_type = 2;
+        if (leading_lep.first == 1 && subleading_lep.first == 0) event_type = 3;
 
-            if ( leading_lep.first == 0 && subleading_lep.first == 0) event_type = 0;
-            if ( leading_lep.first == 1 && subleading_lep.first == 1) event_type = 1;
-            if ( leading_lep.first == 0 && subleading_lep.first == 1) event_type = 2;
-            if ( leading_lep.first == 1 && subleading_lep.first == 0) event_type = 3;
-
-            selected_ls.push_back( leading_lep.second ); selected_ls.push_back( subleading_lep.second );
-            selected_vs.push_back( leading_lep.second + met ); selected_vs.push_back( subleading_lep.second + met );
-
-        }
+        selected_ls.push_back(leading_lep.second); selected_ls.push_back(subleading_lep.second);
+        selected_vs.push_back(leading_lep.second + met); selected_vs.push_back(subleading_lep.second + met);
 
     }
 
 
-    if (v == "z" && leps.size() > 1) {
+    if (v == "z" && leps.size() > 3) {
 
         pair<double, TLorentzVector> z1_l1, z1_l2, z2_l1, z2_l2;
 
@@ -328,7 +334,7 @@ pair< int, pair < vector < TLorentzVector > , vector < TLorentzVector > > > get_
                 if (leps[i].first == leps[j].first) {
 
                     TLorentzVector z_candidate = leps[i].second + leps[j].second;
-                    double mass_diff = abs(z_candidate.M() - 91.1876); // Mass of Z boson in GeV/c^2
+                    double mass_diff = abs(z_candidate.M() - target_mass); 
 
                     if (mass_diff < smallest_mass_diff) {
 
@@ -338,14 +344,25 @@ pair< int, pair < vector < TLorentzVector > , vector < TLorentzVector > > > get_
 
                         smallest_mass_diff = mass_diff;
 
-                        z1_l1 = make_pair(leps[i].first, leps[i].second);
-                        z1_l2 = make_pair(leps[j].first, leps[j].second);
+                        if ( leps[i].second.Pt() > leps[j].second.Pt() ) {
+                            z1_l1 = make_pair(leps[i].first, leps[i].second);
+                            z1_l2 = make_pair(leps[j].first, leps[j].second);
+                        } else {
+                            z1_l1 = make_pair(leps[j].first, leps[j].second);
+                            z1_l2 = make_pair(leps[i].first, leps[i].second);
+                        }
 
                     } else if (mass_diff < second_smallest_mass_diff) {
 
                         second_smallest_mass_diff = mass_diff;
-                        z2_l1 = make_pair(leps[i].first, leps[i].second);
-                        z2_l2 = make_pair(leps[j].first, leps[j].second);
+                        
+                        if ( leps[i].second.Pt() > leps[j].second.Pt() ) {
+                            z2_l1 = make_pair(leps[i].first, leps[i].second);
+                            z2_l2 = make_pair(leps[j].first, leps[j].second);
+                        } else {
+                            z2_l1 = make_pair(leps[j].first, leps[j].second);
+                            z2_l2 = make_pair(leps[i].first, leps[i].second);
+                        }
 
                     }
 
@@ -355,17 +372,13 @@ pair< int, pair < vector < TLorentzVector > , vector < TLorentzVector > > > get_
 
         }
 
-        if ( (z1_l1.second + z1_l2.second).M() > 10 && (z2_l1.second + z2_l2.second).M() > 10 ) {
+        if ( ( z1_l1.first == 0 && z1_l2.first == 0 ) && ( z2_l1.first == 0 && z2_l2.first == 0 ) ) event_type = 0;
+        if ( ( z1_l1.first == 1 && z1_l2.first == 1 ) && ( z2_l1.first == 1 && z2_l2.first == 1 ) ) event_type = 1;
+        if ( ( z1_l1.first == 0 && z1_l2.first == 0 ) && ( z2_l1.first == 1 && z2_l2.first == 1 ) ) event_type = 2;
+        if ( ( z1_l1.first == 1 && z1_l2.first == 1 ) && ( z2_l1.first == 0 && z2_l2.first == 0 ) ) event_type = 3;
 
-            if ( ( z1_l1.first == 0 && z1_l2.first == 0 ) && ( z2_l1.first == 0 && z2_l2.first == 0 ) ) event_type = 0;
-            if ( ( z1_l1.first == 1 && z1_l2.first == 1 ) && ( z2_l1.first == 1 && z2_l2.first == 1 ) ) event_type = 1;
-            if ( ( z1_l1.first == 0 && z1_l2.first == 0 ) && ( z2_l1.first == 1 && z2_l2.first == 1 ) ) event_type = 2;
-            if ( ( z1_l1.first == 1 && z1_l2.first == 1 ) && ( z2_l1.first == 0 && z2_l2.first == 0 ) ) event_type = 3;
-
-            selected_ls.push_back( z1_l1.second ); selected_ls.push_back( z1_l2.second ); selected_ls.push_back( z2_l1.second ); selected_ls.push_back( z2_l2.second );
-            selected_vs.push_back( z1_l1.second + z1_l2.second ); selected_vs.push_back( z2_l1.second + z2_l2.second );
-
-        }
+        selected_ls.push_back( z1_l1.second ); selected_ls.push_back( z1_l2.second ); selected_ls.push_back( z2_l1.second ); selected_ls.push_back( z2_l2.second );
+        selected_vs.push_back( z1_l1.second + z1_l2.second ); selected_vs.push_back( z2_l1.second + z2_l2.second );
 
     }
 

@@ -113,39 +113,87 @@ vector<int> rm_jetlep_overlap( string analysis_type = "reco", vector<int> jets =
 }
 
 
+double smear_pT_e( double pt, double eta ) {
 
-double smear_pT( int index = 0, TClonesArray *branchGenParticle = nullptr ) {
 
-    GenParticle* lep = (GenParticle*) branchGenParticle->At( index );
+    double resolution = 0.0;
 
-    double pt = lep->PT; double eta = abs(lep->Eta);  double resolution = 0.0;
-
-    if ( abs( lep->PID) == 11 ) {
-
-        if (eta <= 0.5) {
-            resolution = std::sqrt(0.03 * 0.03 + pt * pt * 1.3e-3 * 1.3e-3);
-        } else if (0.5 < eta && eta <= 1.5) {
-            resolution = std::sqrt(0.05 * 0.05 + pt * pt * 1.7e-3 * 1.7e-3);
-        } else if (1.5 < eta && eta <= 2.5) {
-            resolution = std::sqrt(0.15 * 0.15 + pt * pt * 3.1e-3 * 3.1e-3);
-        }
-
-    } else if ( abs( lep->PID) == 13 ) {
-
-        if (eta <= 0.5) {
-            resolution = std::sqrt(0.01 * 0.01 + pt * pt * 1.0e-4 * 1.0e-4);
-        } else if (0.5 < eta && eta <= 1.5) {
-            resolution = std::sqrt(0.015 * 0.015 + pt * pt * 1.5e-4 * 1.5e-4);
-        } else if (1.5 < eta && eta <= 2.5) {
-            resolution = std::sqrt(0.025 * 0.025 + pt * pt * 3.5e-4 * 3.5e-4);
-        }
-
+    if (eta <= 0.5) {
+        resolution = std::sqrt(0.03 * 0.03 + pt * pt * 1.3e-3 * 1.3e-3);
+    } else if (0.5 < eta && eta <= 1.5) {
+        resolution = std::sqrt(0.05 * 0.05 + pt * pt * 1.7e-3 * 1.7e-3);
+    } else if (1.5 < eta && eta <= 2.5) {
+        resolution = std::sqrt(0.15 * 0.15 + pt * pt * 3.1e-3 * 3.1e-3);
     }
     
     std::default_random_engine generator(std::random_device{}());
     double sample = std::normal_distribution<>(0, 1)(generator);
     
     return pt + sample * resolution;
+
+}
+
+double smear_pT_mu( double pt, double eta ) {
+
+
+    double resolution = 0.0;
+
+    if (eta <= 0.5) {
+        resolution = std::sqrt(0.01 * 0.01 + pt * pt * 1.0e-4 * 1.0e-4);
+    } else if (0.5 < eta && eta <= 1.5) {
+        resolution = std::sqrt(0.015 * 0.015 + pt * pt * 1.5e-4 * 1.5e-4);
+    } else if (1.5 < eta && eta <= 2.5) {
+        resolution = std::sqrt(0.025 * 0.025 + pt * pt * 3.5e-4 * 3.5e-4);
+    }
+    
+    std::default_random_engine generator(std::random_device{}());
+    double sample = std::normal_distribution<>(0, 1)(generator);
+    
+    return pt + sample * resolution;
+
+}
+
+
+double smear_pT( double pt, double eta, int et, int lep_number, string boson ) { // this is for TLorentzVectors
+
+    double pT; int pid = 0;
+
+    if ( boson == "w" ) {
+
+        if ( et == 0 ) pid = 13;
+
+        if ( et == 1 ) pid = 11;
+
+        if ( et == 2 && lep_number == 1 ) pid = 13; 
+        if ( et == 2 && lep_number == 2 ) pid = 11;
+
+        if ( et == 3 && lep_number == 1 ) pid = 11; 
+        if ( et == 3 && lep_number == 2 ) pid = 13;
+
+    }
+
+    if ( boson == "z" ) {
+
+        if ( et == 0 ) pid = 13;
+
+        if ( et == 1 ) pid = 11;
+
+        if ( et == 2 && lep_number == 1 ) pid = 13; 
+        if ( et == 2 && lep_number == 2 ) pid = 13;
+        if ( et == 2 && lep_number == 3 ) pid = 11; 
+        if ( et == 2 && lep_number == 4 ) pid = 11;
+
+        if ( et == 3 && lep_number == 1 ) pid = 11; 
+        if ( et == 3 && lep_number == 2 ) pid = 11;
+        if ( et == 3 && lep_number == 3 ) pid = 13; 
+        if ( et == 3 && lep_number == 4 ) pid = 13;
+
+    }
+
+    if ( pid == 11 ) pT = smear_pT_e( pt, eta );
+    if ( pid == 13 ) pT = smear_pT_mu( pt, eta );
+
+    return pT;
 
 }
 
@@ -215,10 +263,10 @@ vector <int> apply_efficiency( vector <int> leps_particle = {0}, TClonesArray *b
         if (random_value < efficiency) {
             
             leps_reco.push_back(leps_particle[i]);
-            if ( abs(lep->PID) == 11 && lep->Charge == -1) debug_print( debug_bool, "reco e- : pt = " + to_string( smear_pT( leps_particle[i], branchGenParticle ) ) + " , eta = " + to_string(lep->Eta) + " , phi = " + to_string(lep->Phi) );
-            if ( abs(lep->PID) == 11 && lep->Charge == 1) debug_print( debug_bool, "reco e+ : pt = " + to_string( smear_pT( leps_particle[i], branchGenParticle ) ) + " , eta = " + to_string(lep->Eta) + " , phi = " + to_string(lep->Phi) );
-            if ( abs(lep->PID) == 13 && lep->Charge == -1) debug_print( debug_bool, "reco mu- : pt = " + to_string( smear_pT( leps_particle[i], branchGenParticle ) ) + " , eta = " + to_string(lep->Eta) + " , phi = " + to_string(lep->Phi) );
-            if ( abs(lep->PID) == 13 && lep->Charge == 1) debug_print( debug_bool, "reco mu+ : pt = " + to_string( smear_pT( leps_particle[i], branchGenParticle ) ) + " , eta = " + to_string(lep->Eta) + " , phi = " + to_string(lep->Phi) );
+            if ( abs(lep->PID) == 11 && lep->Charge == -1) debug_print( debug_bool, "reco e- : pt = " + to_string( smear_pT_e( lep->PT, lep->Eta ) ) + " , eta = " + to_string(lep->Eta) + " , phi = " + to_string(lep->Phi) );
+            if ( abs(lep->PID) == 11 && lep->Charge == 1) debug_print( debug_bool, "reco e+ : pt = " + to_string( smear_pT_e( lep->PT, lep->Eta ) ) + " , eta = " + to_string(lep->Eta) + " , phi = " + to_string(lep->Phi) );
+            if ( abs(lep->PID) == 13 && lep->Charge == -1) debug_print( debug_bool, "reco mu- : pt = " + to_string( smear_pT_mu( lep->PT, lep->Eta ) ) + " , eta = " + to_string(lep->Eta) + " , phi = " + to_string(lep->Phi) );
+            if ( abs(lep->PID) == 13 && lep->Charge == 1) debug_print( debug_bool, "reco mu+ : pt = " + to_string( smear_pT_mu( lep->PT, lep->Eta ) ) + " , eta = " + to_string(lep->Eta) + " , phi = " + to_string(lep->Phi) );
 
         }
 

@@ -117,7 +117,7 @@ with open(output_file, 'w') as output:
                     cross_section = extract_value(cross_section)
                     if cross_section is not None:  # Check if cross_section is not None
                         cross_section_decimal = scientific_to_decimal(cross_section)
-                        final_cross_section = cross_section_decimal * z_ee_BR * z_mumu_BR * h_bb_BR
+                        if 'h' in subdir: final_cross_section = cross_section_decimal * h_bb_BR
                         output.write(f"  else if (process_name == {subdir}) return {final_cross_section:.10f}; \n")
                     else:
                         output.write(f"  else if (process_name == {subdir}) return 1.00; \n")

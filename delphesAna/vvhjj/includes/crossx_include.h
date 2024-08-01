@@ -29,8 +29,8 @@ double get_cross_section(const char *process_name) {
   if (process_name == DY2j3j) return 151.2; 
   else if (process_name == wpwmhqq) return 0.0000157006; 
   else if (process_name == zzhqq) return 0.0000002892; 
-  else if (process_name == wpwmhjj_C3_1) return 0.0000015000; 
-  else if (process_name == zzhjj_C3_1) return 0.0000003316; 
+  else if (process_name == wpwmhjj_C3_1) return 0.0004166720; 
+  else if (process_name == zzhjj_C3_1) return 0.0000921040; 
   else return 1.0; 
 } 
 #endif 
