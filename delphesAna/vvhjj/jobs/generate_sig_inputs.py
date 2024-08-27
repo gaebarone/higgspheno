@@ -1,6 +1,6 @@
 import os
 
-process_list = ['wpwmhqq', 'zzhqq'] 
+process_list = ['wpwmhjj', 'zzhjj', 'wpwmjj', 'zzjj', 'hwpwmjj', 'hzzjj'] 
 directory_list = ['/isilon/data/common/sellis9/vvhjj_samples/loopsm/'] * len(process_list)
 
 def generate_file_list(directory_path, output_file):

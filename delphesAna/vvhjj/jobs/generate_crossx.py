@@ -93,13 +93,16 @@ with open(output_file, 'w') as output:
             if os.path.exists(html_file):
                 with open(html_file, 'r') as file:
                     html_content = file.read()
-                    cross_section = extract_cross_section_decayed(html_content)
+                    if subdir.startswith('h'):
+                        cross_section = extract_cross_section(html_content)
+                    else:
+                        cross_section = extract_cross_section_decayed(html_content)
                     cross_section = extract_value(cross_section)
                     if cross_section is not None:  # Check if cross_section is not None
                         cross_section_decimal = scientific_to_decimal(cross_section)
-                        #if 'z' in subdir: final_cross_section = cross_section_decimal * z_ee_BR * z_mumu_BR * h_bb_BR
-                        #if 'w' in subdir: final_cross_section = cross_section_decimal * w_ev_BR * w_muv_BR * h_bb_BR
-                        if 'h' in subdir: final_cross_section = cross_section_decimal * h_bb_BR
+                        final_cross_section = cross_section_decimal
+                        if subdir.endswith('hjj'): 
+                            final_cross_section = final_cross_section * h_bb_BR
                         output.write(f"  else if (process_name == {subdir}) return {final_cross_section:.10f}; \n")
                     else:
                         output.write(f"  else if (process_name == {subdir}) return 1.00; \n")
@@ -113,11 +116,16 @@ with open(output_file, 'w') as output:
             if os.path.exists(html_file):
                 with open(html_file, 'r') as file:
                     html_content = file.read()
-                    cross_section = extract_cross_section(html_content)
+                    if subdir.startswith('h'):
+                        cross_section = extract_cross_section(html_content)
+                    else:
+                        cross_section = extract_cross_section_decayed(html_content)
                     cross_section = extract_value(cross_section)
-                    if cross_section is not None:  # Check if cross_section is not None
+                    if cross_section is not None:  # Check if cross_section is not None                                                                                                                                                                                                                                                                                                                                                    
                         cross_section_decimal = scientific_to_decimal(cross_section)
-                        if 'h' in subdir: final_cross_section = cross_section_decimal * h_bb_BR
+                        final_cross_section = cross_section_decimal
+                        if subdir.endswith('hjj'):
+                            final_cross_section = final_cross_section * h_bb_BR
                         output.write(f"  else if (process_name == {subdir}) return {final_cross_section:.10f}; \n")
                     else:
                         output.write(f"  else if (process_name == {subdir}) return 1.00; \n")

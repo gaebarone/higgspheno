@@ -655,13 +655,14 @@ pair< vector<TLorentzVector> , vector<TLorentzVector>> make_zz_leptonic( string 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-pair < int, pair < vector < int > , vector < int >>> get_vv_parton( TClonesArray *branchGenParticle = nullptr, bool debug_bool = false  ) { // < et , < < vs >, < ls > >
+pair < pair < int, bool >, pair < vector < int > , vector < int >>> get_vv_parton( TClonesArray *branchGenParticle = nullptr, bool debug_bool = false  ) { // < <et, is_h> , < < vs >, < ls > >
 
     vector <int> vs; vector <int> ls;
     pair < vector <int> , vector <int> > vvleps;
        
-    int et = -1;
+    int et = -1; bool from_higgs = false;
 
+    GenParticle *mother;
     GenParticle *l1; GenParticle *l2; GenParticle *l3; GenParticle *l4;
 
     bool is_w = false; bool is_z = false;
@@ -672,20 +673,26 @@ pair < int, pair < vector < int > , vector < int >>> get_vv_parton( TClonesArray
 
         if (particle->D1 != -1 && particle->D2 != -1) {
 
+            if (particle->M1 != -1) mother = (GenParticle*) branchGenParticle->At(particle->M1);
+
             GenParticle *daughter1 = (GenParticle*) branchGenParticle->At(particle->D1);
             GenParticle *daughter2 = (GenParticle*) branchGenParticle->At(particle->D2);
 
             if ( abs(daughter1->PID) == 11 || abs(daughter1->PID) == 13 || abs(daughter2->PID) == 11 || abs(daughter2->PID) == 13 ) {
 
                 if( abs(particle->PID) == 24 && abs(daughter1->PID) != 24 && abs(daughter2->PID) != 24 ) {
-                    
+
+                    if ( is_parent( i, branchGenParticle, 6) ) continue;
+                    if ( is_parent( i, branchGenParticle, 25) ) from_higgs = true;
+                
                     is_w = true; vs.push_back(i);
                 
                 }
 
                 if( abs(particle->PID) == 23 && abs(daughter1->PID) != 23 && abs(daughter2->PID) != 23 ) {
                     
-                is_z = true; vs.push_back(i);
+                    if ( is_parent( i, branchGenParticle, 25) ) from_higgs = true;
+                    is_z = true; vs.push_back(i);
                 
                 }
 
@@ -756,12 +763,12 @@ pair < int, pair < vector < int > , vector < int >>> get_vv_parton( TClonesArray
 
     vvleps = make_pair( vs, ls );
 
-    return make_pair( et, vvleps );
+    return make_pair( make_pair(et, from_higgs), vvleps );
 
 }
 
 
-pair< TLorentzVector,TLorentzVector > make_parton_vv( string analysis_type = "parton", pair < int, pair < vector < int > , vector < int >>> vvleps = {-99,{{-99},{-99}}}, TClonesArray *branchGenParticle = nullptr ) {
+pair< TLorentzVector,TLorentzVector > make_parton_vv( string analysis_type, pair < pair< int, bool>, pair < vector < int > , vector < int >>> vvleps, TClonesArray *branchGenParticle ) {
 
     TLorentzVector v1 = ((GenParticle*) branchGenParticle->At( vvleps.second.first[0] )) -> P4();
     TLorentzVector v2 = ((GenParticle*) branchGenParticle->At( vvleps.second.first[1] )) -> P4();
@@ -770,7 +777,7 @@ pair< TLorentzVector,TLorentzVector > make_parton_vv( string analysis_type = "pa
 
 }
 
-pair< TLorentzVector,TLorentzVector > make_parton_2l( string analysis_type = "parton", pair < int, pair < vector < int > , vector < int >>> vvleps = {-99,{{-99},{-99}}}, TClonesArray *branchGenParticle = nullptr ) {
+pair< TLorentzVector,TLorentzVector > make_parton_2l( string analysis_type, pair < pair< int, bool>, pair < vector < int > , vector < int >>> vvleps, TClonesArray *branchGenParticle ) {
 
     TLorentzVector l1 = ((GenParticle*) branchGenParticle->At( vvleps.second.second[0] )) -> P4();
     TLorentzVector l2 = ((GenParticle*) branchGenParticle->At( vvleps.second.second[1] )) -> P4();
@@ -779,7 +786,7 @@ pair< TLorentzVector,TLorentzVector > make_parton_2l( string analysis_type = "pa
 
 }
 
-pair< pair< TLorentzVector,TLorentzVector >, pair< TLorentzVector,TLorentzVector > > make_parton_4l( string analysis_type = "parton", pair < int, pair < vector < int > , vector < int >>> vvleps = {-99,{{-99},{-99}}}, TClonesArray *branchGenParticle = nullptr ) {
+pair< pair< TLorentzVector,TLorentzVector >, pair< TLorentzVector,TLorentzVector > > make_parton_4l( string analysis_type , pair < pair< int, bool>, pair < vector < int > , vector < int >>> vvleps, TClonesArray *branchGenParticle ) {
 
     TLorentzVector l1 = ((GenParticle*) branchGenParticle->At( vvleps.second.second[0] )) -> P4();
     TLorentzVector l2 = ((GenParticle*) branchGenParticle->At( vvleps.second.second[1] )) -> P4();

@@ -1,6 +1,12 @@
+
 cd ..
+
 make clean
 make
+
+#rm csv/vvhjj.csv
+#touch csv/vvhjj.csv
+
 cd jobs
 
 # clean

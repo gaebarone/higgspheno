@@ -16,6 +16,7 @@
 #include <iostream>
 #include <functional>
 #include <time.h>
+#include <cmath>
 #include "TRandom.h"
 #include "TRandom3.h"
 #include <Math/GenVector/PtEtaPhiM4D.h>
@@ -28,108 +29,108 @@ namespace paired
 
 {
 
-bool isMyPAIReDBTag(bool label_bb, bool label_cc, bool label_ll, int seed = 0, double effWrk=0.9,double fake_eff=0.15) {
+  bool isMyPAIReDBTag(bool label_bb, bool label_cc, bool label_ll, int seed = 0, double effWrk=0.9,double fake_eff=0.15) {
  
-  TRandom3 rand; 
+    TRandom3 rand; 
 #ifdef MDEBUG
-  seed=MSEED;
+    seed=MSEED;
 #endif
-  rand.SetSeed(seed);
+    rand.SetSeed(seed);
   
-  if (label_bb){
-    return rand.Uniform(0,1) < effWrk;
-  } else { 
-    return rand.Uniform(0,1) < fake_eff;
+    if (label_bb){
+      return rand.Uniform(0,1) < effWrk;
+    } else { 
+      return rand.Uniform(0,1) < fake_eff;
+    }
   }
-}
 
-const double pi = TMath::Pi();
+  const double pi = TMath::Pi();
 
- double deltaPhi(double phi1, double phi2) { return TVector2::Phi_mpi_pi(phi1 - phi2); }
+  double deltaPhi(double phi1, double phi2) { return TVector2::Phi_mpi_pi(phi1 - phi2); }
  
- double deltaR_M(double eta1, double phi1, double eta2, double phi2) {
-   double deta = eta1 - eta2;
-   double dphi = paired::deltaPhi(phi1, phi2);
-   return std::hypot(deta, dphi);
- }
+  double deltaR_M(double eta1, double phi1, double eta2, double phi2) {
+    double deta = eta1 - eta2;
+    double dphi = paired::deltaPhi(phi1, phi2);
+    return std::hypot(deta, dphi);
+  }
  
-double shiftpi(double phi, double shift, double lim) {
-  if (shift == 0) return phi;
-  if (shift > 0) {
-    if (phi < lim) return phi + shift;
-  }
-  else {
-    if (phi > lim) return phi + shift;
-  }
-  return phi;
-}
-
-template <class T1, class T2>
-double deltaR(const T1 &a, const T2 &b) {
-  return paired::deltaR_M(a->Eta, a->Phi, b->Eta, b->Phi);
-}
-
-
-
-struct ParticleInfo {
-  ParticleInfo(const GenParticle *particle, int src = -1) {
-    pt = particle->PT;
-    eta = particle->Eta;
-    phi = particle->Phi;
-    mass = particle->Mass;
-    p4 = ROOT::Math::PtEtaPhiMVector(pt, eta, phi, mass);
-    px = p4.px();
-    py = p4.py();
-    pz = p4.pz();
-    energy = p4.energy();
-    charge = particle->Charge;
-    pid = particle->PID;
-    fUniqueID = particle->GetUniqueID();
-    source = src;
+  double shiftpi(double phi, double shift, double lim) {
+    if (shift == 0) return phi;
+    if (shift > 0) {
+      if (phi < lim) return phi + shift;
+    }
+    else {
+      if (phi > lim) return phi + shift;
+    }
+    return phi;
   }
 
-  ParticleInfo(const ParticleFlowCandidate *particle, int src = -1) {
-    pt = particle->PT;
-    eta = particle->Eta;
-    phi = particle->Phi;
-    mass = particle->Mass;
-    p4 = ROOT::Math::PtEtaPhiMVector(pt, eta, phi, mass);
-    px = p4.px();
-    py = p4.py();
-    pz = p4.pz();
-    energy = p4.energy();
-    charge = particle->Charge;
-    pid = particle->PID;
-    d0 = particle->D0;
-    d0err = particle->ErrorD0;
-    dz = particle->DZ;
-    dzerr = particle->ErrorDZ;
-    source = src;
+  template <class T1, class T2>
+    double deltaR(const T1 &a, const T2 &b) {
+    return paired::deltaR_M(a->Eta, a->Phi, b->Eta, b->Phi);
   }
 
-  double pt;
-  double eta;
-  double phi;
-  double mass;
-  double px;
-  double py;
-  double pz;
-  double energy;
-  ROOT::Math::PtEtaPhiMVector p4;
 
-  int charge;
-  int pid;
-  int fUniqueID;
-  int source;
 
-  float d0 = 0;
-  float d0err = 0;
-  float dz = 0;
-  float dzerr = 0;
-};
+  struct ParticleInfo {
+    ParticleInfo(const GenParticle *particle, int src = -1) {
+      pt = particle->PT;
+      eta = particle->Eta;
+      phi = particle->Phi;
+      mass = particle->Mass;
+      p4 = ROOT::Math::PtEtaPhiMVector(pt, eta, phi, mass);
+      px = p4.px();
+      py = p4.py();
+      pz = p4.pz();
+      energy = p4.energy();
+      charge = particle->Charge;
+      pid = particle->PID;
+      fUniqueID = particle->GetUniqueID();
+      source = src;
+    }
+
+    ParticleInfo(const ParticleFlowCandidate *particle, int src = -1) {
+      pt = particle->PT;
+      eta = particle->Eta;
+      phi = particle->Phi;
+      mass = particle->Mass;
+      p4 = ROOT::Math::PtEtaPhiMVector(pt, eta, phi, mass);
+      px = p4.px();
+      py = p4.py();
+      pz = p4.pz();
+      energy = p4.energy();
+      charge = particle->Charge;
+      pid = particle->PID;
+      d0 = particle->D0;
+      d0err = particle->ErrorD0;
+      dz = particle->DZ;
+      dzerr = particle->ErrorDZ;
+      source = src;
+    }
+
+    double pt;
+    double eta;
+    double phi;
+    double mass;
+    double px;
+    double py;
+    double pz;
+    double energy;
+    ROOT::Math::PtEtaPhiMVector p4;
+
+    int charge;
+    int pid;
+    int fUniqueID;
+    int source;
+
+    float d0 = 0;
+    float d0err = 0;
+    float dz = 0;
+    float dzerr = 0;
+  };
 
 template <typename T>
-std::pair<bool,int> isInBridgedJet(const Jet *jet1, const Jet *jet2, T const *p, float jetR, bool bridge=false) {
+  std::pair<bool,int> isInBridgedJet(const Jet *jet1, const Jet *jet2, T const *p, float jetR, bool bridge=false) {
   if (std::abs(p->Eta) > 5 || p->PT <= 0) return make_pair(false,-1);
   if (!p) return make_pair(false,-1);
 
@@ -163,7 +164,7 @@ std::pair<bool,int> isInBridgedJet(const Jet *jet1, const Jet *jet2, T const *p,
 }
 
 template <typename T>
-std::pair<bool,int> isInEllipse(const Jet *jet1, const Jet *jet2, T const *p, float semimajoradd = 1.0) {
+  std::pair<bool,int> isInEllipse(const Jet *jet1, const Jet *jet2, T const *p, float semimajoradd = 1.0) {
   float eta1 = jet1->Eta;
   float eta2 = jet2->Eta;
   float phi1 = jet1->Phi;
@@ -338,40 +339,40 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   _floatVars["gen_flav"] = 0;
 
 
- if (ncands != 0) {
-  _floatVars["dijet_mass"] = jetp4.M();
-  _floatVars["dijet_pt"] = jetp4.Pt();
-  _floatVars["dijet_eta"] = jetp4.Eta();
-  _floatVars["dijet_phi"] = jetp4.Phi();
+  if (ncands != 0) {
+    _floatVars["dijet_mass"] = jetp4.M();
+    _floatVars["dijet_pt"] = jetp4.Pt();
+    _floatVars["dijet_eta"] = jetp4.Eta();
+    _floatVars["dijet_phi"] = jetp4.Phi();
   
-  std::sort(particles.begin(), particles.end(), [](const auto &a, const auto &b) { return a.pt > b.pt; });
+    std::sort(particles.begin(), particles.end(), [](const auto &a, const auto &b) { return a.pt > b.pt; });
 
-  _floatVars["jet_nparticles"] = particles.size();
+    _floatVars["jet_nparticles"] = particles.size();
 
-  for (const auto &p : particles) {
-    if (std::abs(p.pz) > 10000 || std::abs(p.eta) > 5 || p.pt <= 0) continue;
-    _arrayVars["part_px"].push_back(p.px);
-    _arrayVars["part_py"].push_back(p.py);
-    _arrayVars["part_pz"].push_back(p.pz);
-    _arrayVars["part_phi"].push_back(p.phi);
-    _arrayVars["part_eta"].push_back(p.eta);
-    _arrayVars["part_energy"].push_back(p.energy);
-    _arrayVars["part_pt"].push_back(p.pt);
-    _arrayVars["part_deta1"].push_back((jet1->Eta > 0 ? 1 : -1) * (p.eta - jet1->Eta));
-    _arrayVars["part_dphi1"].push_back(paired::deltaPhi(p.phi, jet1->Phi));
-    _arrayVars["part_deta"].push_back((jet1->Eta > 0 ? 1 : -1) * (p.eta - jet1->Eta));
-    _arrayVars["part_dphi"].push_back(paired::deltaPhi(p.phi, jet1->Phi));
-    _arrayVars["part_deta2"].push_back((jet2->Eta > 0 ? 1 : -1) * (p.eta - jet2->Eta));
-    _arrayVars["part_dphi2"].push_back(paired::deltaPhi(p.phi, jet2->Phi));
-    _arrayVars["part_charge"].push_back(p.charge);
-    _arrayVars["part_pid"].push_back(p.pid);
-    _arrayVars["part_d0val"].push_back(p.d0);
-    _arrayVars["part_d0err"].push_back(p.d0err);
-    _arrayVars["part_dzval"].push_back(p.dz);
-    _arrayVars["part_dzerr"].push_back(p.dzerr);  
-    _arrayVars["part_source"].push_back(p.source);  
+    for (const auto &p : particles) {
+      if (std::abs(p.pz) > 10000 || std::abs(p.eta) > 5 || p.pt <= 0) continue;
+      _arrayVars["part_px"].push_back(p.px);
+      _arrayVars["part_py"].push_back(p.py);
+      _arrayVars["part_pz"].push_back(p.pz);
+      _arrayVars["part_phi"].push_back(p.phi);
+      _arrayVars["part_eta"].push_back(p.eta);
+      _arrayVars["part_energy"].push_back(p.energy);
+      _arrayVars["part_pt"].push_back(p.pt);
+      _arrayVars["part_deta1"].push_back((jet1->Eta > 0 ? 1 : -1) * (p.eta - jet1->Eta));
+      _arrayVars["part_dphi1"].push_back(paired::deltaPhi(p.phi, jet1->Phi));
+      _arrayVars["part_deta"].push_back((jet1->Eta > 0 ? 1 : -1) * (p.eta - jet1->Eta));
+      _arrayVars["part_dphi"].push_back(paired::deltaPhi(p.phi, jet1->Phi));
+      _arrayVars["part_deta2"].push_back((jet2->Eta > 0 ? 1 : -1) * (p.eta - jet2->Eta));
+      _arrayVars["part_dphi2"].push_back(paired::deltaPhi(p.phi, jet2->Phi));
+      _arrayVars["part_charge"].push_back(p.charge);
+      _arrayVars["part_pid"].push_back(p.pid);
+      _arrayVars["part_d0val"].push_back(p.d0);
+      _arrayVars["part_d0err"].push_back(p.d0err);
+      _arrayVars["part_dzval"].push_back(p.dz);
+      _arrayVars["part_dzerr"].push_back(p.dzerr);  
+      _arrayVars["part_source"].push_back(p.source);  
+    }
   }
-}
 
   // Gen Particles
   std::vector<const GenParticle *> genParticles_;
@@ -418,37 +419,37 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   else {
     std::vector<const GenParticle *> partons;
     for (const auto *thisgp : genParticles_) {
-        if (thisgp->M1 == 0 && thisgp->PID!=23) {
-          partons.push_back(thisgp);
-          thisret = paired::isInJet(jet1,jet2,thisgp,jetR,bridge,ellipse,semimajoradd);
-          if (thisret.first) {
-            if (abs(thisgp->PID) == 5) {
-              nb++;
-              if (thisret.second==3) nbrid++;
-            }
-            else if (abs(thisgp->PID) == 4) {
-              nc++;
-              if (thisret.second==3) nbrid++;
-            }
-          }
-        }
+      if (thisgp->M1 == 0 && thisgp->PID!=23) {
+	partons.push_back(thisgp);
+	thisret = paired::isInJet(jet1,jet2,thisgp,jetR,bridge,ellipse,semimajoradd);
+	if (thisret.first) {
+	  if (abs(thisgp->PID) == 5) {
+	    nb++;
+	    if (thisret.second==3) nbrid++;
+	  }
+	  else if (abs(thisgp->PID) == 4) {
+	    nc++;
+	    if (thisret.second==3) nbrid++;
+	  }
+	}
+      }
     }
     if (partons.size() >=2) {
-        sort(partons.begin(),partons.end(),
-              [](const GenParticle * lhs, const GenParticle * rhs)  {
-                  return lhs->PT > rhs->PT;
-              });
-        auto dipart = partons.at(0)->P4() + partons.at(1)->P4();
-        hpt = dipart.Pt();
-        hmass = dipart.M();
-        drqq = paired::deltaR(partons.at(0),partons.at(1));
+      sort(partons.begin(),partons.end(),
+	   [](const GenParticle * lhs, const GenParticle * rhs)  {
+	     return lhs->PT > rhs->PT;
+	   });
+      auto dipart = partons.at(0)->P4() + partons.at(1)->P4();
+      hpt = dipart.Pt();
+      hmass = dipart.M();
+      drqq = paired::deltaR(partons.at(0),partons.at(1));
 
-        if (nb>=2) _floatVars["label_bb"] = 1;
-        else if (nc>=2) _floatVars["label_cc"] = 1;
+      if (nb>=2) _floatVars["label_bb"] = 1;
+      else if (nc>=2) _floatVars["label_cc"] = 1;
 
-        if (nbrid>=2) _floatVars["parton_location"] = 3;
-        else if (nbrid > 0) _floatVars["parton_location"] = 2;
-        else _floatVars["parton_location"] = 1;
+      if (nbrid>=2) _floatVars["parton_location"] = 3;
+      else if (nbrid > 0) _floatVars["parton_location"] = 2;
+      else _floatVars["parton_location"] = 1;
     }
   }
 
@@ -475,7 +476,7 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
       else {
         genjetp4 += thisgp->P4();
       }
-    //  cout << "(" << jet1->Eta << ","<< jet1->Phi << ") ("<< jet2->Eta << ","<< jet2->Phi << ") ("<< p->Eta << ","<< p->Phi << ") "<< retpair.second << endl;
+      //  cout << "(" << jet1->Eta << ","<< jet1->Phi << ") ("<< jet2->Eta << ","<< jet2->Phi << ") ("<< p->Eta << ","<< p->Phi << ") "<< retpair.second << endl;
     }
   }
   _floatVars["gendijet_mass"] = genjetp4.M();
@@ -495,77 +496,77 @@ std::pair< std::map<TString, float>, std::map<TString, std::vector<float>> > pro
   _floatVars["isbtagged"] = isMyPAIReDBTag(_floatVars["label_bb"] > 0, _floatVars["label_cc"] > 0, _floatVars["label_ll"] > 0, 0, 0.6, 0.02) ? 1.0 : 0.0;
 
   return std::make_pair(_floatVars,_arrayVars);  
-}
+ }
 
 //------------------------------------------------------------------------------
 
-std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
-  bool isHiggs = false;
-  float hpt=0, zpt=0, gen_flav=0,dRqq=0, hmass=0;
-  const GenParticle *d1, *d2;
+ std::vector<float> getEventInfo(const TClonesArray *branchParticle) {
+   bool isHiggs = false;
+   float hpt=0, zpt=0, gen_flav=0,dRqq=0, hmass=0;
+   const GenParticle *d1, *d2;
 
-  std::vector<const GenParticle *> genParticles_;
-  for (Int_t i = 0; i < branchParticle->GetEntriesFast(); ++i) {
-    genParticles_.push_back((GenParticle *)branchParticle->At(i));
-  }
+   std::vector<const GenParticle *> genParticles_;
+   for (Int_t i = 0; i < branchParticle->GetEntriesFast(); ++i) {
+     genParticles_.push_back((GenParticle *)branchParticle->At(i));
+   }
 
-  for (const auto *thisgp : genParticles_) {
-    if(thisgp==nullptr) continue;
-    if( thisgp->D1 < 0 ) continue; 
-    d1 = genParticles_[thisgp->D1];
-    if ((thisgp->PID == 25 && d1->PID != 25) || (thisgp->PID == 23 && (abs(d1->PID) == 4 || abs(d1->PID) == 5))) {
-      isHiggs = true;
-      hpt = thisgp->PT;
-      hmass = thisgp->Mass;
-      gen_flav = thisgp->PID*10 + abs(d1->PID);
-      if( thisgp==nullptr || thisgp->D2<0) continue;
-      d2 = genParticles_[thisgp->D2];
-      dRqq = paired::deltaR(d1,d2);
-    }    
-    if (thisgp->PID == 23 && (abs(d1->PID) == 11 || abs(d1->PID) == 13) ) {
-      zpt = thisgp->PT;
-    }
-    if (hpt>0 && zpt>0) break;
-  }
-
-
-  if (!isHiggs) {
-    std::vector<const GenParticle *> partons;
-    for (const auto *thisgp : genParticles_) {
-      if( thisgp==nullptr) continue;
-        if (thisgp->M1 == 0 && thisgp->PID!=23) partons.push_back(thisgp);
-    }
-    if (partons.size() >=2) {
-        sort(partons.begin(),partons.end(),
-              [](const GenParticle * lhs, const GenParticle * rhs)  {
-                  return lhs->PT > rhs->PT;
-              });
-        auto dipart = partons.at(0)->P4() + partons.at(1)->P4();
-        dRqq = paired::deltaR(partons.at(0),partons.at(1));
-        hpt = dipart.Pt();
-        hmass = dipart.M();
-    }
-  }
+   for (const auto *thisgp : genParticles_) {
+     if(thisgp==nullptr) continue;
+     if( thisgp->D1 < 0 ) continue; 
+     d1 = genParticles_[thisgp->D1];
+     if ((thisgp->PID == 25 && d1->PID != 25) || (thisgp->PID == 23 && (abs(d1->PID) == 4 || abs(d1->PID) == 5))) {
+       isHiggs = true;
+       hpt = thisgp->PT;
+       hmass = thisgp->Mass;
+       gen_flav = thisgp->PID*10 + abs(d1->PID);
+       if( thisgp==nullptr || thisgp->D2<0) continue;
+       d2 = genParticles_[thisgp->D2];
+       dRqq = paired::deltaR(d1,d2);
+     }    
+     if (thisgp->PID == 23 && (abs(d1->PID) == 11 || abs(d1->PID) == 13) ) {
+       zpt = thisgp->PT;
+     }
+     if (hpt>0 && zpt>0) break;
+   }
 
 
-  std::vector<float> ret{hpt,zpt,gen_flav,dRqq,hmass};
-  return ret;
+   if (!isHiggs) {
+     std::vector<const GenParticle *> partons;
+     for (const auto *thisgp : genParticles_) {
+       if( thisgp==nullptr) continue;
+       if (thisgp->M1 == 0 && thisgp->PID!=23) partons.push_back(thisgp);
+     }
+     if (partons.size() >=2) {
+       sort(partons.begin(),partons.end(),
+	    [](const GenParticle * lhs, const GenParticle * rhs)  {
+	      return lhs->PT > rhs->PT;
+	    });
+       auto dipart = partons.at(0)->P4() + partons.at(1)->P4();
+       dRqq = paired::deltaR(partons.at(0),partons.at(1));
+       hpt = dipart.Pt();
+       hmass = dipart.M();
+     }
+   }
 
-}
+
+   std::vector<float> ret{hpt,zpt,gen_flav,dRqq,hmass};
+   return ret;
+
+ }
 
 
-//------------------------------------------------------------------------------
+ //------------------------------------------------------------------------------
 
 template<typename T>
- std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>
+  std::vector<std::pair< std::map<TString, float>, std::map<TString, std::vector<float>>>>
 
-   PAIReDjointEvent( TClonesArray *branchParticle = nullptr,
-					  const T *branchPassed = nullptr,
-					  TClonesArray *branchJet = nullptr,
-					  float jetR = 0.4,
-					  bool forwardjet = false, bool bridge=false,
-					  bool ellipse = false, float semimajoradd = 1.0, 
-					  bool sigonly=false){
+  PAIReDjointEvent( TClonesArray *branchParticle = nullptr,
+		    const T *branchPassed = nullptr,
+		    TClonesArray *branchJet = nullptr,
+		    float jetR = 0.4,
+		    bool forwardjet = false, bool bridge=false,
+		    bool ellipse = false, float semimajoradd = 1.0, 
+		    bool sigonly=false){
   
   // define branches
   std::map<TString, float> floatVars;
@@ -734,9 +735,187 @@ template<typename T>
     }
   }
     
-    return output;
-}
+  return output;
+ }
 
+template<typename T>
+  std::map<TString, std::vector<float>> processBridgeInputs(const Jet *jet1, const Jet *jet2, const T *branchPassed, const TClonesArray *branchParticle, float jetR,  bool bridge=true, bool ellipse = true, float semimajoradd = 1.0) {
+
+  std::map<TString, std::vector<float>> _arrayVars;
+
+  // Reco PF particles 
+  std::vector<paired::ParticleInfo> particles;
+  ParticleFlowCandidate *p_pf;
+
+  GenParticle *p_gen;
+  GenParticle *p_gen_mother;
+
+  int ncands;
+  bool FOUND_Z = false;
+
+  if (branchPassed == nullptr) {
+    ncands = 0;
+  } else {
+    ncands = branchPassed->GetEntriesFast();
+  }
+
+  bool hasBranchPFCand = false;
+  if (branchPassed != nullptr && strcmp(branchPassed->GetName(), "ParticleFlowCandidate") == 0) hasBranchPFCand = true;
+
+
+  if (hasBranchPFCand){
+
+    for (Int_t i = 0; i < ncands; ++i) {
+
+      p_pf = (ParticleFlowCandidate *)branchPassed->At(i);
+
+      auto retpair = paired::isInJet(jet1,jet2,p_pf,jetR,bridge,ellipse,semimajoradd);
+      if (retpair.first) {
+        particles.push_back(paired::ParticleInfo(p_pf,retpair.second));  
+      }
+    }
+
+  } else {
+
+    for (Int_t i = 0; i < ncands; ++i) {
+
+      p_gen = (GenParticle *)branchPassed->At(i);
+
+      auto retpair = paired::isInJet(jet1,jet2,p_gen,jetR,bridge,ellipse,semimajoradd);
+      if (retpair.first) {
+
+        if (p_gen->M1 >= 0) {
+          p_gen_mother = (GenParticle *)branchPassed->At(p_gen->M1);
+          if(p_gen_mother->PID == 23 && (abs(p_gen->PID) == 11 || abs(p_gen->PID) == 13)){
+	    FOUND_Z = true;
+          }
+        }
+
+        if (FOUND_Z) break;
+        if (p_gen->Status != 1) continue;
+
+        particles.push_back(paired::ParticleInfo(p_gen,retpair.second));
+        
+      }
+    }
+  }
+
+  
+  if (ncands != 0) {
+    std::sort(particles.begin(), particles.end(), [](const auto &a, const auto &b) { return a.pt > b.pt; });
+
+    for (const auto &p : particles) {
+      if (std::abs(p.pz) > 10000 || std::abs(p.eta) > 5 || p.pt <= 0) continue;
+      float ptlog    = (std::log(p.pt)-1.7)*0.7;
+      float elog     = (std::log(p.energy)-2.0)*0.7;
+      float logptrel = (std::log(p.pt/(jet1->PT +jet2->PT))+4.7)*0.7;
+      float logerel  = (std::log(p.energy/(jet1->P4().Energy()+jet2->P4().Energy()))+4.7)*0.7;
+      float deltar1  = (deltaR_M(p.eta, p.phi, jet1->Eta, jet1->Phi)-0.2)*4.0;
+      float deltar2  = (deltaR_M(p.eta, p.phi, jet2->Eta, jet2->Phi)-0.2)*4.0;
+
+      _arrayVars["part_pt_log"].push_back(ptlog);
+      _arrayVars["part_e_log"].push_back(elog);
+      _arrayVars["part_logptrel"].push_back(logptrel);
+      _arrayVars["part_deltaR1"].push_back(deltar1);
+      _arrayVars["part_deltaR2"].push_back(deltar2);
+      _arrayVars["part_charge"].push_back(p.charge);
+      _arrayVars["part_d0"].push_back(p.d0);
+      _arrayVars["part_d0err"].push_back(p.d0err);
+      _arrayVars["part_dz"].push_back(p.dz);
+      _arrayVars["part_dzerr"].push_back(p.dzerr);
+      _arrayVars["part_deta1"].push_back((jet1->Eta > 0 ? 1 : -1) * (p.eta - jet1->Eta));
+      _arrayVars["part_dphi1"].push_back(paired::deltaPhi(p.phi, jet1->Phi));
+      _arrayVars["part_deta2"].push_back((jet2->Eta > 0 ? +1 : -1) * (p.eta - jet2->Eta));
+      _arrayVars["part_dphi2"].push_back(paired::deltaPhi(p.phi, jet2->Phi));
+      _arrayVars["part_source"].push_back(p.source);
+      _arrayVars["part_px"].push_back(p.px);
+      _arrayVars["part_py"].push_back(p.py);
+      _arrayVars["part_pz"].push_back(p.pz);
+      _arrayVars["part_energy"].push_back(p.energy);
+    
+    }
+  }
+
+  return _arrayVars;
+
+ }
+
+
+
+template<typename T> 
+  std::vector<std::map<TString, std::vector<float>>>
+  makeInputs( TClonesArray *branchParticle = nullptr,
+	      const T *branchPassed = nullptr,
+	      TClonesArray *branchJet = nullptr,
+	      float jetR = 0.4,
+	      bool forwardjet = false, bool bridge=false,
+	      bool ellipse = false, float semimajoradd = 1.0)
+  {
+
+
+    std::map<TString, std::vector<float>> arrayVars;
+    arrayVars["part_pt_log"];
+    arrayVars["part_e_log"];
+    arrayVars["part_logptrel"];
+    arrayVars["part_logerel"];
+    arrayVars["part_deltaR1"];
+    arrayVars["part_deltaR2"];
+    arrayVars["part_charge"];
+    arrayVars["part_d0"];
+    arrayVars["part_d0err"];
+    arrayVars["part_dz"];
+    arrayVars["part_dzerr"];
+    arrayVars["part_deta1"];
+    arrayVars["part_dphi1"];
+    arrayVars["part_deta2"];
+    arrayVars["part_dphi2"];
+    arrayVars["part_source"];
+    arrayVars["part_px"];
+    arrayVars["part_py"];
+    arrayVars["part_pz"];
+    arrayVars["part_energy"];
+
+    std::vector<std::map<TString, std::vector<float>>> input;
+
+    for (Int_t i = 0; i < branchJet->GetEntriesFast(); ++i) {
+      const Jet *jet = (Jet *)branchJet->At(i);
+      if (!forwardjet) {
+	if (jet->PT < 20 || std::abs(jet->Eta) > 2.5)  continue;
+      }
+      else {
+	if (jet->PT < 20)  continue;
+      }
+
+      std::map<TString, std::vector<float>> arrays;
+      Int_t j;
+
+      for (j = i+1; j < branchJet->GetEntriesFast(); ++j) {
+	const Jet *jet2 = (Jet *)branchJet->At(j);
+	if (!forwardjet) {
+	  if (jet2->PT < 20 || std::abs(jet2->Eta) > 2.5)  continue;
+	}
+	else {
+	  if (jet2->PT < 20) continue;
+	  if (std::abs(jet->Eta) > 2.5 && std::abs(jet2->Eta) > 2.5)  continue;
+	}
+
+	for (auto &v : arrayVars) {
+	  v.second.clear();
+	}
+	arrays = paired::processBridgeInputs(jet, jet2, branchPassed, branchParticle, jetR, bridge, ellipse, semimajoradd);
+
+	for (auto &p : arrays) {
+	  arrayVars[p.first] = p.second;
+	}
+
+	
+	input.push_back(arrayVars);
+      }
+    }
+    
+    return input;
+
+  }
 }
 //------------------------------------------------------------------------------
-#endif
+#  endif

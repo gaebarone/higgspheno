@@ -77,6 +77,8 @@ bool debug_bool_vv = false;
 #include "includes/kinematics_include.h"
 #include "includes/helperfunctions_include.h"
 
+#include "bdt/models_h/wpwmhjj_xgb_model.h"
+
 #include "includes/paired_include.h"
 #include "includes/ghosttag_include.h"
  
@@ -190,7 +192,6 @@ void zAnalyzer(const char *input_file, const char *output_file, const char *proc
  
   // new cft
 
-
   vector <string> selType={"reco","particle","parton"};
   std::map<string, vector<string>> cutFlowMByType;
   cutFlowMByType["reco"] = cut_list_reco;
@@ -259,7 +260,7 @@ void zAnalyzer(const char *input_file, const char *output_file, const char *proc
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-vector<string> selections = { "wwhjj", "zzhjj" }; // , "wwjj", "zzjj", "hwwjj", "hzzjj" 
+vector<string> selections = { "wpwmhjj", "zzhjj", "wpwmjj", "zzjj", "hwpwmjj", "hzzjj", "nocuts" }; //, "hwwjj", "hzzjj" 
 
 map< string, histograms > sel_hist_map;
 
@@ -272,6 +273,7 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   sel_hist_map[ *selection ].initialize_zz();
   sel_hist_map[ *selection ].initialize_2l();
   sel_hist_map[ *selection ].initialize_4l();
+  sel_hist_map[ *selection ].initialize_met();
   
 }
 
@@ -307,19 +309,54 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   
   cout << "LUMI: "<< Lumi << endl;
   cout << "TOTAL WEIGHT: "<< totalWeight << endl;
-    
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+// bdt
+//------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+  bool fillcsv = true;
+
+  vector < string > bdt_vars = { 
+
+    "process_name", "selection", "cross_section", "weight", 
+
+    "pT_b1", "eta_b1", "phi_b1", "pT_b2", "eta_b2", "phi_b2",
+    "m_bb", "pT_bb", "dphi_bb", "deta_bb", "dr_bb", 
+
+    "pT_j1", "eta_j1", "phi_j1", "pT_j2", "eta_j2", "phi_j2",
+    "m_jj", "pT_jj", "dphi_jj", "deta_jj", "dr_jj",
+
+    "pT_l1", "eta_l1", "phi_l1", "pT_l2", "eta_l2", "phi_l2",
+    "m_l1l2", "pT_l1l2", "dphi_l1l2", "deta_l1l2", "dr_l1l2",
+
+    "pT_l3", "eta_l3", "phi_l3", "pT_l4", "eta_l4", "phi_l4",
+    "m_l3l4", "pT_l3l4", "dphi_l3l4", "deta_l3l4", "dr_l3l4",
+
+    "pT_w1", "eta_w1", "phi_w1", "pT_w2", "eta_w2", "phi_w2",
+    "m_ww", "pT_ww", "dphi_ww", "deta_ww", "dr_ww",
+
+    "pT_z1", "eta_z1", "phi_z1", "pT_z2", "eta_z2", "phi_z2",
+    "m_zz", "pT_zz", "dphi_zz", "deta_zz", "dr_zz",
+
+    "met"
+
+  }; 
+
+  // if  ( fillcsv ) make_csv ( bdt_vars );
+
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 // EVENT LOOP
 //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
   if (debug_bool) numberOfEntries = 50;
   if ( dumpgen ) numberOfEntries = 10;
 
-  TH1F *recoET = new TH1F("reco_event_type", "Reco Event Type", 5, -1, 4); 
-  TH1F *particleET = new TH1F("particle_event_type", "Particle Event Type", 5, -1, 4);
-  TH1F *partonET = new TH1F("parton_event_type", "Parton Event Type", 5, -1, 4);
+  TH1F *recoET = new TH1F("reco_event_type", "Reco Event Type; ET (0: #mu#mu, 1: ee, 2: #mue, 3: e#mu ); Events", 5, -1, 4); 
+  TH1F *particleET = new TH1F("particle_event_type", "Particle Event Type; ET (0: #mu#mu, 1: ee, 2: #mue, 3: e#mu ); Events", 5, -1, 4);
+  TH1F *partonET = new TH1F("parton_event_type", "Parton Event Type; ET (0: #mu#mu, 1: ee, 2: #mue, 3: e#mu ); Events", 5, -1, 4);
 
   for(Int_t entry = 0; entry < numberOfEntries; ++entry) {
 
@@ -372,7 +409,8 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   string analysis_type;
 
   double jet_pT = 20.0; double jet_eta = 5.0;  // cuts
-  double lep_pT = 15.0; double lep_eta = 2.5;  // cuts
+  double e_pT = 15.0; double e_eta = 2.5;  // cuts
+  double mu_pT = 15.0; double mu_eta = 2.5;  // cuts
 
   // reco
     bool found_bb_reco = false;
@@ -415,14 +453,14 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   // parton
     bool found_bb_parton = false;
     bool found_jj_parton = false;
-    bool found_ww_parton = false;
-    bool found_zz_parton = false;
+    bool found_ww_parton = false; bool found_hww_parton = false;
+    bool found_zz_parton = false;  bool found_hzz_parton = false;
 
     vector < int > eminus_parton, eplus_parton, muminus_parton, muplus_parton, leps_parton, jets_parton;
 
     pair< int, pair< int, int >> hbb_parton_i;
     pair< int, int > jj_parton_i;
-    pair < int, pair < vector < int > , vector < int >>> vvleps_parton_i;
+    pair < pair < int, bool >, pair < vector < int > , vector < int >>> vvleps_parton_i;
 
     pair< TLorentzVector, pair< TLorentzVector, TLorentzVector >> hbb_parton;                               // < h, < b1, b2 > >
     pair< TLorentzVector, TLorentzVector > jj_parton;                                                       // < j1, j2 >
@@ -455,8 +493,11 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     // set 
     if ( hbb_parton_i.first != -99 && hbb_parton_i.second.first != -99 && hbb_parton_i.second.second != -99 )  found_bb_parton = true;
     if ( jj_parton_i.first != -99 && jj_parton_i.second != -99 ) found_jj_parton = true;
-    if ( vvleps_parton_i.first != -1 && vvleps_parton_i.second.second.size() < 4 ) found_ww_parton = true;
-    if ( vvleps_parton_i.first != -1 && vvleps_parton_i.second.second.size() >= 4 ) found_zz_parton = true;
+
+    if ( vvleps_parton_i.first.first != -1 && !vvleps_parton_i.first.second && vvleps_parton_i.second.second.size() < 4 ) found_ww_parton = true;
+    if ( vvleps_parton_i.first.first != -1 && !vvleps_parton_i.first.second && vvleps_parton_i.second.second.size() >= 4 ) found_zz_parton = true;
+    if ( vvleps_parton_i.first.first != -1 && vvleps_parton_i.first.second && vvleps_parton_i.second.second.size() < 4 ) found_hww_parton = true;
+    if ( vvleps_parton_i.first.first != -1 && vvleps_parton_i.first.second && vvleps_parton_i.second.second.size() >= 4 ) found_hzz_parton = true;
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -472,10 +513,10 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   debug_print( debug_bool, " " );
 
     // all leps and jets
-    eminus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "electron", -1, debug_bool );
-    eplus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "electron", 1, debug_bool );
-    muminus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "muon", -1, debug_bool );
-    muplus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, lep_pT, lep_eta, "muon", 1, debug_bool );
+    eminus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, e_pT, e_eta, "electron", -1, debug_bool );
+    eplus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, e_pT, e_eta, "electron", 1, debug_bool );
+    muminus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, mu_pT, mu_eta, "muon", -1, debug_bool );
+    muplus_particle = get_leptons( analysis_type, branchGenParticle, branchGenParticle, branchGenJet, mu_pT, mu_eta, "muon", 1, debug_bool );
     concatenate_indices( e_particle, eminus_particle); concatenate_indices(e_particle, eplus_particle); concatenate_indices(mu_particle, muminus_particle); concatenate_indices(mu_particle, muplus_particle); 
     concatenate_indices( all_leps_particle, e_particle ); concatenate_indices( all_leps_particle, mu_particle );
 
@@ -484,12 +525,13 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     // concatenate_indices( all_leps_particle, jet_e_particle ); concatenate_indices( all_leps_particle, jet_mu_particle );
 
     if ( all_leps_particle.size() > 0 ) update_cft(cft_event_particle, cft_total_particle,  "pT_l > 15 && eta_l < 2.5 - particle", weight); 
-    if ( all_leps_particle.size() >= 2 ) update_cft(cft_event_particle, cft_total_particle,  "2 passing leps - particle", weight); if (  all_leps_particle.size() >= 4 ) update_cft(cft_event_particle, cft_total_particle, "4 passing leps - particle", weight);
+    if ( all_leps_particle.size() >= 2 ) update_cft(cft_event_particle, cft_total_particle,  "2 leps - particle", weight); if (  all_leps_particle.size() >= 4 ) update_cft(cft_event_particle, cft_total_particle, "4 leps - particle", weight);
     if ( all_leps_particle.size() >= 2 && (eminus_particle.size() + muminus_particle.size()) > 0 && (eplus_particle.size() + muplus_particle.size()) > 0 ) update_cft(cft_event_particle, cft_total_particle,  "2l OS - particle", weight);
     if ( all_leps_particle.size() >= 4 && (eminus_particle.size() + muminus_particle.size()) > 1 && (eplus_particle.size() + muplus_particle.size()) > 1 ) update_cft(cft_event_particle, cft_total_particle,  "4l OS - particle", weight);
 
     jets_particle = get_all_jets( "particle", leps_parton, branchGenJet, branchGenParticle, branchGenParticle, branchGenParticle, jet_pT, jet_eta, debug_bool );
     if ( jets_particle.size()>0 ) update_cft(cft_event_particle, cft_total_particle,  "pT_j > 20 && eta_j < 5 - particle", weight);
+    if ( jets_particle.size() >= 2 ) update_cft(cft_event_particle, cft_total_particle,  "2 jets - particle", weight); if (  jets_particle.size() >= 4 ) update_cft(cft_event_particle, cft_total_particle, "4 jets - particle", weight);
 
     nleps_particle = all_leps_particle.size();
     njets_particle = jets_particle.size();
@@ -504,7 +546,7 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     jj_particle_i = get_jj( "particle", jets_particle, branchGenJet ); 
 
     if ( jj_particle_i.first != -1 && jj_particle_i.second != -1 ) {
-      update_cft(cft_event_particle, cft_total_particle, "absdetajj > 2.5 - particle", weight);
+      // update_cft(cft_event_particle, cft_total_particle, "absdetajj > 2.5 - particle", weight);
       if ( !is_jj_bb( jj_particle_i, branchGenJet, branchGenParticle ) ) {
         update_cft(cft_event_particle, cft_total_particle, "no bb vbfj - particle", weight);
         found_jj_particle = true;
@@ -520,7 +562,7 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
         found_bb_particle = false;
       } else {
         found_bb_particle = true;
-        update_cft(cft_event_particle, cft_total_particle, "no bb veto - particle", weight);
+        update_cft(cft_event_particle, cft_total_particle, "bb != jj - particle", weight);
       }    
     }
 
@@ -569,12 +611,13 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     // concatenate_indices( all_leps_reco, jet_e_reco ); concatenate_indices( all_leps_reco, jet_mu_reco );
 
     if ( all_leps_reco.size() > 0 ) update_cft(cft_event_reco, cft_total_reco,  "pT_l > 15 && eta_l < 2.5 - reco", weight); 
-    if ( all_leps_reco.size() >= 2 ) update_cft(cft_event_reco, cft_total_reco,  "2 passing leps - reco", weight); if ( all_leps_reco.size() >= 4 ) update_cft(cft_event_reco, cft_total_reco,  "4 passing leps - reco", weight);
+    if ( all_leps_reco.size() >= 2 ) update_cft(cft_event_reco, cft_total_reco,  "2 leps - reco", weight); if ( all_leps_reco.size() >= 4 ) update_cft(cft_event_reco, cft_total_reco,  "4 leps - reco", weight);
     if ( all_leps_reco.size() >= 2 && (eminus_reco.size() + muminus_reco.size()) > 0 && (eplus_reco.size() + muplus_reco.size()) > 0 ) update_cft(cft_event_reco, cft_total_reco,  "2l OS - reco", weight);
     if ( all_leps_reco.size() >= 4 && (eminus_reco.size() + muminus_reco.size()) > 1 && (eplus_reco.size() + muplus_reco.size()) > 1 ) update_cft(cft_event_reco, cft_total_reco,  "4l OS - reco", weight);
 
     jets_reco = get_all_jets( "reco", leps_parton, branchJet, branchGenParticle, branchElectron, branchMuon, jet_pT, jet_eta, debug_bool );
     if ( jets_reco.size()>0 ) update_cft(cft_event_reco, cft_total_reco,  "pT_j > 20 && eta_j < 5 - reco", weight);
+    if ( jets_reco.size() >= 2 ) update_cft(cft_event_reco, cft_total_reco,  "2 jets - reco", weight); if (  jets_reco.size() >= 4 ) update_cft(cft_event_reco, cft_total_reco, "4 jets - reco", weight);
 
     nleps_reco = all_leps_reco.size();
     njets_reco = jets_reco.size();
@@ -588,7 +631,7 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 
     jj_reco_i = get_jj( "reco", jets_reco, branchJet ); 
     if ( jj_reco_i.first != -1 && jj_reco_i.second != -1 ) {
-      update_cft(cft_event_reco, cft_total_reco, "absdetajj > 2.5 - reco", weight);
+      // update_cft(cft_event_reco, cft_total_reco, "absdetajj > 2.5 - reco", weight);
       if ( !is_jj_bb( jj_reco_i, branchJet, branchGenParticle ) ) {
         update_cft(cft_event_reco, cft_total_reco, "no bb vbfj - reco", weight);
         found_jj_reco = true;
@@ -604,7 +647,7 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
         found_bb_reco = false;
       } else {
         found_bb_reco = true;
-        update_cft(cft_event_reco, cft_total_reco, "no bb veto - reco", weight);
+        update_cft(cft_event_reco, cft_total_reco, "bb != jj - reco", weight);
       }    
     }
 
@@ -629,19 +672,24 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
 
 
   if ( found_bb_reco ) update_cft(cft_event_reco, cft_total_reco, "found bb - reco", weight);
+  if ( !found_bb_reco ) update_cft(cft_event_reco, cft_total_reco, "no bb found - reco", weight);
   if ( found_jj_reco ) update_cft(cft_event_reco, cft_total_reco, "found jj - reco", weight);
   if ( found_ww_reco ) update_cft(cft_event_reco, cft_total_reco, "found ww - reco", weight);
   if ( found_zz_reco ) update_cft(cft_event_reco, cft_total_reco, "found zz - reco", weight);
 
   if ( found_bb_particle ) update_cft(cft_event_particle, cft_total_particle, "found bb - particle", weight);
+  if ( !found_bb_particle ) update_cft(cft_event_particle, cft_total_particle, "no bb found - particle", weight);
   if ( found_jj_particle ) update_cft(cft_event_particle, cft_total_particle, "found jj - particle", weight);
   if ( found_ww_particle ) update_cft(cft_event_particle, cft_total_particle, "found ww - particle", weight);
   if ( found_zz_particle ) update_cft(cft_event_particle, cft_total_particle, "found zz - particle", weight);
 
   if ( found_bb_parton ) update_cft(cft_event_parton, cft_total_parton, "found bb - parton", weight);
+  if ( !found_bb_parton ) update_cft(cft_event_parton, cft_total_parton, "no bb found - parton", weight);
   if ( found_jj_parton ) update_cft(cft_event_parton, cft_total_parton, "found jj - parton", weight);
   if ( found_ww_parton ) update_cft(cft_event_parton, cft_total_parton, "found ww - parton", weight);
   if ( found_zz_parton ) update_cft(cft_event_parton, cft_total_parton, "found zz - parton", weight);
+  if ( found_hww_parton ) update_cft(cft_event_parton, cft_total_parton, "found hww - parton", weight);
+  if ( found_hzz_parton ) update_cft(cft_event_parton, cft_total_parton, "found hzz - parton", weight);
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -700,24 +748,54 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
     if ( found_jj_parton ) {
       jj_parton = make_parton_jj( "parton", jj_parton_i, branchGenParticle ); j1_parton = jj_parton.first; j2_parton = jj_parton.second;
     }
-    if ( found_ww_parton ) {
+    if ( found_ww_parton || found_hww_parton ) {
       ww_parton = make_parton_vv( "parton", vvleps_parton_i, branchGenParticle ); w1_parton = ww_parton.first; w2_parton = ww_parton.second;
       ll_parton = make_parton_2l( "parton", vvleps_parton_i, branchGenParticle ); l1_parton = ll_parton.first; l2_parton = ll_parton.second;
     }    
-    if ( found_zz_parton ) {
+    if ( found_zz_parton || found_hzz_parton ) {
       zz_parton = make_parton_vv( "parton", vvleps_parton_i, branchGenParticle ); z1_parton = zz_parton.first; z2_parton = zz_parton.second;
       llll_parton = make_parton_4l( "parton", vvleps_parton_i, branchGenParticle ); l1_parton = llll_parton.first.first; l2_parton = llll_parton.first.second; l3_parton = llll_parton.second.first; l4_parton = llll_parton.second.second;
     }
+    
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // mll + met cuts 
+  // more cuts 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    if ( (l1_reco+l2_reco).M() > 10 ) update_cft(cft_event_reco, cft_total_reco, "mll > 10 - reco", weight);
-    if ( (l1_particle+l2_particle).M() > 10 ) update_cft(cft_event_particle, cft_total_particle, "mll > 10 - particle", weight);
+    // absdetajj
+    if ( abs(delta_eta( j1_reco, j2_reco )) > 2.5 ) update_cft(cft_event_reco, cft_total_reco, "absdetajj > 2.5 - reco", weight);
+    if ( abs(delta_eta( j1_particle, j2_particle )) > 2.5 ) update_cft(cft_event_particle, cft_total_particle, "absdetajj > 2.5 - particle", weight);
+    
+    // mjj 
+    if ( (j1_reco+j2_reco).M() > 250 ) update_cft(cft_event_reco, cft_total_reco, "mjj > 250 - reco", weight);
+    if ( (j1_particle+j2_particle).M() > 250 ) update_cft(cft_event_particle, cft_total_particle, "mjj > 250 - particle", weight);
+    
+    // mll
+    // if ( (l1_reco+l2_reco).M() > 10 ) update_cft(cft_event_reco, cft_total_reco, "mll > 10 - reco", weight);
+    // if ( (l1_particle+l2_particle).M() > 10 ) update_cft(cft_event_particle, cft_total_particle, "mll > 10 - particle", weight);
 
-    if ( ((MissingET*)branchMissingET->At( 0 ))->MET > 20 ) update_cft(cft_event_reco, cft_total_reco, "met > 20 - reco", weight);
-    if ( ((MissingET*)branchGenMissingET->At( 0 ))->MET > 20 ) update_cft(cft_event_particle, cft_total_particle, "met > 20 - particle", weight); 
+    // mvv
+    if ( found_ww_reco ) {
+      if ( (w1_reco+w2_reco).M() < 150 ) update_cft(cft_event_reco, cft_total_reco, "mvv < 150 - reco", weight);
+      else update_cft(cft_event_reco, cft_total_reco, "mvv > 150 - reco", weight);
+    } else if ( found_zz_reco ) {
+      if ( (z1_reco+z2_reco).M() < 150 ) update_cft(cft_event_reco, cft_total_reco, "mvv < 150 - reco", weight);
+      else update_cft(cft_event_reco, cft_total_reco, "mvv > 150 - reco", weight);
+    }
+    if ( found_ww_particle ) {
+      if ( (w1_particle+w2_particle).M() < 150 ) update_cft(cft_event_particle, cft_total_particle, "mvv < 150 - particle", weight);
+      else update_cft(cft_event_particle, cft_total_particle, "mvv > 150 - particle", weight);
+    } else if ( found_zz_particle ) {
+      if ( (z1_particle+z2_particle).M() < 150 ) update_cft(cft_event_particle, cft_total_particle, "mvv < 150 - particle", weight);
+      else update_cft(cft_event_particle, cft_total_particle, "mvv > 150 - particle", weight);
+    }
+    
+    // met
+    TLorentzVector met = ((MissingET*)branchMissingET->At( 0 ))->P4(); TLorentzVector genmet = ((MissingET*)branchGenMissingET->At( 0 ))->P4();
+    if ( met.Et() > 30 ) update_cft(cft_event_reco, cft_total_reco, "met > 30 - reco", weight);
+    else update_cft(cft_event_reco, cft_total_reco, "met < 30 - reco", weight);
+    if ( genmet.Et() > 30 ) update_cft(cft_event_particle, cft_total_particle, "met > 30 - particle", weight); 
+    else update_cft(cft_event_particle, cft_total_particle, "met < 30 - particle", weight);
 
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -823,14 +901,103 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
   }
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
+  // prep for bdt
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
+/*
+    std::map<std::string, double> bdt_inputs;
+
+    bdt_inputs["pT_b1"] = b1_reco.Pt();
+    bdt_inputs["eta_b1"] = b1_reco.Eta();
+    bdt_inputs["phi_b1"] = b1_reco.Phi();
+    bdt_inputs["pT_b2"] = b2_reco.Pt();
+    bdt_inputs["eta_b2"] = b2_reco.Eta();
+    bdt_inputs["phi_b2"] = b2_reco.Phi();
+
+    bdt_inputs["m_bb"] = (b1_reco+b2_reco).M();
+    bdt_inputs["pT_bb"] = (b1_reco+b2_reco).Pt();
+    bdt_inputs["dphi_bb"] = delta_phi(b1_reco, b2_reco);
+    bdt_inputs["deta_bb"] = delta_eta(b1_reco, b2_reco);
+    bdt_inputs["dr_bb"] = delta_r(b1_reco, b2_reco);
+
+    bdt_inputs["pT_j1"] = j1_reco.Pt();
+    bdt_inputs["eta_j1"] = j1_reco.Eta();
+    bdt_inputs["phi_j1"] = j1_reco.Phi();
+    bdt_inputs["pT_j2"] = j2_reco.Pt();
+    bdt_inputs["eta_j2"] = j2_reco.Eta();
+    bdt_inputs["phi_j2"] = j2_reco.Phi();
+
+    bdt_inputs["m_jj"] = (j1_reco+j2_reco).M();
+    bdt_inputs["pT_jj"] = (j1_reco+j2_reco).Pt();
+    bdt_inputs["dphi_jj"] = delta_phi(j1_reco, j2_reco);
+    bdt_inputs["deta_jj"] = delta_eta(j1_reco, j2_reco);
+    bdt_inputs["dr_jj"] = delta_r(j1_reco, j2_reco);
+
+    bdt_inputs["pT_l1"] = l1_reco.Pt();
+    bdt_inputs["eta_l1"] = l1_reco.Eta();
+    bdt_inputs["phi_l1"] = l1_reco.Phi();
+    bdt_inputs["pT_l2"] = l2_reco.Pt();
+    bdt_inputs["eta_l2"] = l2_reco.Eta();
+    bdt_inputs["phi_l2"] = l2_reco.Phi();
+
+    bdt_inputs["m_l1l2"] = (l1_reco+l2_reco).M();
+    bdt_inputs["pT_l1l2"] = (l1_reco+l2_reco).Pt();
+    bdt_inputs["dphi_l1l2"] = delta_phi(l1_reco, l2_reco);
+    bdt_inputs["deta_l1l2"] = delta_eta(l1_reco, l2_reco);
+    bdt_inputs["dr_l1l2"] = delta_r(l1_reco, l2_reco);
+
+    bdt_inputs["pT_l3"] = l3_reco.Pt();
+    bdt_inputs["eta_l3"] = l3_reco.Eta();
+    bdt_inputs["phi_l3"] = l3_reco.Phi();
+    bdt_inputs["pT_l4"] = l4_reco.Pt();
+    bdt_inputs["eta_l4"] = l4_reco.Eta();
+    bdt_inputs["phi_l4"] = l4_reco.Phi();
+
+    bdt_inputs["m_l3l4"] = (l3_reco+l4_reco).M();
+    bdt_inputs["pT_l3l4"] = (l3_reco+l4_reco).Pt();
+    bdt_inputs["dphi_l3l4"] = delta_phi(l3_reco, l4_reco);
+    bdt_inputs["deta_l3l4"] = delta_eta(l3_reco, l4_reco);
+    bdt_inputs["dr_l3l4"] = delta_r(l3_reco, l4_reco);
+
+    bdt_inputs["pT_w1"] = w1_reco.Pt();
+    bdt_inputs["eta_w1"] = w1_reco.Eta();
+    bdt_inputs["phi_w1"] = w1_reco.Phi();
+    bdt_inputs["pT_w2"] = w2_reco.Pt();
+    bdt_inputs["eta_w2"] = w2_reco.Eta();
+    bdt_inputs["phi_w2"] = w2_reco.Phi();
+
+    bdt_inputs["m_ww"] = (w1_reco+w2_reco).M();
+    bdt_inputs["pT_ww"] = (w1_reco+w2_reco).Pt();
+    bdt_inputs["dphi_ww"] = delta_phi(w1_reco, w2_reco);
+    bdt_inputs["deta_ww"] = delta_eta(w1_reco, w2_reco);
+    bdt_inputs["dr_ww"] = delta_r(w1_reco, w2_reco);
+
+    bdt_inputs["pT_z1"] = z1_reco.Pt();
+    bdt_inputs["eta_z1"] = z1_reco.Eta();
+    bdt_inputs["phi_z1"] = z1_reco.Phi();
+    bdt_inputs["pT_z2"] = z2_reco.Pt();
+    bdt_inputs["eta_z2"] = z2_reco.Eta();
+    bdt_inputs["phi_z2"] = z2_reco.Phi();
+
+    bdt_inputs["m_zz"] = (z1_reco+z2_reco).M();
+    bdt_inputs["pT_zz"] = (z1_reco+z2_reco).Pt();
+    bdt_inputs["dphi_zz"] = delta_phi(z1_reco, z2_reco);
+    bdt_inputs["deta_zz"] = delta_eta(z1_reco, z2_reco);
+    bdt_inputs["dr_zz"] = delta_r(z1_reco, z2_reco);
+
+    std::vector<double> bdt_output = xgb_classify( bdt_inputs );
+    std::vector<double> bdt_probs = get_probabilities( bdt_output ); // bdt_probs[1] - signal like probability
+
+  
+    // cout << bdt_probs[1] << endl;
+*/
+
+  //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // fill hists
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     recoET->Fill(vv_reco_i.first, weight);
     particleET->Fill(vv_particle_i.first, weight);
-    partonET->Fill(vvleps_parton_i.first, weight);
-
-    // selections = { "wwhjj", "zzhjj", "wwjj", "zzjj", "hwwjj", "hzzjj" };
+    partonET->Fill(vvleps_parton_i.first.first, weight);
 
     for (const auto& selection : selections) {
 
@@ -855,32 +1022,39 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
       if ( enable_cut_particle[ selection ] ) update_cft(cft_event_particle, cft_total_particle, "final " + selection + " - particle", weight);
       if ( enable_cut_parton[ selection ] ) update_cft(cft_event_parton, cft_total_parton, "final " + selection + " - parton", weight);
 
+      // bdt stuff here
+      // if ( enable_cut_reco[ selection ] ) update_cft(cft_event_reco, cft_total_reco, "bdt final " + selection + " - reco", weight);
+      // if ( enable_cut_particle[ selection ] ) update_cft(cft_event_particle, cft_total_particle, "bdt final " + selection + " - particle", weight);
+      // if ( enable_cut_parton[ selection ] ) update_cft(cft_event_parton, cft_total_parton, "bdt final " + selection + " - parton", weight);
+
     // 1D
       if ( enable_cut_reco[ selection ] ) {
-        sel_hist_map[ selection ].fill_bb( "reco", weight, b1_reco, b2_reco );
-        sel_hist_map[ selection ].fill_jj( "reco", weight, j1_reco, j2_reco );
-        sel_hist_map[ selection ].fill_ww( "reco", weight, vv_reco_i.first, w1_reco, w2_reco );
-        sel_hist_map[ selection ].fill_zz( "reco", weight, vv_reco_i.first, z1_reco, z2_reco );
-        sel_hist_map[ selection ].fill_2l( "reco", weight, l1_reco, l2_reco );
-        sel_hist_map[ selection ].fill_4l( "reco", weight, l3_reco, l4_reco );
+        sel_hist_map[ selection ].fill_bb( "reco", weight, b1_reco, b2_reco, process_name );
+        sel_hist_map[ selection ].fill_jj( "reco", weight, j1_reco, j2_reco, process_name  );
+        sel_hist_map[ selection ].fill_ww( "reco", weight, vv_reco_i.first, w1_reco, w2_reco, process_name);
+        sel_hist_map[ selection ].fill_zz( "reco", weight, vv_reco_i.first, z1_reco, z2_reco, process_name );
+        sel_hist_map[ selection ].fill_2l( "reco", weight, l1_reco, l2_reco, process_name );
+        sel_hist_map[ selection ].fill_4l( "reco", weight, l3_reco, l4_reco, process_name );
+        sel_hist_map[ selection ].fill_met( "reco", weight, met, process_name );
       } 
 
       if ( enable_cut_particle[ selection ] ) {
-        sel_hist_map[ selection ].fill_bb( "particle", weight, b1_particle, b2_particle );
-        sel_hist_map[ selection ].fill_jj( "particle", weight, j1_particle, j2_particle );
-        sel_hist_map[ selection ].fill_ww( "particle", weight, vv_particle_i.first, w1_particle, w2_particle );
-        sel_hist_map[ selection ].fill_zz( "particle", weight, vv_particle_i.first, z1_particle, z2_particle );
-        sel_hist_map[ selection ].fill_2l( "particle", weight, l1_particle, l2_particle );
-        sel_hist_map[ selection ].fill_4l( "particle", weight, l3_particle, l4_particle );
+        sel_hist_map[ selection ].fill_bb( "particle", weight, b1_particle, b2_particle, process_name );
+        sel_hist_map[ selection ].fill_jj( "particle", weight, j1_particle, j2_particle, process_name );
+        sel_hist_map[ selection ].fill_ww( "particle", weight, vv_particle_i.first, w1_particle, w2_particle, process_name );
+        sel_hist_map[ selection ].fill_zz( "particle", weight, vv_particle_i.first, z1_particle, z2_particle, process_name );
+        sel_hist_map[ selection ].fill_2l( "particle", weight, l1_particle, l2_particle, process_name );
+        sel_hist_map[ selection ].fill_4l( "particle", weight, l3_particle, l4_particle, process_name );
+        sel_hist_map[ selection ].fill_met( "particle", weight, genmet, process_name );
       } 
 
       if ( enable_cut_parton[ selection ] ) {
-        sel_hist_map[ selection ].fill_bb( "parton", weight, b1_parton, b2_parton );
-        sel_hist_map[ selection ].fill_jj( "parton", weight, j1_parton, j2_parton );
-        sel_hist_map[ selection ].fill_ww( "parton", weight, vvleps_parton_i.first, w1_parton, w2_parton );
-        sel_hist_map[ selection ].fill_zz( "parton", weight, vvleps_parton_i.first, z1_parton, z2_parton );
-        sel_hist_map[ selection ].fill_2l( "parton", weight, l1_parton, l2_parton );
-        sel_hist_map[ selection ].fill_4l( "parton", weight, l3_parton, l4_parton );
+        sel_hist_map[ selection ].fill_bb( "parton", weight, b1_parton, b2_parton, process_name );
+        sel_hist_map[ selection ].fill_jj( "parton", weight, j1_parton, j2_parton, process_name );
+        sel_hist_map[ selection ].fill_ww( "parton", weight, vvleps_parton_i.first.first, w1_parton, w2_parton, process_name );
+        sel_hist_map[ selection ].fill_zz( "parton", weight, vvleps_parton_i.first.first, z1_parton, z2_parton, process_name );
+        sel_hist_map[ selection ].fill_2l( "parton", weight, l1_parton, l2_parton, process_name );
+        sel_hist_map[ selection ].fill_4l( "parton", weight, l3_parton, l4_parton, process_name );
       } 
 
     // 2D
@@ -902,8 +1076,11 @@ for (auto selection = selections.begin(); selection != selections.end(); ++selec
         sel_hist_map[ selection ].fill_4l_2D( "particle", "parton", weight, l3_particle, l4_particle, l3_parton, l4_parton );
       }
 
-    }
 
+    // FILL CSV
+      if ( fillcsv && enable_cut_reco[ selection ] ) fill_csv( process_name, selection, cross_section, weight, b1_reco, b2_reco, j1_reco, j2_reco, l1_reco, l2_reco, l3_reco, l4_reco, w1_reco, w2_reco, z1_reco, z2_reco, met);
+
+    }
 
   //------------------------------------------------------------------------------------------------------------------------------------------------------------
   // end of event loop

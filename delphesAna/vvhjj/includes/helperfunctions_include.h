@@ -78,6 +78,18 @@ bool is_prompt( int particle_index = 0, TClonesArray *branchGenParticle = nullpt
 
 }
 
+bool is_parent( int particle_index, TClonesArray *branchGenParticle, int parent_PID) {
+
+    GenParticle *particle  = (GenParticle*) branchGenParticle->At( particle_index );
+    GenParticle *mother    = (GenParticle*) branchGenParticle->At( particle->M1 );
+
+    if( mother->PID == particle->PID ) return is_parent( particle->M1, branchGenParticle, parent_PID );
+
+    if( abs(mother->PID) == parent_PID ) return true;
+    else return false;
+
+}
+
 
 vector<int> rm_jetlep_overlap( string analysis_type = "reco", vector<int> jets = {-99}, vector<int> leps = {-99}, TClonesArray *branchJet = nullptr, TClonesArray *branchGenParticle = nullptr) {
 
@@ -274,5 +286,163 @@ vector <int> apply_efficiency( vector <int> leps_particle = {0}, TClonesArray *b
 
     return leps_reco;
 }
+
+
+
+std::vector<double> get_probabilities(std::vector<double> &log_probabilities) {
+    double sum = 0;
+
+    std::vector<double> probabilities (log_probabilities.size(), 0);
+
+    for (std::vector<double>::const_iterator i = log_probabilities.begin(); i != log_probabilities.end(); ++i) {
+        sum += exp(*i);
+    }
+
+    for (unsigned int i = 0; i < log_probabilities.size(); i++) {
+        probabilities[i] = exp(log_probabilities[i]) / sum;
+    }
+
+    return probabilities;
+}
+
+
+
+void make_csv( vector < string > column_names ) {
+
+    std::ofstream csvFile("bdt/vvhjj.csv");
+
+    if (csvFile.is_open()) {
+
+        for (size_t i = 0; i < column_names.size(); ++i) {
+
+            csvFile << column_names[i];
+            if (i < column_names.size() - 1) csvFile << ",";
+        
+        }
+ 
+        csvFile << "\n";
+        csvFile.close();
+
+        std::cout << "CSV file created successfully " << std::endl;
+
+    } else std::cerr << "Error: Could not create the file " << std::endl;
+
+}
+
+
+void fill_csv( string process_name, string selection, double cross_section, double weight, TLorentzVector b1_reco, TLorentzVector b2_reco, TLorentzVector j1_reco, TLorentzVector j2_reco, TLorentzVector l1_reco, TLorentzVector l2_reco, TLorentzVector l3_reco, TLorentzVector l4_reco, TLorentzVector w1_reco, TLorentzVector w2_reco, TLorentzVector z1_reco, TLorentzVector z2_reco, TLorentzVector met) {
+       
+    std::ofstream csv_file("bdt/vvhjj.csv", std::ios::app);
+    
+    if (!csv_file.is_open()) {
+        std::cerr << "Error: Unable to open the CSV file!" << std::endl;
+        return;
+    }
+
+   csv_file 
+
+
+        << process_name << "," 
+        << selection << ","
+        << cross_section << "," 
+        << weight << "," 
+
+
+        << b1_reco.Pt() << "," 
+        << b1_reco.Eta() << "," 
+        << b1_reco.Phi() << "," 
+
+        << b2_reco.Pt() << "," 
+        << b2_reco.Eta() << "," 
+        << b2_reco.Phi() << "," 
+
+        << (b1_reco+b2_reco).M() << "," 
+        << (b1_reco+b2_reco).Pt() << "," 
+        << delta_phi(b1_reco,b2_reco) << ","
+        << delta_eta(b1_reco,b2_reco) << ","
+        << delta_r(b1_reco,b2_reco) << ","
+
+
+        << j1_reco.Pt() << "," 
+        << j1_reco.Eta() << "," 
+        << j1_reco.Phi() << "," 
+
+        << j2_reco.Pt() << "," 
+        << j2_reco.Eta() << "," 
+        << j2_reco.Phi() << ","
+
+        << (j1_reco+j2_reco).M() << "," 
+        << (j1_reco+j2_reco).Pt() << "," 
+        << delta_phi(j1_reco,j2_reco) << ","
+        << delta_eta(j1_reco,j2_reco) << ","
+        << delta_r(j1_reco,j2_reco) << ","
+
+
+        << l1_reco.Pt() << "," 
+        << l1_reco.Eta() << "," 
+        << l1_reco.Phi() << "," 
+
+        << l2_reco.Pt() << "," 
+        << l2_reco.Eta() << "," 
+        << l2_reco.Phi() << ","
+
+        << (l1_reco+l2_reco).M() << "," 
+        << (l1_reco+l2_reco).Pt() << "," 
+        << delta_phi(l1_reco,l2_reco) << ","
+        << delta_eta(l1_reco,l2_reco) << ","
+        << delta_r(l1_reco,l2_reco) << ","
+
+        << l3_reco.Pt() << "," 
+        << l3_reco.Eta() << "," 
+        << l3_reco.Phi() << "," 
+
+        << l4_reco.Pt() << "," 
+        << l4_reco.Eta() << "," 
+        << l4_reco.Phi() << ","
+
+        << (l3_reco+l4_reco).M() << "," 
+        << (l3_reco+l4_reco).Pt() << "," 
+        << delta_phi(l3_reco,l4_reco) << ","
+        << delta_eta(l3_reco,l4_reco) << ","
+        << delta_r(l3_reco,l4_reco) << ","
+
+
+        << w1_reco.Pt() << "," 
+        << w1_reco.Eta() << "," 
+        << w1_reco.Phi() << "," 
+
+        << w2_reco.Pt() << "," 
+        << w2_reco.Eta() << "," 
+        << w2_reco.Phi() << ","
+
+        << (w1_reco+w2_reco).M() << "," 
+        << (w1_reco+w2_reco).Pt() << "," 
+        << delta_phi(w1_reco,w2_reco) << ","
+        << delta_eta(w1_reco,w2_reco) << ","
+        << delta_r(w1_reco,w2_reco) << ","
+
+
+        << z1_reco.Pt() << "," 
+        << z1_reco.Eta() << "," 
+        << z1_reco.Phi() << "," 
+
+        << z2_reco.Pt() << "," 
+        << z2_reco.Eta() << "," 
+        << z2_reco.Phi() << ","
+
+        << (z1_reco+z2_reco).M() << "," 
+        << (z1_reco+z2_reco).Pt() << "," 
+        << delta_phi(z1_reco,z2_reco) << ","
+        << delta_eta(z1_reco,z2_reco) << ","
+        << delta_r(z1_reco,z2_reco) << ","
+
+
+        << met.Pt() << "\n";
+
+
+    csv_file.close();
+
+}
+
 
 #endif

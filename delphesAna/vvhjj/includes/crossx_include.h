@@ -13,8 +13,12 @@ double get_cross_section(const char *process_name) {
   std::string zzjj_j = "zzjj_j"; 
   std::string zz_zjj_123j = "zz_zjj_123j"; 
   std::string DY2j3j = "DY2j3j"; 
-  std::string wpwmhqq = "wpwmhqq"; 
-  std::string zzhqq = "zzhqq"; 
+  std::string hwpwmjj = "hwpwmjj"; 
+  std::string hzzjj = "hzzjj"; 
+  std::string wpwmhjj = "wpwmhjj"; 
+  std::string wpwmjj = "wpwmjj"; 
+  std::string zzhjj = "zzhjj"; 
+  std::string zzjj = "zzjj"; 
   std::string wpwmhjj_C3_1 = "wpwmhjj_C3_1"; 
   std::string zzhjj_C3_1 = "zzhjj_C3_1"; 
   if (process_name == ttbar012j) return 88.29; 
@@ -27,10 +31,14 @@ double get_cross_section(const char *process_name) {
   if (process_name == zzjj_j) return 0.0124; 
   if (process_name == zz_zjj_123j) return 0.4964; 
   if (process_name == DY2j3j) return 151.2; 
-  else if (process_name == wpwmhqq) return 0.0000157006; 
-  else if (process_name == zzhqq) return 0.0000002892; 
-  else if (process_name == wpwmhjj_C3_1) return 0.0004166720; 
-  else if (process_name == zzhjj_C3_1) return 0.0000921040; 
+  else if (process_name == hwpwmjj) return 0.0005606000; 
+  else if (process_name == hzzjj) return 0.0000021520; 
+  else if (process_name == wpwmhjj) return 0.0000157006; 
+  else if (process_name == wpwmjj) return 0.0360800000; 
+  else if (process_name == zzhjj) return 0.0000002892; 
+  else if (process_name == zzjj) return 0.0005808000; 
+  else if (process_name == wpwmhjj_C3_1) return 0.0000198012; 
+  else if (process_name == zzhjj_C3_1) return 0.0000004167; 
   else return 1.0; 
 } 
 #endif 

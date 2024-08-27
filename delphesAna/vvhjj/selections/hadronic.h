@@ -247,7 +247,7 @@ pair<int, int> get_jj( string analysis_type = "reco", vector<int> jets = {0}, TC
 
                 double deta = abs(j1->Eta - j2->Eta);
 
-                if ( deta < 2.5 ) continue;
+                // if ( deta < 2.5 ) continue;
                 if ( deta > deta_max ) {
 
                     deta_max = deta;

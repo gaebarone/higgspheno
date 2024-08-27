@@ -17,15 +17,15 @@ hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/all_bkg.ro
 
 
 # vvhqq
-hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/zzhqq.root zzhqq/del*.root
-hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/wpwmhqq.root wpwmhqq/del*.root
+hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/zzhjj.root zzhjj/del*.root
+hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/wpwmhjj.root wpwmhjj/del*.root
 
 # vvqq
-#hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/zzqq.root zzqq/del*.root
-#hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/wpwmqq.root wpwmqq/del*.root
+hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/zzjj.root zzjj/del*.root
+hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/wpwmjj.root wpwmjj/del*.root
 
 # hvvqq ( h > vv )
-#hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/hzzqq.root hzzqq/del*.root
-#hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/hwpwmqq.root hwpwmqq/del*.root
+hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/hzzjj.root hzzjj/del*.root
+hadd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs/hwpwmjj.root hwpwmjj/del*.root
 
 cd /isilon/data/users/sellis9/higgsandmore/delphesAna/vvhjj/outputs
